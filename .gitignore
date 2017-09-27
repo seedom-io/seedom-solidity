@@ -1,0 +1,16 @@
+# logs
+logs
+*.log
+
+# mocha & istanbul
+coverage
+shippable
+
+# npm
+node_modules
+
+# ethpm
+installed_contracts
+
+# mac
+.DS_Store
