@@ -1,0 +1,17 @@
+{
+    "package_name": "charity",
+    "version": "0.0.1",
+    "description": "Collect and retrieve charity tickets",
+    "authors": [
+      "Alex Groleau <agroleau@teampalmtree.com>",
+      "Eric Thomas <eric.l.m.thomas@gmail.com>"
+    ],
+    "keywords": [
+      "ethereum",
+      "charity"
+    ],
+    "dependencies": {
+      "zeppelin": "1.3.0"
+    },
+    "license": "MIT"
+}
