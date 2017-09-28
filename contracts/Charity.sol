@@ -26,8 +26,10 @@ contract Charity {
 
     address owner;
     address charity;
+    uint256 charitySplit;
+    uint256 winnerSplit;
+    uint256 ownerSplit;
     uint256 entryRate;
-    uint256 maxEntries;
     uint256 startTime;
     uint256 revealTime;
     uint256 endTime;
@@ -38,7 +40,8 @@ contract Charity {
     uint256 totalRevealedEntries;
 
     mapping(address => Participant) participants;
-
+    address[] participantAddresses;
+    address[] revelearsAddresses;
 
     function Charity() {
         owner = msg.sender;
@@ -50,22 +53,28 @@ contract Charity {
 
     function start(
         address _charity,
+        uint256 _charitySplit,
+        uint256 _winnerSplit,
+        uint256 _ownerSplit,
         uint256 _entryRate,
-        uint256 _maxEntries,
         uint256 _startTime,
         uint256 _revealTime,
         uint256 _endTime) public
     {
 
-        // make sure only we can authorize a new charity
-        require(msg.sender == owner);
+        require(msg.sender == owner); // make sure only we can authorize a new charity
         require(_charity != 0x0);
+        require(_charitySplit > 0);
+        require(_winnerSplit > 0);
+        require(_ownerSplit > 0);
         require(_entryRate > 0);
         require(_startTime >= now && revealTime >= _startTime && _endTime >= _revealTime);
 
         charity = _charity;
+        charitySplit = _charitySplit;
+        winnerSplit = _winnerSplit;
+        ownerSplit = _ownerSplit;
         entryRate = _entryRate;
-        maxEntries = _maxEntries;
         startTime = _startTime;
         revealTime = _revealTime;
         endTime = _endTime;
@@ -74,24 +83,24 @@ contract Charity {
 
     function participate(bytes32 _hashedRandom) public payable {
         
-        // owner cannot participate
-        require(msg.sender != owner);
-        // ensure we are after the start but before the reveal
-        require(now >= startTime && now <= revealTime);
+        require(msg.sender != owner); // owner cannot participate
+        require(now >= startTime && now <= revealTime); // ensure we are after the start but before the reveal
         require(msg.value != 0);
         require(_hashedRandom != 0x0);
 
         // get the message sender
         address _sender = message.sender;
         // get the amount of ether entered
-        uint256 _weiAmount = msg.value;
+        uint256 _wei = msg.value;
         // calculate entries amount to be created
-        uint256 _entries = _weiAmount.mul(entryRate);
+        uint256 _entries = _wei.mul(entryRate);
         
         Participant _participant = participants[_sender];
         // create a new participant or add entries to existing
         if (_participant.entries == 0) {
             _participant = Participant(_entries, _hashedRandom);
+            // track participant addresses
+            participantAddresses.push(_sender);
             // update participants count
             totalParticipants = totalParticipants.add(1);
         } else {
@@ -107,10 +116,8 @@ contract Charity {
 
     function reveal(uint256 _random) public returns (bool) {
 
-        // owner cannot reveal
-        require(msg.sender != owner);
-        // ensure we are after the reveal but before the end
-        require(now >= revealTime && now <= endTime);
+        require(msg.sender != owner); // owner cannot reveal
+        require(now >= revealTime && now <= endTime); // ensure we are after the reveal but before the end
         require(_random != 0);
         
         // get the message sender
@@ -136,6 +143,8 @@ contract Charity {
 
         // set the revealed number in the participant
         _participant.random = _random;
+        // track revealer addresses
+        revealerAddresses.push(_sender);
         // update total revealers count
         totalRevealers = totalRevealers.add(1);
         // update total revealed entries count
@@ -147,10 +156,41 @@ contract Charity {
 
     function end() public {
 
-        // make sure only we can end a charity
-        require(msg.sender == owner);
-        // a charity can only be ended after the reveal peroid
-        require(now >= revealTime);
+        require(msg.sender == owner); // make sure only we can end a charity
+        require(now >= endTime); // a charity can only be ended after the reveal period is over
+
+        uint256 _winningRandom = 0;
+        // XOR all revealed random numbers together
+        for (uint256 i = 0; i < revealerAddresses.length; i++) {
+            address revealerAddresses = revealerAddresses[i];
+            Participant _participant = participants[revealerAddresses];
+            _random = _random ^ _participant.random;
+        }
+
+        // find winner revealer
+        uint256 _winnerRevealerIndex = _winningRandom % revealerAddresses.length;
+        address _winnerRevealer = revealerAddresses[_winnerRevealerIndex];
+        
+        // calculate total wei received
+        uint256 _totalWei = totalEntries.div(entryRate);
+        // divide it up amongst all entities (non-revealed winnings are forfeited)
+        uint256 _charityAmount = _totalWei.mul(charitySplit).div(100);
+        uint256 _winnerAmount = _totalWei.mul(winnerSplit).div(100);
+        uint256 _ownerAmount = _totalWei.mul(ownerSplit).div(100);
+
+        // make wei transfers
+        charity.transfer(_charityAmount);
+        _winnerRevealer.transfer(_winnerAmount);
+        owner.transfer(_ownerAmount);
+        
+        // delete all participants
+        for (uint256 i = 0; i < participantAddresses.length; i++) {
+            delete participants[participantAddresses[i]];
+        }
+
+        // delete participant & revealer addresses
+        delete participantAddresses;
+        delete revealerAddresses;
 
     }
 
