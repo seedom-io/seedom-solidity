@@ -26,6 +26,7 @@ contract Charity {
 
     address owner;
     address charity;
+    address winner;
     uint256 charitySplit;
     uint256 winnerSplit;
     uint256 ownerSplit;
@@ -78,6 +79,25 @@ contract Charity {
         revealTime = _revealTime;
         endTime = _endTime;
 
+        // clear out any pre-existing data
+        clear();
+
+    }
+
+    function clear() internal {
+
+        // set no winner
+        winner = 0;
+
+        // delete all participants
+        for (uint256 i = 0; i < participantAddresses.length; i++) {
+            delete participants[participantAddresses[i]];
+        }
+
+        // delete participant & revealer addresses
+        delete participantAddresses;
+        delete revealerAddresses;
+
     }
 
     function participate(bytes32 _hashedRandom) public payable {
@@ -86,11 +106,10 @@ contract Charity {
         require(msg.value != 0);
         require(_hashedRandom != 0x0);
 
-        // get the message sender
+        // get the message sender, amount of ether sent
+        // and calculate the number of entries
         address _sender = message.sender;
-        // get the amount of ether entered
         uint256 _wei = msg.value;
-        // calculate entries amount to be created
         uint256 _entries = _wei.mul(entryRate);
         
         Participant _participant = participants[_sender];
@@ -103,9 +122,8 @@ contract Charity {
             totalParticipants = totalParticipants.add(1);
         }
         
-        // add entries to participant
+        // add entries to participant & update total entries count
         _participant.entries = _participant.entries.add(_entries);
-        // update total entries count
         totalEntries = totalEntries.add(_entries);
         // send out participation update
         Participation(_sender, _entries, _participant.entries, totalParticipants);
@@ -117,18 +135,13 @@ contract Charity {
         require(now >= revealTime && now <= endTime); // ensure we are after the reveal but before the end
         require(_random != 0);
         
-        // get the message sender
+        // get the message sender & find a participant for this sender
         address _sender = message.sender;
-        // find a participant for this sender
         Participant _participant = participants[_sender];
 
         // participant have to have entries to reveal
-        if (_participant.entries == 0) {
-            return false;
-        }
-
-        // participant can't have already revealed
-        if (_participant.random != 0) {
+        // and participant can't have already revealed
+        if ((participant.entries == 0) || (_participant.random != 0)) {
             return false;
         }
 
@@ -138,14 +151,14 @@ contract Charity {
             
         }
 
-        // set the revealed number in the participant
+        // set the revealed number in the participant & track revealer addresses
         _participant.random = _random;
-        // track revealer addresses
         revealerAddresses.push(_sender);
-        // update total revealers count
+
+        // update total revealers count & total revealed entries count
         totalRevealers = totalRevealers.add(1);
-        // update total revealed entries count
         totalRevealedEntries = totalRevealedEntries.add(_participant.entries);
+
         // send out revelation update
         Revelation(_sender, _random, _participant.entries, totalRevealedEntries, totalRevealers);
 
@@ -154,6 +167,20 @@ contract Charity {
     function end() public {
         require(msg.sender == owner); // make sure only we can end a charity
         require(now >= endTime); // a charity can only be ended after the reveal period is over
+        require(winner == 0); // make sure someone hasn't already won
+
+        // randomly determine winner address and set in storage
+        winner = determineWinner();
+        // get amounts to transfer
+        (_charityAmount, _winnerAmount, _ownerAmount) = calculateTransferAmounts();
+        // make wei transfers
+        charity.transfer(_charityAmount);
+        winner.transfer(_winnerAmount);
+        owner.transfer(_ownerAmount);
+
+    }
+
+    function determineWinner() internal returns (address) {
 
         uint256 _winningRandom = 0;
         // XOR all revealed random numbers together
@@ -164,29 +191,23 @@ contract Charity {
         }
 
         // find winner revealer
-        uint256 _winnerRevealerIndex = _winningRandom % revealerAddresses.length;
-        address _winnerRevealer = revealerAddresses[_winnerRevealerIndex];
-        
+        uint256 _winnerIndex = _winningRandom % revealerAddresses.length;
+        return revealerAddresses[_winnerIndex];
+
+    }
+
+    function calculateTransferAmounts() internal returns (
+        uint256 _charityAmount,
+        uint256 _winnerAmount,
+        uint256 _ownerAmount)
+    {
+
         // calculate total wei received
         uint256 _totalWei = totalEntries.div(entryRate);
         // divide it up amongst all entities (non-revealed winnings are forfeited)
-        uint256 _charityAmount = _totalWei.mul(charitySplit).div(100);
-        uint256 _winnerAmount = _totalWei.mul(winnerSplit).div(100);
-        uint256 _ownerAmount = _totalWei.mul(ownerSplit).div(100);
-
-        // make wei transfers
-        charity.transfer(_charityAmount);
-        _winnerRevealer.transfer(_winnerAmount);
-        owner.transfer(_ownerAmount);
-
-        // delete all participants
-        for (uint256 i = 0; i < participantAddresses.length; i++) {
-            delete participants[participantAddresses[i]];
-        }
-
-        // delete participant & revealer addresses
-        delete participantAddresses;
-        delete revealerAddresses;
+        _charityAmount = _totalWei.mul(charitySplit).div(100);
+        _winnerAmount = _totalWei.mul(winnerSplit).div(100);
+        _ownerAmount = _totalWei.mul(ownerSplit).div(100);
 
     }
 
