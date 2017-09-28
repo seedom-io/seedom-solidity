@@ -96,17 +96,17 @@ contract Charity {
         uint256 _entries = _wei.mul(entryRate);
         
         Participant _participant = participants[_sender];
-        // create a new participant or add entries to existing
+        // if we have a new participant, set the hashed
+        // random, track this new participant, and
+        // add to total participants
         if (_participant.entries == 0) {
-            _participant = Participant(_entries, _hashedRandom);
-            // track participant addresses
+            _participant.hashedRandom = _hashedRandom;
             participantAddresses.push(_sender);
-            // update participants count
             totalParticipants = totalParticipants.add(1);
-        } else {
-            _participant.entries = _participant.entries.add(_entries);
         }
-
+        
+        // add entries to participant
+        _participant.entries = _participant.entries.add(_entries);
         // update total entries count
         totalEntries = totalEntries.add(_entries);
         // send out participation update
@@ -182,7 +182,7 @@ contract Charity {
         charity.transfer(_charityAmount);
         _winnerRevealer.transfer(_winnerAmount);
         owner.transfer(_ownerAmount);
-        
+
         // delete all participants
         for (uint256 i = 0; i < participantAddresses.length; i++) {
             delete participants[participantAddresses[i]];
@@ -193,7 +193,5 @@ contract Charity {
         delete revealerAddresses;
 
     }
-
-    
 
 }
