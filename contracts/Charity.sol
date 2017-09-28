@@ -61,7 +61,6 @@ contract Charity {
         uint256 _revealTime,
         uint256 _endTime) public
     {
-
         require(msg.sender == owner); // make sure only we can authorize a new charity
         require(_charity != 0x0);
         require(_charitySplit > 0);
@@ -82,7 +81,6 @@ contract Charity {
     }
 
     function participate(bytes32 _hashedRandom) public payable {
-        
         require(msg.sender != owner); // owner cannot participate
         require(now >= startTime && now <= revealTime); // ensure we are after the start but before the reveal
         require(msg.value != 0);
@@ -115,7 +113,6 @@ contract Charity {
     }
 
     function reveal(uint256 _random) public returns (bool) {
-
         require(msg.sender != owner); // owner cannot reveal
         require(now >= revealTime && now <= endTime); // ensure we are after the reveal but before the end
         require(_random != 0);
@@ -155,7 +152,6 @@ contract Charity {
     }
 
     function end() public {
-
         require(msg.sender == owner); // make sure only we can end a charity
         require(now >= endTime); // a charity can only be ended after the reveal period is over
 
