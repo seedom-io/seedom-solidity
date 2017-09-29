@@ -111,7 +111,7 @@ contract Charity {
         address _sender = msg.sender;
         uint256 _wei = msg.value;
         uint256 _entries = _wei.mul(entryRate);
-        
+
         Participant _participant = participants[_sender];
         // if we have a new participant, set the hashed
         // random, track this new participant, and
@@ -121,7 +121,7 @@ contract Charity {
             participantAddresses.push(_sender);
             totalParticipants = totalParticipants.add(1);
         }
-        
+
         // add entries to participant & update total entries count
         _participant.entries = _participant.entries.add(_entries);
         totalEntries = totalEntries.add(_entries);
@@ -134,9 +134,9 @@ contract Charity {
         require(msg.sender != owner); // owner cannot reveal
         require(now >= revealTime && now <= endTime); // ensure we are after the reveal but before the end
         require(_random != 0);
-        
+
         // get the message sender & find a participant for this sender
-        address _sender = message.sender;
+        address _sender = msg.sender;
         Participant _participant = participants[_sender];
 
         // participant have to have entries to reveal
