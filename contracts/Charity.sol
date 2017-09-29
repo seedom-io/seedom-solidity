@@ -108,7 +108,7 @@ contract Charity {
 
         // get the message sender, amount of ether sent
         // and calculate the number of entries
-        address _sender = message.sender;
+        address _sender = msg.sender;
         uint256 _wei = msg.value;
         uint256 _entries = _wei.mul(entryRate);
         
@@ -148,7 +148,6 @@ contract Charity {
         // make sure the participant's random is valid
         if (_participant.hashedRandom != sha3(_random, _sender)) {
             return false;
-            
         }
 
         // set the revealed number in the participant & track revealer addresses
