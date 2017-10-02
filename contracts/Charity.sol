@@ -15,7 +15,8 @@ contract Charity {
     event Revelation(
         address indexed revealer,
         uint256 newRevealedEntries,
-        uint256 totalRevealed);
+        uint256 totalRevealed,
+        uint256 totalRevealers);
 
     event Win(
         address indexed winner,
@@ -65,6 +66,10 @@ contract Charity {
 
     function getTotalParticipants() public returns (uint256) {
         return participants.length;
+    }
+
+    function getTotalRevealers() public returns (uint256) {
+        return revealers.length;
     }
 
     function getTotalEntries() public returns (uint256) {
@@ -150,10 +155,6 @@ contract Charity {
 
         // find existing participant
         Participant memory _participant = participantsMapping[_sender];
-        // some safety checks
-        require(_participant.revealedRandom == 0);
-        require(_participant.cumulativeEntries == 0);
-
         // new participant?
         if (_participant.entries == 0 || _participant.hashedRandom == 0x0) {
             // some safety checks
@@ -167,7 +168,7 @@ contract Charity {
         _participant.entries = _participant.entries.add(_newEntries);
         totalEntries = totalEntries.add(_newEntries);
         // send out participation update
-        Participation(_sender, _newEntries, _participant.entries, totalEntries, participantAddresses.length);
+        Participation(_sender, _newEntries, _participant.entries, totalEntries, participants.length);
         return true;
 
     }
@@ -196,7 +197,7 @@ contract Charity {
         // update revealed entries count
         totalRevealed = totalRevealed.add(_participant.entries);
         // send out revelation update
-        Revelation(_sender, _participant.entries, totalRevealed);
+        Revelation(_sender, _participant.entries, totalRevealed, revealers.length);
         return true;
 
     }
@@ -237,7 +238,7 @@ contract Charity {
         // generate winning random from all revealed randoms
         for (uint256 revealerIndex = 0; revealerIndex < revealers.length; revealerIndex++) {
 
-            uint256 _revealerAddress = revealers[revealerIndex];
+            address _revealerAddress = revealers[revealerIndex];
             // get the participant for this revealer
             Participant memory _participant = participantsMapping[_revealerAddress];
             require(_participant.entries > 0); // safety check
@@ -260,7 +261,11 @@ contract Charity {
 
     }
 
-    function findWinningRevealerAddress(uint256 _leftIndex, uint256 _rightIndex, uint256 _winnerIndex) internal returns (Participant) {
+    function findWinningRevealerAddress(
+        uint256 _leftIndex,
+        uint256 _rightIndex,
+        uint256 _winnerIndex) internal returns (address)
+    {
 
         // calculate the mid index  for binary search, find the mid revealer, get next sequential index
         uint256 _midIndex = _leftIndex + ((_rightIndex - _leftIndex) / 2);
