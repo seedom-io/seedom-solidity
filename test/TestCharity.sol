@@ -8,7 +8,7 @@ contract TestCharity {
 
     function testOwnerSet() {
         Charity charity = Charity(DeployedAddresses.Charity());
-        Assert.equal(charity.getOwner(), tx.origin, "Owner should be us");
+        Assert.equal(charity.owner(), tx.origin, "Owner should be us");
     }
 
 }
