@@ -204,7 +204,7 @@ contract Charity {
         // calculate winning index from this random
         uint256 _winnerIndex = _winningRandom % totalRevealed;
         // set winner
-        winner = findWinningRevealerAddress(0, revealers.length, _winnerIndex);
+        winner = findWinningRevealerAddress(0, revealers.length - 1, _winnerIndex);
 
         // get amounts to transfer
         (_charityAmount, _winnerAmount, _ownerAmount) = calculateTransferAmounts();
@@ -274,11 +274,11 @@ contract Charity {
 
         // winner index is greater, move right
         if (_winnerGTEMid) {
-            return findWinningRevealerAddress(_midIndex, _rightIndex, _winnerIndex);
+            return findWinningRevealerAddress(_nextIndex, _rightIndex, _winnerIndex);
         }
 
         // winner index is less, move left
-        return findWinningRevealerAddress(_leftIndex, _midIndex, _winnerIndex);
+        return findWinningRevealerAddress(_leftIndex, _midIndex - 1, _winnerIndex);
 
     }
 
