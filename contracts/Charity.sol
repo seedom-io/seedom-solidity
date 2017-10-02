@@ -37,45 +37,36 @@ contract Charity is Ownable {
         uint256 cumulativeEntries;
     }
 
-    address owner;
-    address charity;
-    address winner;
-    uint256 charitySplit;
-    uint256 winnerSplit;
-    uint256 ownerSplit;
-    uint256 entryCost;
-    uint256 startTime;
-    uint256 revealTime;
-    uint256 endTime;
-    bool cancelled;
+    address public charity;
+    address public winner;
+    uint256 public charitySplit;
+    uint256 public winnerSplit;
+    uint256 public ownerSplit;
+    uint256 public weiPerEntry;
+    uint256 public startTime;
+    uint256 public revealTime;
+    uint256 public endTime;
+    bool public cancelled;
 
-    uint256 totalEntries;
-    address[] participants;
-    mapping(address => Participant) participantsMapping;
+    uint256 public totalEntries;
+    address[] public participants;
+    mapping(address => Participant) public participantsMapping;
 
-    uint256 totalRevealed;
-    address[] revealers;
-    mapping(address => Revealer) revealersMapping;
+    uint256 public totalRevealed;
+    address[] public revealers;
+    mapping(address => Revealer) public revealersMapping;
 
     function Charity() {
         // initiall set this charity cancelled
         cancelled = true;
     }
 
-    function getTotalParticipants() public returns (uint256) {
+    function totalParticipants() public returns (uint256) {
         return participants.length;
     }
 
-    function getTotalRevealers() public returns (uint256) {
+    function totalRevealers() public returns (uint256) {
         return revealers.length;
-    }
-
-    function getTotalEntries() public returns (uint256) {
-        return totalEntries;
-    }
-
-    function getTotalRevealed() public returns (uint256) {
-        return totalRevealed;
     }
 
     /**
@@ -90,7 +81,7 @@ contract Charity is Ownable {
         uint256 _charitySplit,
         uint256 _winnerSplit,
         uint256 _ownerSplit,
-        uint256 _entryCost,
+        uint256 _weiPerEntry,
         uint256 _startTime,
         uint256 _revealTime,
         uint256 _endTime) public onlyOwner
@@ -99,7 +90,7 @@ contract Charity is Ownable {
         require(_charitySplit > 0);
         require(_winnerSplit > 0);
         require(_ownerSplit > 0);
-        require(_entryCost > 0);
+        require(_weiPerEntry > 0);
         require(_startTime >= now && _revealTime >= _startTime && _endTime >= _revealTime);
         // we can only start a new charity if a winner has been chosen or the last
         // charity was cancelled
@@ -109,7 +100,7 @@ contract Charity is Ownable {
         charitySplit = _charitySplit;
         winnerSplit = _winnerSplit;
         ownerSplit = _ownerSplit;
-        entryCost = _entryCost;
+        weiPerEntry = _weiPerEntry;
         startTime = _startTime;
         revealTime = _revealTime;
         endTime = _endTime;
@@ -177,7 +168,7 @@ contract Charity is Ownable {
         address _sender = msg.sender;
         uint256 _wei = msg.value;
         // calculate the number of entries from the wei sent
-        uint256 _newEntries = _wei.div(entryCost);
+        uint256 _newEntries = _wei.div(weiPerEntry);
         require(_newEntries > 0); // ensure at least one
 
         // find existing participant
@@ -367,7 +358,7 @@ contract Charity is Ownable {
     {
 
         // calculate total wei received
-        uint256 _totalWei = totalEntries.div(entryCost);
+        uint256 _totalWei = totalEntries.div(weiPerEntry);
         // divide it up amongst all entities (non-revealed winnings are forfeited)
         _charityAmount = _totalWei.mul(charitySplit).div(100);
         _winnerAmount = _totalWei.mul(winnerSplit).div(100);
@@ -401,7 +392,7 @@ contract Charity is Ownable {
             }
 
             // calculate refund
-            uint256 _wei = _participant.entries.mul(entryCost);
+            uint256 _wei = _participant.entries.mul(weiPerEntry);
             // send refund
             _participantAddress.transfer(_wei);
 
