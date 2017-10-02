@@ -100,7 +100,7 @@ contract Charity is Ownable {
         require(_winnerSplit > 0);
         require(_ownerSplit > 0);
         require(_entryCost > 0);
-        require(_startTime >= now && revealTime >= _startTime && _endTime >= _revealTime);
+        require(_startTime >= now && _revealTime >= _startTime && _endTime >= _revealTime);
         // we can only start a new charity if a winner has been chosen or the last
         // charity was cancelled
         require(winner != address(0) || cancelled);
