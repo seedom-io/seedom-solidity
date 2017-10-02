@@ -17,6 +17,14 @@ contract Charity {
         uint256 newRevealedEntries,
         uint256 totalRevealed);
 
+    event Win(
+        address indexed winner,
+        uint256 charityAmount,
+        uint256 winnerAmount,
+        uint256 ownerAmount);
+
+    event Cancellation();
+
     struct Participant {
         uint256 entries;
         bytes32 hashedRandom;
@@ -110,13 +118,13 @@ contract Charity {
         totalRevealed = 0;
 
         // delete all participants in mapping
-        for (uint256 i = 0; i < participants.length; i++) {
-            delete participantsMapping[participants[i]];
+        for (uint256 participantsIndex = 0; participantsIndex < participants.length; participantsIndex++) {
+            delete participantsMapping[participants[participantsIndex]];
         }
 
         // delete all revealers in mapping
-        for (uint256 i = 0; i < revealers.length; i++) {
-            delete revealersMapping[revealers[i]];
+        for (uint256 revealersIndex = 0; revealersIndex < revealers.length; revealersIndex++) {
+            delete revealersMapping[revealers[revealersIndex]];
         }
 
         // delete revealer addresses
@@ -141,7 +149,7 @@ contract Charity {
         require(_newEntries > 0); // ensure at least one
 
         // find existing participant
-        Participant _participant = participantsMapping[_sender];
+        Participant memory _participant = participantsMapping[_sender];
         // some safety checks
         require(_participant.revealedRandom == 0);
         require(_participant.cumulativeEntries == 0);
@@ -173,12 +181,12 @@ contract Charity {
 
         // find the original participant
         address _sender = msg.sender;
-        Participant _participant = participantsMapping[_sender];
+        Participant memory _participant = participantsMapping[_sender];
         require(_participant.entries > 0); // make sure they entered
         require(_participant.hashedRandom == sha3(_random, _sender)); // verify random against hashed random
 
         // create a revealer for this participant
-        Revealer _revealer = revealersMapping[_sender];
+        Revealer memory _revealer = revealersMapping[_sender];
         require(_revealer.random == 0); // make sure no random set already
         require(_revealer.cumulativeEntries == 0); // safety check
 
@@ -206,6 +214,9 @@ contract Charity {
         // set winner
         winner = findWinningRevealerAddress(0, revealers.length - 1, _winnerIndex);
 
+        uint256 _charityAmount;
+        uint256 _winnerAmount;
+        uint256 _ownerAmount;
         // get amounts to transfer
         (_charityAmount, _winnerAmount, _ownerAmount) = calculateTransferAmounts();
 
@@ -214,6 +225,9 @@ contract Charity {
         winner.transfer(_winnerAmount);
         owner.transfer(_ownerAmount);
 
+        // send out win event
+        Win(winner, _charityAmount, _winnerAmount, _ownerAmount);
+
     }
 
     function calculateWinningRandom() internal returns (uint256) {
@@ -221,16 +235,16 @@ contract Charity {
         uint256 _cumulativeEntries = 0;
         uint256 _winningRandom = 0;
         // generate winning random from all revealed randoms
-        for (uint256 i = 0; i < revealers.length; i++) {
+        for (uint256 revealerIndex = 0; revealerIndex < revealers.length; revealerIndex++) {
 
-            uint256 _revealerAddress = revealers[i];
+            uint256 _revealerAddress = revealers[revealerIndex];
             // get the participant for this revealer
-            Participant _participant = participantsMapping[_revealerAddress];
+            Participant memory _participant = participantsMapping[_revealerAddress];
             require(_participant.entries > 0); // safety check
             require(_participant.hashedRandom != 0x0); // safety check
 
             // get the revealer
-            Revealer _revealer = revealersMapping[_revealerAddress];
+            Revealer memory _revealer = revealersMapping[_revealerAddress];
             require(_revealer.random != 0); // safety check
             require(_revealer.cumulativeEntries == 0); // safety check
 
@@ -248,11 +262,9 @@ contract Charity {
 
     function findWinningRevealerAddress(uint256 _leftIndex, uint256 _rightIndex, uint256 _winnerIndex) internal returns (Participant) {
 
-        // calculate the mid index (binary search)
+        // calculate the mid index  for binary search, find the mid revealer, get next sequential index
         uint256 _midIndex = _leftIndex + ((_rightIndex - _leftIndex) / 2);
-        // find the mid revealer
         address _midRevealerAddress = revealers[_midIndex];
-        // get next index
         uint256 _nextIndex = _midIndex + 1;
 
         // we are at the end of the array, the winner is the last revealer
@@ -261,9 +273,9 @@ contract Charity {
         }
 
         // find the mid and very next revealers
-        Revealer _midRevealer = revealersMapping[_midRevealerAddress];
+        Revealer memory _midRevealer = revealersMapping[_midRevealerAddress];
         address _nextRevealerAddress = revealers[_nextIndex];
-        Revealer _nextRevealer = revealersMapping[_nextRevealerAddress];
+        Revealer memory _nextRevealer = revealersMapping[_nextRevealerAddress];
 
         bool _winnerGTEMid = _winnerIndex >= _midRevealer.cumulativeEntries;
         bool _winnerLTNext = _winnerIndex < _nextRevealer.cumulativeEntries;          
@@ -289,7 +301,7 @@ contract Charity {
     {
 
         // calculate total wei received
-        uint256 _totalWei = totalEntries.div(entryRate);
+        uint256 _totalWei = totalEntries.div(entryCost);
         // divide it up amongst all entities (non-revealed winnings are forfeited)
         _charityAmount = _totalWei.mul(charitySplit).div(100);
         _winnerAmount = _totalWei.mul(winnerSplit).div(100);
@@ -307,11 +319,11 @@ contract Charity {
         cancelled = true;
 
         // loop through all participants to refund them
-        for (uint256 i = 0; i < participants.length; i++) {
+        for (uint256 participantsIndex = 0; participantsIndex < participants.length; participantsIndex++) {
 
-            address _participantAddress = participants[i];
+            address _participantAddress = participants[participantsIndex];
             // get the participant for refund
-            Participant _participant = participantsMapping[_participantAddress];
+            Participant memory _participant = participantsMapping[_participantAddress];
             // this should never happen, but keep moving as we cannot die
             // during cancellation
             if (_participant.entries == 0) {
@@ -324,6 +336,9 @@ contract Charity {
             _participantAddress.transfer(_wei);
 
         }
+
+        // send out cancellation event
+        Cancellation();
 
     }
 
