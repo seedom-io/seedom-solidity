@@ -2,28 +2,35 @@ var chai = require('chai');
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 var assert = chai.assert;
-var expect = chai.expect;
 var testData = require('mocha-testdata');
 var given = testData.given;
+var sha3 = require('sha3');
 
 var Charity = artifacts.require("./charity.sol");
 
-var now = Math.round((new Date()).getTime() / 1000);
+function now() {
+  return Math.round((new Date()).getTime() / 1000);
+}
+
+function sleep(seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
 
 contract('Charity', function(accounts) {
 
   var validOwner = accounts[0];
   var validCharity = accounts[1];
-  var timeInterval = 20;
-
-  var validStartTime = now + timeInterval;
-  var validRevealTime = validStartTime + timeInterval;
-  var validEndTime = validRevealTime + timeInterval;
-
+  var validParticipant = accounts[2];
   var validCharitySplit = 49;
   var validWinnerSplit = 49;
   var validOwnerSplit = 2;
   var validWeiPerEntry = 1000;
+
+  var timeInterval = 5;
+
+  var validStartTime = now() + timeInterval;
+  var validRevealTime = validStartTime + timeInterval;
+  var validEndTime = validRevealTime + timeInterval;
 
   it("should set the validOwner to us", async () => {
     var instance = await Charity.new();
@@ -80,6 +87,10 @@ contract('Charity', function(accounts) {
 
   });
 
+  validStartTime = now() + timeInterval;
+  validRevealTime = validStartTime + timeInterval;
+  validEndTime = validRevealTime + timeInterval;
+
   given(
     [ 0, 49, 49, 2, 1000, validStartTime, validRevealTime, validEndTime ],
     [ validCharity, 0, 49, 2, 1000, validStartTime, validRevealTime, validEndTime ],
@@ -106,9 +117,9 @@ contract('Charity', function(accounts) {
     ));
   });
 
-  var oldStartTime = now - (timeInterval * 3);
-  var oldRevealTime = now - (timeInterval * 2);
-  var oldEndTime = now - timeInterval;
+  var oldStartTime = now() - (timeInterval * 3);
+  var oldRevealTime = oldStartTime + timeInterval;
+  var oldEndTime = oldRevealTime + timeInterval;
 
   given(
     // old dates
@@ -138,5 +149,77 @@ contract('Charity', function(accounts) {
       {from: validOwner}
     ));
   });
+
+  var validValue = 10000;
+  var validHasher = new sha3.SHA3Hash(256);
+  var validRandom = 123;
+  validHasher.update(validRandom.toString());
+  var validHashedRandomString = "0x" + validHasher.digest('hex');
+  var validHashedRandom = validHashedRandomString.valueOf();
+  var validEntries = validValue / validWeiPerEntry;
+
+  validStartTime = now() + timeInterval;
+  validRevealTime = validStartTime + timeInterval;
+  validEndTime = validRevealTime + timeInterval;
+
+  it("should participate properly", async () => {
+
+    var instance = await Charity.new();
+
+    await instance.start(
+      validCharity,
+      validCharitySplit,
+      validWinnerSplit,
+      validOwnerSplit,
+      validWeiPerEntry,
+      validStartTime,
+      validRevealTime,
+      validEndTime,
+      {from: validOwner}
+    );
+
+    // wait for charity to start
+    await sleep(timeInterval);
+
+    await instance.participate(
+      validHashedRandom,
+      {from: validParticipant, value: validValue}
+    );
+
+    var actualParticipant = await instance.participant.call(validParticipant, {from: validParticipant});
+    var actualEntries = actualParticipant[0];
+    var actualHashedRandom = actualParticipant[1];
+
+    assert.equal(actualEntries, validEntries, "expected entries does not match");
+    assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
+
+  });
+
+  /*it("should fail owner participation", async () => {
+    var instance = await Charity.new();
+    await instance.start(
+      validCharity,
+      validCharitySplit,
+      validWinnerSplit,
+      validOwnerSplit,
+      validWeiPerEntry,
+      validStartTime,
+      validRevealTime,
+      validEndTime,
+      {from: validOwner}
+    );
+    assert.isRejected(instance.participate(
+      validHashedRandom,
+      {from: validOwner, value: validValue}
+    ));
+  });
+
+  it("should fail participation without start", async () => {
+    var instance = await Charity.new();
+    assert.isRejected(instance.participate(
+      validHashedRandom,
+      {from: validParticipant, value: validValue}
+    ));
+  });*/
 
 });

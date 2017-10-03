@@ -50,11 +50,11 @@ contract Charity is Ownable {
 
     uint256 public totalEntries;
     address[] public participants;
-    mapping(address => Participant) public participantsMapping;
+    mapping(address => Participant) participantsMapping;
 
     uint256 public totalRevealed;
     address[] public revealers;
-    mapping(address => Revealer) public revealersMapping;
+    mapping(address => Revealer) revealersMapping;
 
     function Charity() {
         // initiall set this charity cancelled
@@ -67,6 +67,17 @@ contract Charity is Ownable {
 
     function totalRevealers() public returns (uint256) {
         return revealers.length;
+    }
+
+    function participant(address _address) public returns (uint256 _entries, bytes32 _hashedRandom) {
+        Participant memory _participant = participantsMapping[_address];
+        _entries = _participant.entries;
+        _hashedRandom = _participant.hashedRandom;
+    }
+
+    function revealer(address _address) public returns (uint256 _random) {
+        Revealer memory _revealer = revealersMapping[_address];
+        _random = _revealer.random;
     }
 
     /**
@@ -91,7 +102,7 @@ contract Charity is Ownable {
         require(_winnerSplit != 0);
         require(_ownerSplit != 0);
         require(_weiPerEntry != 0);
-        require(_startTime > now);
+        require(_startTime >= now);
         require(_revealTime > _startTime);
         require(_endTime > _revealTime);
         // we can only start a new charity if a winner has been chosen or the last
@@ -162,8 +173,9 @@ contract Charity is Ownable {
      */
     function participate(bytes32 _hashedRandom) public payable {
         require(msg.sender != owner); // owner cannot participate
-        require(now >= startTime && now <= revealTime); // ensure we are after the start but before the reveal
-        require(msg.value != 0); // some wei must be sent
+        require(now >= startTime); // ensure we are after the start
+        require(now < revealTime); // but before the reveal
+        require(msg.value > 0); // some wei must be sent
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't participate in a cancelled charity
 
@@ -174,7 +186,7 @@ contract Charity is Ownable {
         require(_newEntries > 0); // ensure at least one
 
         // find existing participant
-        Participant memory _participant = participantsMapping[_sender];
+        Participant storage _participant = participantsMapping[_sender];
         // new participant?
         if (_participant.entries == 0 || _participant.hashedRandom == 0x0) {
             require(_hashedRandom != 0x0); // hashed random cannot be zero
@@ -190,7 +202,7 @@ contract Charity is Ownable {
         totalEntries = totalEntries.add(_newEntries);
         // send out participation update
         Participation(_sender, _newEntries, _participant.entries, totalEntries, participants.length);
-
+    
     }
 
     /**
@@ -203,7 +215,7 @@ contract Charity is Ownable {
      */
     function reveal(uint256 _random) public {
         require(msg.sender != owner); // owner cannot reveal
-        require(now >= revealTime && now <= endTime); // ensure we are after the reveal but before the end
+        require(now >= revealTime && now < endTime); // ensure we are after the reveal but before the end
         require(_random != 0); // random non-zero
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't reveal in a cancelled charity
@@ -235,6 +247,8 @@ contract Charity is Ownable {
      * used to deterministically generate a global random number. A binary
      * search is performed with this random number to find the actual
      * winner with the weight of their entries used in random selection.
+     * Anyone can perform this operation to ensure that winnings can
+     * always be distributed without requiring the owner.
      */
     function end() public onlyOwner {
         require(now >= endTime); // a charity can only be ended after the reveal period is over
