@@ -1,0 +1,25 @@
+{
+  "name": "charity-solidity",
+  "version": "1.0.0",
+  "description": "prosperity bomb",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "zeppelin-solidity": "^1.3.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TeamPalmTree/charity-solidity.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TeamPalmTree/charity-solidity/issues"
+  },
+  "homepage": "https://github.com/TeamPalmTree/charity-solidity#readme"
+}

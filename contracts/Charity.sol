@@ -1,7 +1,7 @@
 pragma solidity ^0.4.4;
 
-import 'zeppelin/contracts/ownership/Ownable.sol';
-import 'zeppelin/contracts/math/SafeMath.sol';
+import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
+import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract Charity is Ownable {
     using SafeMath for uint256;
