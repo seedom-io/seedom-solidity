@@ -34,13 +34,13 @@ contract('Charity', function(accounts) {
   var validTimes = generateTimes(5);
   var validCharity = accounts[1];
 
-  it("should set the validOwner to us", async function() {
+  it("should set the validOwner to us", async () => {
     var instance = await Charity.new();
     var actualOwner = await instance.owner.call();
     assert.equal(actualOwner, validOwner, "Owner wasn't us");
   });
 
-  it("should start properly", async function() {
+  it("should start properly", async () => {
 
     var instance = await Charity.new();
 
