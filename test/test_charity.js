@@ -1,9 +1,34 @@
-const assertJump = require('zeppelin-solidity/test/helpers/assertJump');
+var assert = chai.assert;
 
 var Charity = artifacts.require("./charity.sol");
 
 function timestamp(date) {
   return Math.floor(date / 1000);
+}
+
+function generateTimes(interval) {
+
+  var startDate = new Date();
+  startDate.setSeconds(startDate.getSeconds() + interval);
+  var revealDate = new Date();
+  revealDate.setSeconds(startDate.getSeconds() + interval);
+  var endDate = new Date();
+  endDate.setSeconds(revealDate.getSeconds() + interval);
+
+  return [
+    timestamp(startDate),
+    timestamp(revealDate),
+    timestamp(endDate)
+  ];
+
+}
+
+function assertException(error) {
+  if (error.message.search('invalid opcode') == -1) {
+    assert.equal(error.message.search('assert.fail'), -1, error.actual);
+  } else {
+    assert.isOk(true, "valid exception");
+  }
 }
 
 contract('Charity', function(accounts) {
@@ -14,26 +39,9 @@ contract('Charity', function(accounts) {
     assert.equal(actualOwner, accounts[0], "Owner wasn't us");
   });
 
-  it("should start properly", async function() {
+  /*it("should start properly", async function() {
 
     var owner = accounts[0];
-    var charity = accounts[1];
-    var charitySplit = 49;
-    var winnerSplit = 49;
-    var ownerSplit = 2;
-    var weiPerEntry = 1000;
-    
-    var startDate = new Date();
-    startDate.setSeconds(startDate.getSeconds() + 5);
-    var revealDate = new Date();
-    revealDate.setSeconds(startDate.getSeconds() + 5);
-    var endDate = new Date();
-    endDate.setSeconds(revealDate.getSeconds() + 5);
-
-    var startTime = timestamp(startDate);
-    var revealTime = timestamp(revealDate);
-    var endTime = timestamp(endDate);
-
     var instance = await Charity.deployed();
 
     var actualWinner = await instance.winner.call({from: owner});
@@ -49,17 +57,21 @@ contract('Charity', function(accounts) {
     var actualTotalRevealers = await instance.totalRevealers.call({from: owner});
     assert.equal(0, actualTotalRevealers, "total revealers zero");
     
+    var charity = accounts[1];
+    var charitySplit = 49;
+    var winnerSplit = 49;
+    var ownerSplit = 2;
+    var weiPerEntry = 1000;
+    var times = generateTimes(5);
     await instance.start(
       charity,
       charitySplit,
       winnerSplit,
       ownerSplit,
-      weiPerEntry,
-      startTime,
-      revealTime,
-      endTime,
-      {from: owner}
-    );
+      weiPerEntry, 
+      times[0],
+      times[1],
+      times[2]);
 
     var actualCharity = await instance.charity.call({from: owner});
     assert.equal(charity, actualCharity, "charity does not match");
@@ -72,52 +84,50 @@ contract('Charity', function(accounts) {
     var actualWeiPerEntry = await instance.weiPerEntry.call({from: owner});
     assert.equal(weiPerEntry, actualWeiPerEntry, "wei per entry does not match");
     var actualStartTime = await instance.startTime.call({from: owner});
-    assert.equal(startTime, actualStartTime, "start time does not match");
+    assert.equal(times[0], actualStartTime, "start time does not match");
     var actualRevealTime = await instance.revealTime.call({from: owner});
-    assert.equal(revealTime, actualRevealTime, "reveal time does not match");
+    assert.equal(times[1], actualRevealTime, "reveal time does not match");
     var actualEndTime = await instance.endTime.call({from: owner});
-    assert.equal(endTime, actualEndTime, "end time does not match");
+    assert.equal(times[2], actualEndTime, "end time does not match");
 
-  });
+  });*/
 
-  it("should fail to start with zero charity", async function() {
+  it("should fail to start with completely invalid data", async function() {
 
-    var owner = accounts[0];
-    var charity = 0;
-    var charitySplit = 49;
-    var winnerSplit = 49;
-    var ownerSplit = 2;
-    var weiPerEntry = 1000;
+    var times = generateTimes(5);
+    var charity = accounts[1];
+    var startData = [
+      [ 0, 49, 49, 2, 1000, times[0], times[1], times[2] ],
+      [ charity, 0, 49, 2, 1000, times[0], times[1], times[2] ],
+      [ charity, 49, 0, 2, 1000, times[0], times[1], times[2] ],
+      [ charity, 49, 49, 0, 1000, times[0], times[1], times[2] ],
+      [ charity, 49, 49, 2, 0, times[0], times[1], times[2] ],
+      [ charity, 49, 49, 2, 1000, 0, times[1], times[2] ],
+      [ charity, 49, 49, 2, 1000, times[0], 0, times[2] ],
+      [ charity, 49, 49, 2, 1000, times[0], times[1], 0 ]
+    ];
     
-    var startDate = new Date();
-    startDate.setSeconds(startDate.getSeconds() + 5);
-    var revealDate = new Date();
-    revealDate.setSeconds(startDate.getSeconds() + 5);
-    var endDate = new Date();
-    endDate.setSeconds(revealDate.getSeconds() + 5);
+    return startData.forEach(async function(args) {
 
-    var startTime = timestamp(startDate);
-    var revealTime = timestamp(revealDate);
-    var endTime = timestamp(endDate);
+      var instance = await Charity.new();
 
-    var instance = await Charity.deployed();
-      
-    try {
-      await instance.start(
-        charity,
-        charitySplit,
-        winnerSplit,
-        ownerSplit,
-        weiPerEntry,
-        startTime,
-        revealTime,
-        endTime,
-        {from: owner}
-      );
-      assert.fail();
-    } catch (error) {
-      assertJump(error);
-    }
+      try {
+        await instance.start(
+          args[0],
+          args[1],
+          args[2],
+          args[3],
+          args[4],
+          args[5],
+          args[6],
+          args[7]);
+        assert.fail("start args should have failed: " + args);
+      } catch (error) {
+        assertException(error);
+      }
+
+    });
+
   });
-  
+
 });
