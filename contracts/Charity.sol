@@ -8,28 +8,37 @@ contract Charity is Ownable {
 
     event Participation(
         address indexed participant,
-        uint256 newParticipantEntries,
-        uint256 totalParticipantEntries,
-        uint256 totalEntries,
-        uint256 totalParticipants);
+        bytes32 hashedRandom
+    );
 
     event Revelation(
         address indexed revealer,
         uint256 newRevealedEntries,
         uint256 totalRevealed,
-        uint256 totalRevealers);
+        uint256 totalRevealers
+    );
 
     event Win(
         address indexed winner,
-        uint256 charityAmount,
-        uint256 winnerAmount,
-        uint256 ownerAmount);
+        uint256 charityRefund,
+        uint256 winnerRefund,
+        uint256 ownerRefund
+    );
 
-    event Cancellation();
+    event Cancellation(
+        address indexed participant,
+        uint256 refund
+    );
+
+    event Withdrawal(
+        address indexed wallet,
+        uint256 amount
+    );
 
     struct Participant {
         uint256 entries;
         bytes32 hashedRandom;
+        uint256 refund;
     }
 
     struct Revealer {
@@ -42,10 +51,13 @@ contract Charity is Ownable {
     uint256 public charitySplit;
     uint256 public winnerSplit;
     uint256 public ownerSplit;
-    uint256 public weiPerEntry;
+    uint256 public valuePerEntry;
     uint256 public startTime;
     uint256 public revealTime;
     uint256 public endTime;
+
+    uint256 charityRefund;
+    uint256 ownerRefund;
     bool public cancelled;
 
     uint256 public totalEntries;
@@ -69,10 +81,15 @@ contract Charity is Ownable {
         return revealers.length;
     }
 
-    function participant(address _address) public returns (uint256 _entries, bytes32 _hashedRandom) {
+    function participant(address _address) public returns (
+        uint256 _entries,
+        bytes32 _hashedRandom,
+        uint256 _refund)
+    {
         Participant memory _participant = participantsMapping[_address];
         _entries = _participant.entries;
         _hashedRandom = _participant.hashedRandom;
+        _refund = _participant.refund;
     }
 
     function revealer(address _address) public returns (uint256 _random) {
@@ -92,7 +109,7 @@ contract Charity is Ownable {
         uint256 _charitySplit,
         uint256 _winnerSplit,
         uint256 _ownerSplit,
-        uint256 _weiPerEntry,
+        uint256 _valuePerEntry,
         uint256 _startTime,
         uint256 _revealTime,
         uint256 _endTime) public onlyOwner
@@ -101,7 +118,7 @@ contract Charity is Ownable {
         require(_charitySplit != 0);
         require(_winnerSplit != 0);
         require(_ownerSplit != 0);
-        require(_weiPerEntry != 0);
+        require(_valuePerEntry != 0);
         require(_startTime >= now);
         require(_revealTime > _startTime);
         require(_endTime > _revealTime);
@@ -113,7 +130,7 @@ contract Charity is Ownable {
         charitySplit = _charitySplit;
         winnerSplit = _winnerSplit;
         ownerSplit = _ownerSplit;
-        weiPerEntry = _weiPerEntry;
+        valuePerEntry = _valuePerEntry;
         startTime = _startTime;
         revealTime = _revealTime;
         endTime = _endTime;
@@ -154,55 +171,69 @@ contract Charity is Ownable {
     }
 
     /**
-     * Fallback convenience function for accepting wei for additional entries
-     * after a hashed random was initially submitted. This will always fail if
-     * participate() is not called at least once with a hashed random.
+     * Participate in the current charity by contributing randomness to the global
+     * selection of a winner. Send a hashed random number N using the following
+     * formula: sha3(N, address). This being the SHA3 hash of the random number
+     * prepended to the sender's address. Do not forget your random number
+     * contribution as this will be required during the random revealation phase
+     * to confirm your entries. After participation, send wei to the callback
+     * function to receive entries and thereby increase your chances of winning.
+     * Participation is only permitted between the start and reaveal times.
      */
-    function () public payable {
-        participate(0x0);
-    }
-
-    /**
-     * Participate in the current charity. First, send a hashed random number N
-     * using the following formula: sha3(N, address). This being the SHA3 hash
-     * of the random number prepended to the sender's address. Do not forget your
-     * random number as this will be required during the reveal phase to confirm
-     * your entries. You can continue to send wei to obtain additional entries by
-     * sending 0 for hashed random. Participation is only permitted from the
-     * start and reaveal times.
-     */
-    function participate(bytes32 _hashedRandom) public payable {
+    function participate(bytes32 _hashedRandom) public {
         require(msg.sender != owner); // owner cannot participate
         require(now >= startTime); // ensure we are after the start
         require(now < revealTime); // but before the reveal
-        require(msg.value > 0); // some wei must be sent
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't participate in a cancelled charity
+        require(_hashedRandom != 0x0); // hashed random cannot be zero
 
         address _sender = msg.sender;
-        uint256 _wei = msg.value;
-        // calculate the number of entries from the wei sent
-        uint256 _newEntries = _wei.div(weiPerEntry);
-        require(_newEntries > 0); // ensure at least one
-
         // find existing participant
         Participant storage _participant = participantsMapping[_sender];
-        // new participant?
-        if (_participant.entries == 0 || _participant.hashedRandom == 0x0) {
-            require(_hashedRandom != 0x0); // hashed random cannot be zero
-            // some safety checks
-            require(_participant.entries == 0);
-            require(_participant.hashedRandom == 0x0);
-            _participant.hashedRandom = _hashedRandom;
-            participants.push(_sender);
-        }
+        require(_participant.hashedRandom == 0x0); // make sure they have not participated
+        require(_participant.entries == 0); // safety check
+        // save hashed random, add to tracked
+        _participant.hashedRandom = _hashedRandom;
+        participants.push(_sender);
+
+        // send out participation update
+        Participation(_sender, _hashedRandom);
+    
+    }
+
+    /**
+     * Fallback function that accepts wei for entries. This will always
+     * fail if participate() is not called once first with a hashed random.
+     */
+    function () public payable {
+        require(msg.sender != owner); // owner cannot fund
+        require(msg.value > 0); // some money needs to be sent
+        require(now >= startTime); // ensure we are after the start
+        require(now < revealTime); // but before the reveal
+        require(winner == address(0)); // safety check
+        require(!cancelled); // we can't fund a cancelled charity
+
+        address _sender = msg.sender;
+        // find existing participant
+        Participant storage _participant = participantsMapping[_sender];
+        require(_participant.hashedRandom != 0x0); // make sure they participated
+
+        uint256 _value = msg.value;
+        // calculate the number of entries from the wei sent
+        uint256 _newEntries = _value.div(valuePerEntry);
+        require(_newEntries > 0); // ensure at least one
 
         // add new entries to participant and total
         _participant.entries = _participant.entries.add(_newEntries);
         totalEntries = totalEntries.add(_newEntries);
-        // send out participation update
-        Participation(_sender, _newEntries, _participant.entries, totalEntries, participants.length);
-    
+
+        uint256 _refund = _value % valuePerEntry;
+        // refund any excess wei
+        if (_refund > 0) {
+            _participant.refund = _participant.refund.add(_refund);
+        }
+
     }
 
     /**
@@ -262,19 +293,15 @@ contract Charity is Ownable {
         // set winner
         winner = findWinningRevealerAddress(0, revealers.length - 1, _winnerIndex);
 
-        uint256 _charityAmount;
-        uint256 _winnerAmount;
-        uint256 _ownerAmount;
-        // get amounts to transfer
-        (_charityAmount, _winnerAmount, _ownerAmount) = calculateTransferAmounts();
-
-        // make wei transfers
-        charity.transfer(_charityAmount);
-        winner.transfer(_winnerAmount);
-        owner.transfer(_ownerAmount);
+        uint256 _winnerRefund;
+        // get winner refund and set charity & owner refunds
+        (charityRefund, _winnerRefund, ownerRefund) = calculateRefundAmounts();
+        // set participant refund
+        Participant memory _winnerParticipant = participantsMapping[winner];
+        _winnerParticipant.refund = _winnerRefund;
 
         // send out win event
-        Win(winner, _charityAmount, _winnerAmount, _ownerAmount);
+        Win(winner, charityRefund, _winnerRefund, ownerRefund);
 
     }
 
@@ -364,21 +391,21 @@ contract Charity is Ownable {
     }
 
     /**
-     * Calculate transfer amounts to the charity, winner, and owner
+     * Calculate refund amounts to the charity, winner, and owner
      * given the percentage splits specified at charity start.
      */
-    function calculateTransferAmounts() internal returns (
+    function calculateRefundAmounts() internal returns (
         uint256 _charityAmount,
         uint256 _winnerAmount,
         uint256 _ownerAmount)
     {
 
         // calculate total wei received
-        uint256 _totalWei = totalEntries.div(weiPerEntry);
+        uint256 _totalValue = totalEntries.div(valuePerEntry);
         // divide it up amongst all entities (non-revealed winnings are forfeited)
-        _charityAmount = _totalWei.mul(charitySplit).div(100);
-        _winnerAmount = _totalWei.mul(winnerSplit).div(100);
-        _ownerAmount = _totalWei.mul(ownerSplit).div(100);
+        _charityAmount = _totalValue.mul(charitySplit).div(100);
+        _winnerAmount = _totalValue.mul(winnerSplit).div(100);
+        _ownerAmount = _totalValue.mul(ownerSplit).div(100);
 
     }
 
@@ -397,25 +424,42 @@ contract Charity is Ownable {
 
         // loop through all participants to refund them
         for (uint256 participantsIndex = 0; participantsIndex < participants.length; participantsIndex++) {
-
             address _participantAddress = participants[participantsIndex];
-            // get the participant for refund
+            // get the participant for refund and set it
             Participant memory _participant = participantsMapping[_participantAddress];
-            // this should never happen, but keep moving as we cannot die
-            // during cancellation
-            if (_participant.entries == 0) {
-                continue;
-            }
-
-            // calculate refund
-            uint256 _wei = _participant.entries.mul(weiPerEntry);
-            // send refund
-            _participantAddress.transfer(_wei);
-
+            _participant.refund = _participant.entries.mul(valuePerEntry);
+            // send out cancellation event
+            Cancellation(_participantAddress, _participant.refund);
         }
 
-        // send out cancellation event
-        Cancellation();
+    }
+
+    /**
+     * This is the only method for getting funds out of the contract. All
+     * winnings and refunds are transferred in this way.
+     */
+    function withdraw() public {
+
+        address _sender = msg.sender;
+
+        uint256 _refund = 0;
+        // determine where to find the refund amount
+        if (_sender == charity) {
+            _refund = charityRefund;
+        } else if (_sender == owner) {
+            _refund = ownerRefund;
+        } else {
+            // we have a participant
+            Participant memory _participant = participantsMapping[_sender];
+            _refund = _participant.refund;
+        }
+
+        // execute the refund if we have one
+        if (_refund > 0) {
+            _sender.transfer(_refund);
+            // send withdrawal event
+            Withdrawal(_sender, _refund);
+        }
 
     }
 
