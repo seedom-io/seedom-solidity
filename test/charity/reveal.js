@@ -17,7 +17,7 @@ module.exports = (artifact, accounts) => {
 
     it("should allow revelation after start, funding, and participation", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
@@ -66,10 +66,9 @@ module.exports = (artifact, accounts) => {
             { from: validParticipant }
         );
 
-        /*var actualRevealer = await instance.revealer.call(validParticipant, { from: validParticipant });
-        var actualRandom = actualRevealer[0];
+        var actualRandom = await instance.revealer.call(validParticipant, { from: validParticipant });
 
-        assert.equal(actualRandom, validRandom, "randoms should match");
+        assert.equal(helpers.hexBigNumber(actualRandom), validRandom, "randoms should match");
 
         actualTotalEntries = await instance.totalEntries.call();
         actualTotalRevealed = await instance.totalRevealed.call();
@@ -79,8 +78,233 @@ module.exports = (artifact, accounts) => {
         assert.equal(actualTotalEntries, 10, "total entries incorrect");
         assert.equal(actualTotalRevealed, 10, "total revealed not zero");
         assert.equal(actualTotalParticipants, 1, "total participants should be 1");
-        assert.equal(actualTotalRevealers, 1, "total revealers not zero");*/
+        assert.equal(actualTotalRevealers, 1, "total revealers not zero");
 
+    });
+
+    it("should reject random revelations too low", async () => {
+
+        var validRandom = helpers.random(8);
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.start(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        );
+
+        // run fallback function
+        await instance.sendTransaction({ from: validParticipant, value: 10000 });
+
+        await helpers.sleep(helpers.timeInterval);
+
+        assert.isRejected(instance.reveal(
+            validRandom,
+            { from: validParticipant }
+        ));
+
+    });
+
+    it("should reject multiple revelations", async () => {
+        
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.start(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        );
+
+        // run fallback function
+        await instance.sendTransaction({ from: validParticipant, value: 10000 });
+
+        await helpers.sleep(helpers.timeInterval);
+
+        instance.reveal(
+            validRandom,
+            { from: validParticipant }
+        );
+
+        assert.isRejected(instance.reveal(
+            validRandom,
+            { from: validParticipant }
+        ));
+
+    });
+
+    it("should reject owner revelations", async () => {
+        
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.start(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        );
+
+        // run fallback function
+        await instance.sendTransaction({ from: validParticipant, value: 10000 });
+
+        await helpers.sleep(helpers.timeInterval);
+
+        assert.isRejected(instance.reveal(
+            validRandom,
+            { from: validOwner }
+        ));
+
+    });
+
+    it("should reject incorrect randoms", async () => {
+        
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+        var invalidRandom = helpers.random();
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.start(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        );
+
+        // run fallback function
+        await instance.sendTransaction({ from: validParticipant, value: 10000 });
+
+        await helpers.sleep(helpers.timeInterval);
+
+        assert.isRejected(instance.reveal(
+            invalidRandom,
+            { from: validParticipant }
+        ));
+
+    });
+
+    it("should reject revelations before and after revelation period", async () => {
+        
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.start(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        );
+
+        // run fallback function
+        await instance.sendTransaction({ from: validParticipant, value: 10000 });
+
+        assert.isRejected(instance.reveal(
+            validRandom,
+            { from: validParticipant }
+        ));
+
+        await helpers.sleep(helpers.timeInterval * 2);
+
+        assert.isRejected(instance.reveal(
+            validRandom,
+            { from: validParticipant }
+        ));
 
     });
 

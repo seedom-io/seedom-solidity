@@ -17,7 +17,7 @@ module.exports = (artifact, accounts) => {
 
     it("should accept two participants properly after start", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
         var validRandom2 = validRandom + 1;
         var validHashedRandom2 = helpers.hashedRandom(validRandom2, validParticipant2);
@@ -141,7 +141,7 @@ module.exports = (artifact, accounts) => {
 
     it("should fail owner participation", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
@@ -174,7 +174,7 @@ module.exports = (artifact, accounts) => {
 
     it("should fail participation without start", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var instance = await artifact.new();
@@ -188,7 +188,7 @@ module.exports = (artifact, accounts) => {
 
     it("should reject participation before and after participation phase", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
@@ -225,7 +225,7 @@ module.exports = (artifact, accounts) => {
 
     it("should reject multiple participation from same address", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;

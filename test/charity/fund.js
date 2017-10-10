@@ -17,7 +17,7 @@ module.exports = (artifact, accounts) => {
 
     it("should allow funding after participation after start", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
+        var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
@@ -72,8 +72,8 @@ module.exports = (artifact, accounts) => {
 
     it("should reject funding without participation after start", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
-        var validHashedRandom = helpers.hashedRandom(validRandom);
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
         var validRevealTime = validStartTime + helpers.timeInterval;
@@ -113,8 +113,8 @@ module.exports = (artifact, accounts) => {
 
     it("should refund wei if partial entry value sent after participation", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
-        var validHashedRandom = helpers.hashedRandom(validRandom);
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
         var validRevealTime = validStartTime + helpers.timeInterval;
@@ -158,8 +158,8 @@ module.exports = (artifact, accounts) => {
 
     it("should reject funding with no value after participation", async () => {
 
-        var validRandom = helpers.random(0, 1000000);
-        var validHashedRandom = helpers.hashedRandom(validRandom);
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
         var validRevealTime = validStartTime + helpers.timeInterval;

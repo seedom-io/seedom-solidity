@@ -247,7 +247,7 @@ contract Charity is Ownable {
     function reveal(uint256 _random) public {
         require(msg.sender != owner); // owner cannot reveal
         require(now >= revealTime && now < endTime); // ensure we are after the reveal but before the end
-        require(_random != 0); // random non-zero
+        require(bytes32(_random)[0] > 0x8); // random avoids bit-flipping and padding
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't reveal in a cancelled charity
 
@@ -255,10 +255,10 @@ contract Charity is Ownable {
         address _sender = msg.sender;
         Participant memory _participant = participantsMapping[_sender];
         require(_participant.entries > 0); // make sure they entered
-        require(_participant.hashedRandom == sha3(_random, _sender)); // verify random against hashed random
+        require(_participant.hashedRandom == keccak256(_random, _sender)); // verify random against hashed random
 
         // create a revealer for this participant
-        /*Revealer memory _revealer = revealersMapping[_sender];
+        Revealer storage _revealer = revealersMapping[_sender];
         require(_revealer.random == 0); // make sure no random set already
         require(_revealer.cumulativeEntries == 0); // safety check
 
@@ -268,7 +268,7 @@ contract Charity is Ownable {
         // update revealed entries count
         totalRevealed = totalRevealed.add(_participant.entries);
         // send out revelation update
-        Revelation(_sender, _participant.entries, totalRevealed, revealers.length);*/
+        Revelation(_sender, _participant.entries, totalRevealed, revealers.length);
 
     }
 
