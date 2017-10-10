@@ -1,17 +1,37 @@
 var artifact = artifacts.require("./charity.sol");
 
-contract('Charity', (accounts) => {
+var args = process.argv.slice(3);
 
-    describe("Construct", () => {
-        require("./charity/construct")(artifact, accounts);
-    });
+contract('charity', (accounts) => {
 
-    describe("Start", () => {
-        require("./charity/start")(artifact, accounts);
-    });
+    if (args.length > 1) {
 
-    describe("Participate", () => {
-        require("./charity/participate")(artifact, accounts);
-    });
+        describe(args[1], () => {
+            require("./charity/" + args[1])(artifact, accounts);
+        });
+
+    } else {
+
+        describe("construct", () => {
+            require("./charity/construct")(artifact, accounts);
+        });
+
+        describe("start", () => {
+            require("./charity/start")(artifact, accounts);
+        });
+
+        describe("participate", () => {
+            require("./charity/participate")(artifact, accounts);
+        });
+
+        describe("fund", () => {
+            require("./charity/fund")(artifact, accounts);
+        });
+
+        describe("reveal", () => {
+            require("./charity/reveal")(artifact, accounts);
+        });
+
+    }
 
 });

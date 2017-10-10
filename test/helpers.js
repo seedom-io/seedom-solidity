@@ -1,27 +1,29 @@
 var sha3 = require('sha3');
 
-exports.now = function() {
+module.exports.now = function() {
   return Math.round((new Date()).getTime() / 1000);
 }
 
-exports.sleep = function(seconds) {
+module.exports.sleep = function(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
-exports.random = function(min, max) {
-  return Math.random() * (max - min) + min;
+module.exports.random = function(min, max) {
+  return Math.floor(Math.random() * (max - min) + min);
 }
 
-exports.hashedRandom = function(random) {
+module.exports.hashedRandom = function(random, participant) {
   var hasher = new sha3.SHA3Hash(256);
   hasher.update(random.toString());
+  console.log(typeof participant);
+  hasher.update(participant);
   var hashedRandomString = "0x" + hasher.digest('hex');
   return hashedRandomString.valueOf();
 }
 
-exports.timeInterval = 3;
+module.exports.timeInterval = 3;
 
-exports.advanceBlock = function() {
+module.exports.advanceBlock = function() {
     return new Promise((resolve, reject) => {
         web3.currentProvider.sendAsync({
         jsonrpc: '2.0',

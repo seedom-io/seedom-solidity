@@ -258,7 +258,7 @@ contract Charity is Ownable {
         require(_participant.hashedRandom == sha3(_random, _sender)); // verify random against hashed random
 
         // create a revealer for this participant
-        Revealer memory _revealer = revealersMapping[_sender];
+        /*Revealer memory _revealer = revealersMapping[_sender];
         require(_revealer.random == 0); // make sure no random set already
         require(_revealer.cumulativeEntries == 0); // safety check
 
@@ -268,7 +268,7 @@ contract Charity is Ownable {
         // update revealed entries count
         totalRevealed = totalRevealed.add(_participant.entries);
         // send out revelation update
-        Revelation(_sender, _participant.entries, totalRevealed, revealers.length);
+        Revelation(_sender, _participant.entries, totalRevealed, revealers.length);*/
 
     }
 
