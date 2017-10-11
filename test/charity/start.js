@@ -59,13 +59,13 @@ module.exports = (artifact, accounts) => {
         var actualEndTime = await instance.endTime.call({ from: validOwner });
 
         assert.equal(actualCharity, validCharity, "charity does not match");
-        assert.equal(actualCharitySplit, validCharitySplit, "charity split does not match");
-        assert.equal(actualWinnerSplit, validWinnerSplit, "winner split does not match");
-        assert.equal(actualOwnerSplit, validOwnerSplit, "validOwner split does not match");
-        assert.equal(actualValuePerEntry, validValuePerEntry, "wei per entry does not match");
-        assert.equal(actualStartTime, validStartTime, "start time does not match");
-        assert.equal(actualRevealTime, validRevealTime, "reveal time does not match");
-        assert.equal(actualEndTime, validEndTime, "end time does not match");
+        assert.equal(actualCharitySplit.toNumber(), validCharitySplit, "charity split does not match");
+        assert.equal(actualWinnerSplit.toNumber(), validWinnerSplit, "winner split does not match");
+        assert.equal(actualOwnerSplit.toNumber(), validOwnerSplit, "validOwner split does not match");
+        assert.equal(actualValuePerEntry.toNumber(), validValuePerEntry, "wei per entry does not match");
+        assert.equal(actualStartTime.toNumber(), validStartTime, "start time does not match");
+        assert.equal(actualRevealTime.toNumber(), validRevealTime, "reveal time does not match");
+        assert.equal(actualEndTime.toNumber(), validEndTime, "end time does not match");
 
     });
 

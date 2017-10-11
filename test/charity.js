@@ -32,6 +32,10 @@ contract('charity', (accounts) => {
             require("./charity/reveal")(artifact, accounts);
         });
 
+        describe("end", () => {
+            require("./charity/end")(artifact, accounts);
+        });
+
     }
 
 });

@@ -54,10 +54,10 @@ module.exports = (artifact, accounts) => {
         var actualTotalParticipants = await instance.totalParticipants.call();
         var actualTotalRevealers = await instance.totalRevealers.call();
 
-        assert.equal(actualTotalEntries, 10, "total entries incorrect");
-        assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, 1, "total participants should be 1");
-        assert.equal(actualTotalRevealers, 0, "total revealers not zero");
+        assert.equal(actualTotalEntries.toNumber(), 10, "total entries incorrect");
+        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 1, "total participants should be 1");
+        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
 
         await helpers.sleep(helpers.timeInterval);
 
@@ -75,10 +75,10 @@ module.exports = (artifact, accounts) => {
         actualTotalParticipants = await instance.totalParticipants.call();
         actualTotalRevealers = await instance.totalRevealers.call();
 
-        assert.equal(actualTotalEntries, 10, "total entries incorrect");
-        assert.equal(actualTotalRevealed, 10, "total revealed not zero");
-        assert.equal(actualTotalParticipants, 1, "total participants should be 1");
-        assert.equal(actualTotalRevealers, 1, "total revealers not zero");
+        assert.equal(actualTotalEntries.toNumber(), 10, "total entries incorrect");
+        assert.equal(actualTotalRevealed.toNumber(), 10, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 1, "total participants should be 1");
+        assert.equal(actualTotalRevealers.toNumber(), 1, "total revealers not zero");
 
     });
 

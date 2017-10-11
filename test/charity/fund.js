@@ -54,19 +54,19 @@ module.exports = (artifact, accounts) => {
         var actualTotalParticipants = await instance.totalParticipants.call();
         var actualTotalRevealers = await instance.totalRevealers.call();
 
-        assert.equal(actualTotalEntries, 10, "total entries incorrect");
-        assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, 1, "total participants should be 1");
-        assert.equal(actualTotalRevealers, 0, "total revealers not zero");
+        assert.equal(actualTotalEntries.toNumber(), 10, "total entries incorrect");
+        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 1, "total participants should be 1");
+        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
 
         var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
         var actualEntries = actualParticipant[0];
         var actualHashedRandom = actualParticipant[1];
         var actualRefund = actualParticipant[2];
 
-        assert.equal(actualEntries, 10, "expected entries does not match");
+        assert.equal(actualEntries.toNumber(), 10, "expected entries does not match");
         assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
-        assert.equal(actualRefund, 0, "refund should be zero");
+        assert.equal(actualRefund.toNumber(), 0, "refund should be zero");
 
     });
 
@@ -104,10 +104,10 @@ module.exports = (artifact, accounts) => {
         var actualTotalParticipants = await instance.totalParticipants.call();
         var actualTotalRevealers = await instance.totalRevealers.call();
 
-        assert.equal(actualTotalEntries, 0, "total entries not zero");
-        assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, 0, "total participants should be zero");
-        assert.equal(actualTotalRevealers, 0, "total revealers not zero");
+        assert.equal(actualTotalEntries.toNumber(), 0, "total entries not zero");
+        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 0, "total participants should be zero");
+        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
 
     });
 
@@ -150,9 +150,9 @@ module.exports = (artifact, accounts) => {
         var actualHashedRandom = actualParticipant[1];
         var actualRefund = actualParticipant[2];
 
-        assert.equal(actualEntries, 10, "expected entries does not match");
+        assert.equal(actualEntries.toNumber(), 10, "expected entries does not match");
         assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
-        assert.equal(actualRefund, 500, "refund does not match");
+        assert.equal(actualRefund.toNumber(), 500, "refund does not match");
 
     });
 
@@ -195,10 +195,10 @@ module.exports = (artifact, accounts) => {
         var actualTotalParticipants = await instance.totalParticipants.call();
         var actualTotalRevealers = await instance.totalRevealers.call();
 
-        assert.equal(actualTotalEntries, 0, "total entries not zero");
-        assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, 1, "total participants should be one");
-        assert.equal(actualTotalRevealers, 0, "total revealers not zero");
+        assert.equal(actualTotalEntries.toNumber(), 0, "total entries not zero");
+        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 1, "total participants should be one");
+        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
 
     });
 
