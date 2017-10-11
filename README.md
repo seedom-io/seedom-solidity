@@ -2,7 +2,7 @@
 
 ## Dependencies
 - NodeJS (v7.10.1)
-- Truffle (v4.0.0 beta) `npm install -g truffle@beta`
+- Truffle (v4 beta) `npm install -g truffle@beta`
 - Ethereum TestRPC `npm install -g ethereumjs-testrpc`
 
 ## Getting started 

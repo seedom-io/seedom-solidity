@@ -1,6 +1,8 @@
 var crypto = require('crypto');
 var keccak256 = require('js-sha3').keccak256;
 
+module.exports.timeInterval = 3;
+
 module.exports.now = function () {
     return Math.round((new Date()).getTime() / 1000);
 }
@@ -46,8 +48,6 @@ module.exports.hashedRandom = function (random, participant) {
 module.exports.hexBigNumber = function(bigNumber) {
     return "0x" + bigNumber.toString(16);
 }
-
-module.exports.timeInterval = 3;
 
 module.exports.advanceBlock = function () {
     return new Promise((resolve, reject) => {

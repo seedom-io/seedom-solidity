@@ -17,6 +17,9 @@ module.exports = (artifact, accounts) => {
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
 
+    var validCharityRandom = helpers.random();
+    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
+
     it("should choose a winner", async () => {
 
         var validRandom = helpers.random();
@@ -34,7 +37,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -46,13 +49,10 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
+        await instance.start(validCharityHashedRandom, { from: validCharity });
+
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
-
-        console.log("Participant 1: " + validParticipant);
-        console.log("Participant 2: " + validParticipant2);
-        console.log("Participant 3: " + validParticipant3);
-        console.log("Participant 4: " + validParticipant4);
 
         await instance.participate(
             validHashedRandom,
@@ -74,7 +74,7 @@ module.exports = (artifact, accounts) => {
             { from: validParticipant4 }
         );
 
-        // run fallback function
+        /*// run fallback function
         await instance.sendTransaction({ from: validParticipant, value: 10000 });
         await instance.sendTransaction({ from: validParticipant2, value: 15000 });
         await instance.sendTransaction({ from: validParticipant3, value: 20000 });
@@ -138,7 +138,7 @@ module.exports = (artifact, accounts) => {
             (winner == validParticipant)
             || (winner == validParticipant2)
             || (winner == validParticipant3)
-            , "one participant that revealed should have won");
+            , "one participant that revealed should have won");*/
 
     });
 

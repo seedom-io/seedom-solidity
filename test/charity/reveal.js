@@ -10,12 +10,17 @@ module.exports = (artifact, accounts) => {
     var validCharity = accounts[1];
     var validParticipant = accounts[2];
     var validParticipant2 = accounts[3];
+    var validParticipant3 = accounts[4];
+    var validParticipant4 = accounts[5];
     var validCharitySplit = 49;
     var validWinnerSplit = 49;
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
 
-    it("should allow revelation after start, funding, and participation", async () => {
+    var validCharityRandom = helpers.random();
+    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
+
+    it("should allow revelation after participation", async () => {
 
         var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
@@ -26,7 +31,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -37,6 +42,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -66,8 +73,13 @@ module.exports = (artifact, accounts) => {
             { from: validParticipant }
         );
 
-        var actualRandom = await instance.revealer.call(validParticipant, { from: validParticipant });
+        var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
+        var actualEntries = actualParticipant[0];
+        var actualHashedRandom = actualParticipant[1];
+        var actualRandom = actualParticipant[2];
 
+        assert.equal(actualEntries.toNumber(), 10, "entries should be 10");
+        assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
         assert.equal(helpers.hexBigNumber(actualRandom), validRandom, "randoms should match");
 
         actualTotalEntries = await instance.totalEntries.call();
@@ -93,7 +105,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -104,6 +116,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -125,7 +139,7 @@ module.exports = (artifact, accounts) => {
 
     });
 
-    it("should reject multiple revelations", async () => {
+    it("should reject multiple revelations from same address", async () => {
         
         var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
@@ -136,7 +150,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -147,6 +161,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -173,6 +189,82 @@ module.exports = (artifact, accounts) => {
 
     });
 
+    it("should reject revelations without funding", async () => {
+        
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.construct(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        );
+
+        await helpers.sleep(helpers.timeInterval);
+
+        assert.isRejected(instance.reveal(
+            validRandom,
+            { from: validParticipant }
+        ));
+
+    });
+
+    it("should reject revelations before start", async () => {
+        
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.construct(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        assert.isRejected(instance.participate(
+            validHashedRandom,
+            { from: validParticipant }
+        ));
+
+    });
+
     it("should reject owner revelations", async () => {
         
         var validRandom = helpers.random();
@@ -184,7 +276,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -195,6 +287,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -228,7 +322,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -239,6 +333,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -271,7 +367,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -282,6 +378,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));

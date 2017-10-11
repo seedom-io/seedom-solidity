@@ -32,7 +32,7 @@ contract Charity is Ownable {
 
     event Withdrawal(
         address indexed wallet,
-        uint256 amount
+        uint256 balance
     );
 
     struct Participant {
@@ -81,9 +81,9 @@ contract Charity is Ownable {
     address[] public participants;
     address[] public revealers;
     mapping(address => Participant) participantsMapping;
-    mapping(address => uint256) refundsMapping;
+    mapping(address => uint256) balancesMapping;
 
-    function Charity() {
+    function Charity() public {
         // initiall set this charity cancelled
         cancelled = true;
     }
@@ -99,18 +99,16 @@ contract Charity is Ownable {
     function participant(address _address) public returns (
         uint256 _entries,
         bytes32 _hashedRandom,
-        uint256 _random,
-        uint256 _refund)
+        uint256 _random)
     {
-        Participant memory _participant = participantsMapping[_address];
+        Participant storage _participant = participantsMapping[_address];
         _entries = _participant.entries;
         _hashedRandom = _participant.hashedRandom;
-        _random = _revealer.random;
-        _refund = _participant.refund;
+        _random = _participant.random;
     }
 
-    function refund(address _address) public returns (uint256) {
-        return refundsMapping[_address];
+    function balance(address _address) public returns (uint256) {
+        return balancesMapping[_address];
     }
 
     /**
@@ -247,12 +245,12 @@ contract Charity is Ownable {
 
         // add new entries to participant and total
         _participant.entries += _newEntries;
-        totalEntries += newEntries;
+        totalEntries += _newEntries;
 
         uint256 _refund = _value % valuePerEntry;
         // refund any excess wei
         if (_refund > 0) {
-            refundsMapping[_sender] += _refund;
+            balancesMapping[_sender] += _refund;
         }
 
     }
@@ -272,16 +270,15 @@ contract Charity is Ownable {
 
         // find the original participant
         address _sender = msg.sender;
-        Participant memory _participant = participantsMapping[_sender];
+        Participant storage _participant = participantsMapping[_sender];
         require(_participant.entries > 0); // make sure they entered
         require(_participant.hashedRandom == keccak256(_random, _sender)); // verify random against hashed random
-        require(_revealer.random == 0); // make sure no random set already
+        require(_participant.random == 0); // make sure no random set already
 
-        // track revealers & set random on participant to consider them revealed
-        revealers.push(_sender);
+        // set random, track revealer, update stats
         _participant.random = _random;
-        // update revealed entries count
-        totalRevealed += participant.entries;
+        revealers.push(_sender);
+        totalRevealed += _participant.entries;
         // send out revelation update
         Revelation(_sender, _participant.entries, totalRevealed, revealers.length);
 
@@ -304,7 +301,7 @@ contract Charity is Ownable {
         require(now >= endTime); // a charity can only be ended after the reveal period is over
         require(charityHashedRandom == keccak256(_finalRandom, msg.sender)); // verify charity's hashed random
 
-        mapping(address => uint256) _cumulatives;
+        uint256[] memory _cumulatives = new uint256[](revealers.length);
         // calculate social random & index from this random, set winner
         uint256 _winningRandom = calculateWinningRandom(_finalRandom, _cumulatives);
         uint256 _winnerIndex = _winningRandom % totalRevealed;
@@ -314,18 +311,18 @@ contract Charity is Ownable {
         DebugInt("_winnerIndex", _winnerIndex);
         DebugAddress("winner", winner);
 
-        uint256 _ownerRefund;
-        uint256 _charityRefund;
-        uint256 _winnerRefund;
+        uint256 _ownerReward;
+        uint256 _charityReward;
+        uint256 _winnerReward;
         // get owner, winner, and charity refunds
-        (_ownerRefund, _charityRefund, _winnerRefund) = calculateRefunds();
-        // set refunds
-        refundsMapping[owner] += _charityRefund;
-        refundsMapping[charity] += _ownerRefund;
-        refundsMapping[winner] += _winnerRefund;
+        (_charityReward, _winnerReward, _ownerReward) = calculateRewards();
+        // add rewards to existing balances
+        balancesMapping[charity] += _charityReward;
+        balancesMapping[winner] += _winnerReward;
+        balancesMapping[owner] += _ownerReward;
 
         // send out win event
-        Win(winner, _charityRefund, _winnerRefund, _ownerRefund);
+        Win(winner, _charityReward, _winnerReward, _ownerReward);
 
     }
 
@@ -337,7 +334,7 @@ contract Charity is Ownable {
      */
     function calculateWinningRandom(
         uint256 _finalRandom,
-        mapping(address => uint256) _cumulatives) internal returns (uint256)
+        uint256[] _cumulatives) internal returns (uint256)
     {
 
         uint256 _cumulative = 0;
@@ -350,13 +347,13 @@ contract Charity is Ownable {
             Participant memory _participant = participantsMapping[_revealerAddress];
             require(_participant.entries > 0); // safety check
             require(_participant.hashedRandom != 0x0); // safety check
-            require(_revealer.random != 0); // safety check
+            require(_participant.random != 0); // safety check
 
             // keep track of the sum of revealed entries as we loop
             _cumulative += _participant.entries;
-            _cumulatives[_revealerAddress] = _cumulative;
+            _cumulatives[revealerIndex] = _cumulative;
             // xor all randoms together
-            _winningRandom = _winningRandom ^ _revealer.random;
+            _winningRandom = _winningRandom ^ _participant.random;
 
         }
 
@@ -380,7 +377,7 @@ contract Charity is Ownable {
         uint256 _leftIndex,
         uint256 _rightIndex,
         uint256 _winnerIndex,
-        mapping(address => uint256) _cumulatives) internal returns (address)
+        uint256[] _cumulatives) internal returns (address)
     {
 
         // calculate the mid index  for binary search, find the mid revealer, get next sequential index
@@ -394,12 +391,11 @@ contract Charity is Ownable {
         }
 
         // find the mid and very next revealers
-        Revealer memory _midRevealer = revealersMapping[_midRevealerAddress];
-        address _nextRevealerAddress = revealers[_nextIndex];
-        Revealer memory _nextRevealer = revealersMapping[_nextRevealerAddress];
+        uint256 _midRevealerCumulative = _cumulatives[_midIndex];
+        uint256 _nextRevealerCumulative = _cumulatives[_nextIndex];
 
-        bool _winnerGTEMid = _winnerIndex >= _midRevealer.cumulativeEntries;
-        bool _winnerLTNext = _winnerIndex < _nextRevealer.cumulativeEntries;          
+        bool _winnerGTEMid = _winnerIndex >= _midRevealerCumulative;
+        bool _winnerLTNext = _winnerIndex < _nextRevealerCumulative;          
         // we are in range and found the winner!                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
         if (_winnerGTEMid && _winnerLTNext) {
             return _midRevealerAddress;
@@ -407,11 +403,11 @@ contract Charity is Ownable {
 
         // winner index is greater, move right
         if (_winnerGTEMid) {
-            return findWinningRevealerAddress(_nextIndex, _rightIndex, _winnerIndex);
+            return findWinningRevealerAddress(_nextIndex, _rightIndex, _winnerIndex, _cumulatives);
         }
 
         // winner index is less, move left
-        return findWinningRevealerAddress(_leftIndex, _midIndex - 1, _winnerIndex);
+        return findWinningRevealerAddress(_leftIndex, _midIndex - 1, _winnerIndex, _cumulatives);
 
     }
 
@@ -419,17 +415,17 @@ contract Charity is Ownable {
      * Calculate refund amounts to the charity, winner, and owner
      * given the percentage splits specified at charity start.
      */
-    function calculateRefunds() internal returns (
-        uint256 _ownerAmount,
-        uint256 _charityAmount,
-        uint256 _winnerAmount)
+    function calculateRewards() internal returns (
+        uint256 _charityReward,
+        uint256 _winnerReward,
+        uint256 _ownerReward)
     {
         // calculate total wei received
         uint256 _totalValue = totalEntries / valuePerEntry;
         // divide it up amongst all entities (non-revealed winnings are forfeited)
-        _ownerAmount = _totalValue * ownerSplit / 100;
-        _charityAmount = _totalValue * charitySplit / 100;
-        _winnerAmount = _totalValue * winnerSplit / 100;
+        _charityReward = _totalValue * charitySplit / 100;
+        _winnerReward = _totalValue * winnerSplit / 100;
+        _ownerReward = _totalValue * ownerSplit / 100;
     }
 
     /**
@@ -448,12 +444,11 @@ contract Charity is Ownable {
         // loop through all participants to refund them
         for (uint256 participantsIndex = 0; participantsIndex < participants.length; participantsIndex++) {
             address _participantAddress = participants[participantsIndex];
-            // get the participant
+            // get the participant & refund
             Participant memory _participant = participantsMapping[_participantAddress];
-            // refund entry value
-            refundsMapping[_participantAddress] += _participant.entries * valuePerEntry;
+            balancesMapping[_participantAddress] += _participant.entries * valuePerEntry;
             // send out cancellation event
-            Cancellation(_participantAddress, refundsMapping[_participantAddress]);
+            Cancellation(_participantAddress, balancesMapping[_participantAddress]);
         }
 
     }
@@ -466,12 +461,12 @@ contract Charity is Ownable {
 
         address _sender = msg.sender;
         // determine where to find the refund amount
-        uint256 _refund = refundsMapping[_sender];
+        uint256 _balance = balancesMapping[_sender];
         // execute the refund if we have one
-        if (_refund > 0) {
-            _sender.transfer(_refund);
+        if (_balance > 0) {
+            _sender.transfer(_balance);
             // send withdrawal event
-            Withdrawal(_sender, _refund);
+            Withdrawal(_sender, _balance);
         }
 
     }

@@ -10,10 +10,15 @@ module.exports = (artifact, accounts) => {
     var validCharity = accounts[1];
     var validParticipant = accounts[2];
     var validParticipant2 = accounts[3];
+    var validParticipant3 = accounts[4];
+    var validParticipant4 = accounts[5];
     var validCharitySplit = 49;
     var validWinnerSplit = 49;
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
+
+    var validCharityRandom = helpers.random();
+    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
 
     it("should accept two participants properly after start", async () => {
 
@@ -28,7 +33,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -39,6 +44,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -51,11 +58,14 @@ module.exports = (artifact, accounts) => {
         var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
         var actualEntries = actualParticipant[0];
         var actualHashedRandom = actualParticipant[1];
-        var actualRefund = actualParticipant[2];
+        var actualRandom = actualParticipant[2];
 
         assert.equal(actualEntries.toNumber(), 0, "entries should be zero");
         assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
-        assert.equal(actualRefund.toNumber(), 0, "refund should be zero");
+        assert.equal(actualRandom.toNumber(), 0, "random should be zero");
+
+        var actualBalance = await instance.balance.call(validParticipant, { from: validParticipant });
+        assert.equal(actualBalance.toNumber(), 0, "balance should be zero");
 
         var actualTotalEntries = await instance.totalEntries.call();
         var actualTotalRevealed = await instance.totalRevealed.call();
@@ -75,11 +85,14 @@ module.exports = (artifact, accounts) => {
         actualParticipant = await instance.participant.call(validParticipant2, { from: validParticipant2 });
         actualEntries = actualParticipant[0];
         actualHashedRandom = actualParticipant[1];
-        actualRefund = actualParticipant[2];
+        actualRandom = actualParticipant[2];
 
         assert.equal(actualEntries.toNumber(), 0, "entries should be zero");
         assert.equal(actualHashedRandom, validHashedRandom2, "hashed random does not match");
-        assert.equal(actualRefund.toNumber(), 0, "refund should be zero");
+        assert.equal(actualRandom.toNumber(), 0, "random should be zero");
+
+        actualBalance = await instance.balance.call(validParticipant, { from: validParticipant });
+        assert.equal(actualBalance.toNumber(), 0, "balance should be zero");
 
         actualTotalEntries = await instance.totalEntries.call();
         actualTotalRevealed = await instance.totalRevealed.call();
@@ -93,53 +106,7 @@ module.exports = (artifact, accounts) => {
 
     });
 
-    it("should reject participation of bad hashed randoms after start", async () => {
-
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
-
-        var instance = await artifact.new();
-
-        await instance.start(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
-        );
-
-        // wait for charity to start
-        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
-
-        assert.isRejected(instance.participate(0, { from: validParticipant }));
-
-        var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
-        var actualEntries = actualParticipant[0];
-        var actualHashedRandom = actualParticipant[1];
-        var actualRefund = actualParticipant[2];
-
-        assert.equal(actualEntries.toNumber(), 0, "entries should be zero");
-        assert.equal(actualHashedRandom, 0, "hashed random should be zero");
-        assert.equal(actualRefund.toNumber(), 0, "refund should be zero");
-
-        var actualTotalEntries = await instance.totalEntries.call();
-        var actualTotalRevealed = await instance.totalRevealed.call();
-        var actualTotalParticipants = await instance.totalParticipants.call();
-        var actualTotalRevealers = await instance.totalRevealers.call();
-
-        assert.equal(actualTotalEntries.toNumber(), 0, "total entries should be zero");
-        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants.toNumber(), 0, "total participants should be zero");
-        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
-
-    });
-
-    it("should fail owner participation", async () => {
+    it("should fail participation without start", async () => {
 
         var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
@@ -150,7 +117,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -167,12 +134,12 @@ module.exports = (artifact, accounts) => {
 
         assert.isRejected(instance.participate(
             validHashedRandom,
-            { from: validOwner }
+            { from: validParticipant }
         ));
 
     });
 
-    it("should fail participation without start", async () => {
+    it("should fail participation without construct", async () => {
 
         var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
@@ -197,7 +164,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -208,6 +175,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         assert.isRejected(instance.participate(
             validHashedRandom,
@@ -223,6 +192,41 @@ module.exports = (artifact, accounts) => {
 
     });
 
+    it("should fail owner participation", async () => {
+
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.construct(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        assert.isRejected(instance.participate(
+            validHashedRandom,
+            { from: validOwner }
+        ));
+
+    });
+
     it("should reject multiple participation from same address", async () => {
 
         var validRandom = helpers.random();
@@ -234,7 +238,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -245,6 +249,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -258,6 +264,57 @@ module.exports = (artifact, accounts) => {
             validHashedRandom,
             { from: validParticipant }
         ));
+
+    });
+
+    it("should reject participation of bad hashed randoms after start", async () => {
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.construct(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        assert.isRejected(instance.participate(0, { from: validParticipant }));
+
+        var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
+        var actualEntries = actualParticipant[0];
+        var actualHashedRandom = actualParticipant[1];
+        var actualRandom = actualParticipant[2];
+
+        assert.equal(actualEntries.toNumber(), 0, "entries should be zero");
+        assert.equal(actualHashedRandom, 0, "hashed random should be zero");
+        assert.equal(actualRandom.toNumber(), 0, "random should be zero");
+
+        var actualBalance = await instance.balance.call(validParticipant, { from: validParticipant });
+        assert.equal(actualBalance.toNumber(), 0, "balance should be zero");
+
+        var actualTotalEntries = await instance.totalEntries.call();
+        var actualTotalRevealed = await instance.totalRevealed.call();
+        var actualTotalParticipants = await instance.totalParticipants.call();
+        var actualTotalRevealers = await instance.totalRevealers.call();
+
+        assert.equal(actualTotalEntries.toNumber(), 0, "total entries should be zero");
+        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 0, "total participants should be zero");
+        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
 
     });
 

@@ -12,6 +12,10 @@ contract('charity', (accounts) => {
 
     } else {
 
+        describe("instantiate", () => {
+            require("./charity/instantiate")(artifact, accounts);
+        });
+
         describe("construct", () => {
             require("./charity/construct")(artifact, accounts);
         });

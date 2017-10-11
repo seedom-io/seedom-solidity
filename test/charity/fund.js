@@ -10,10 +10,15 @@ module.exports = (artifact, accounts) => {
     var validCharity = accounts[1];
     var validParticipant = accounts[2];
     var validParticipant2 = accounts[3];
+    var validParticipant3 = accounts[4];
+    var validParticipant4 = accounts[5];
     var validCharitySplit = 49;
     var validWinnerSplit = 49;
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
+
+    var validCharityRandom = helpers.random();
+    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
 
     it("should allow funding after participation after start", async () => {
 
@@ -26,7 +31,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -37,6 +42,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -62,11 +69,14 @@ module.exports = (artifact, accounts) => {
         var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
         var actualEntries = actualParticipant[0];
         var actualHashedRandom = actualParticipant[1];
-        var actualRefund = actualParticipant[2];
+        var actualRandom = actualParticipant[2];
 
         assert.equal(actualEntries.toNumber(), 10, "expected entries does not match");
         assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
-        assert.equal(actualRefund.toNumber(), 0, "refund should be zero");
+        assert.equal(actualRandom.toNumber(), 0, "random should be zero");
+
+        var actualBalance = await instance.balance.call(validParticipant, { from: validParticipant });
+        assert.equal(actualBalance.toNumber(), 0, "balance should be zero");
 
     });
 
@@ -81,7 +91,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -92,6 +102,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -122,7 +134,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -133,6 +145,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -148,11 +162,14 @@ module.exports = (artifact, accounts) => {
         var actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
         var actualEntries = actualParticipant[0];
         var actualHashedRandom = actualParticipant[1];
-        var actualRefund = actualParticipant[2];
+        var actualRandom = actualParticipant[2];
 
         assert.equal(actualEntries.toNumber(), 10, "expected entries does not match");
         assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
-        assert.equal(actualRefund.toNumber(), 500, "refund does not match");
+        assert.equal(actualRandom.toNumber(), 0, "random should be zero");
+
+        var actualBalance = await instance.balance.call(validParticipant, { from: validParticipant });
+        assert.equal(actualBalance.toNumber(), 500, "balance should be 500");
 
     });
 
@@ -167,7 +184,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.start(
+        await instance.construct(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -178,6 +195,8 @@ module.exports = (artifact, accounts) => {
             validEndTime,
             { from: validOwner }
         );
+
+        await instance.start(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
