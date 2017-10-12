@@ -3,6 +3,7 @@ var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 var assert = chai.assert;
 var helpers = require('../helpers');
+var mochaLogger = require('mocha-logger');
 
 module.exports = (artifact, accounts) => {
 
@@ -18,7 +19,7 @@ module.exports = (artifact, accounts) => {
     var validValuePerEntry = 1000;
 
     var validCharityRandom = helpers.random();
-    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
+    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
 
     it("should choose a winner", async () => {
 
@@ -49,7 +50,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -74,7 +75,7 @@ module.exports = (artifact, accounts) => {
             { from: validParticipant4 }
         );
 
-        /*// run fallback function
+        // run fallback function
         await instance.sendTransaction({ from: validParticipant, value: 10000 });
         await instance.sendTransaction({ from: validParticipant2, value: 15000 });
         await instance.sendTransaction({ from: validParticipant3, value: 20000 });
@@ -117,28 +118,22 @@ module.exports = (artifact, accounts) => {
         assert.equal(actualTotalParticipants.toNumber(), 4, "total participants should be 4");
         assert.equal(actualTotalRevealers.toNumber(), 3, "total revealers should be 3");
 
+        mochaLogger.pending("participant 1: " + validParticipant + " entires: " + 10);
+        mochaLogger.pending("participant 2: " + validParticipant2 + " entires: " + 15);
+        mochaLogger.pending("participant 3: " + validParticipant3 + " entires: " + 20);
+
         await helpers.sleep(helpers.timeInterval);
 
         // first participant should be allowed to end the charity
-        var result = await instance.end({ from: validParticipant });
-        result.logs.forEach((log) => {
-            var param = log.args.param;
-            var value = log.args.value;
-            if (log.event == "DebugInt") {
-                value = value.toNumber();
-            }
-
-            console.log(param + " = " + value);
-            
-        });
+        await instance.end(validCharityRandom, { from: validCharity });
 
         var winner = await instance.winner.call();
-        console.log("Winner: " + winner);
+        mochaLogger.pending("winner: " + winner);
         assert.isOk(
             (winner == validParticipant)
             || (winner == validParticipant2)
             || (winner == validParticipant3)
-            , "one participant that revealed should have won");*/
+            , "one participant that revealed should have won");
 
     });
 

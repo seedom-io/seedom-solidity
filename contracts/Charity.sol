@@ -180,7 +180,7 @@ contract Charity is Ownable {
 
     }
 
-    function start(bytes32 _hashedRandom) public onlyCharity {
+    function seed(bytes32 _hashedRandom) public onlyCharity {
         require(now >= constructTime); // ensure we are after construct
         require(now < startTime); // but before the start
         require(winner == address(0)); // safety check
@@ -284,10 +284,6 @@ contract Charity is Ownable {
 
     }
 
-    event DebugInt(string param, uint256 value);
-    event DebugString(string param, string value);
-    event DebugAddress(string param, address value);
-
     /**
      * End this charity, choose a winner and disseminate wei according to
      * the split percentages. All of the revealed random numbers will be
@@ -297,19 +293,15 @@ contract Charity is Ownable {
      * Anyone can perform this operation to ensure that winnings can
      * always be distributed without requiring the owner.
      */
-    function end(uint256 _finalRandom) public openParticipation onlyCharity {
+    function end(uint256 _charityRandom) public openParticipation onlyCharity {
         require(now >= endTime); // a charity can only be ended after the reveal period is over
-        require(charityHashedRandom == keccak256(_finalRandom, msg.sender)); // verify charity's hashed random
+        require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
 
         uint256[] memory _cumulatives = new uint256[](revealers.length);
         // calculate social random & index from this random, set winner
-        uint256 _winningRandom = calculateWinningRandom(_finalRandom, _cumulatives);
+        uint256 _winningRandom = calculateWinningRandom(_charityRandom, _cumulatives);
         uint256 _winnerIndex = _winningRandom % totalRevealed;
         winner = findWinningRevealerAddress(0, revealers.length - 1, _winnerIndex, _cumulatives);
-
-        DebugInt("_winningRandom", _winningRandom);
-        DebugInt("_winnerIndex", _winnerIndex);
-        DebugAddress("winner", winner);
 
         uint256 _ownerReward;
         uint256 _charityReward;
@@ -333,7 +325,7 @@ contract Charity is Ownable {
      * number of entries for each participant as the random selection weight.
      */
     function calculateWinningRandom(
-        uint256 _finalRandom,
+        uint256 _charityRandom,
         uint256[] _cumulatives) internal returns (uint256)
     {
 
@@ -349,16 +341,16 @@ contract Charity is Ownable {
             require(_participant.hashedRandom != 0x0); // safety check
             require(_participant.random != 0); // safety check
 
-            // keep track of the sum of revealed entries as we loop
-            _cumulative += _participant.entries;
+            // set lower cumulative bound
             _cumulatives[revealerIndex] = _cumulative;
+            _cumulative += _participant.entries;
             // xor all randoms together
             _winningRandom = _winningRandom ^ _participant.random;
 
         }
 
         // the charity's initial random has the ultimate randomization effect
-        return _winningRandom ^ _finalRandom;
+        return _winningRandom ^ _charityRandom;
 
     }
 
@@ -380,34 +372,30 @@ contract Charity is Ownable {
         uint256[] _cumulatives) internal returns (address)
     {
 
+        // the winner is the last revealer!
+        if (_leftIndex == _rightIndex) {
+            return revealers[_leftIndex];
+        }
+
         // calculate the mid index  for binary search, find the mid revealer, get next sequential index
         uint256 _midIndex = _leftIndex + ((_rightIndex - _leftIndex) / 2);
         address _midRevealerAddress = revealers[_midIndex];
         uint256 _nextIndex = _midIndex + 1;
-
-        // we are at the end of the array, the winner is the last revealer
-        if (_nextIndex >= revealers.length) {
-            return _midRevealerAddress;
-        }
-
-        // find the mid and very next revealers
+        // find the mid and very next revealer cumulatives
         uint256 _midRevealerCumulative = _cumulatives[_midIndex];
         uint256 _nextRevealerCumulative = _cumulatives[_nextIndex];
-
+        // see if we are in range of winner index
         bool _winnerGTEMid = _winnerIndex >= _midRevealerCumulative;
-        bool _winnerLTNext = _winnerIndex < _nextRevealerCumulative;          
-        // we are in range and found the winner!                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-        if (_winnerGTEMid && _winnerLTNext) {
-            return _midRevealerAddress;
-        }
-
-        // winner index is greater, move right
+        bool _winnerLTNext = _winnerIndex < _nextRevealerCumulative;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
         if (_winnerGTEMid) {
+            // we are in range, winner found!
+            if (_winnerLTNext) { return _midRevealerAddress; }
+            // winner is greater, move right
             return findWinningRevealerAddress(_nextIndex, _rightIndex, _winnerIndex, _cumulatives);
         }
-
-        // winner index is less, move left
-        return findWinningRevealerAddress(_leftIndex, _midIndex - 1, _winnerIndex, _cumulatives);
+        // winner is less, move left
+        return findWinningRevealerAddress(_leftIndex, _midIndex, _winnerIndex, _cumulatives);
 
     }
 

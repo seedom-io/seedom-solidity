@@ -18,7 +18,7 @@ module.exports = (artifact, accounts) => {
     var validValuePerEntry = 1000;
 
     var validCharityRandom = helpers.random();
-    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
+    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
 
     it("should allow revelation after participation", async () => {
 
@@ -43,7 +43,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -117,7 +117,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -162,7 +162,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -212,7 +212,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -288,7 +288,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -334,7 +334,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
@@ -379,7 +379,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(validCharityHashedRandom, { from: validCharity });
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
         await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));

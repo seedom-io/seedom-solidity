@@ -20,8 +20,8 @@ contract('charity', (accounts) => {
             require("./charity/construct")(artifact, accounts);
         });
 
-        describe("start", () => {
-            require("./charity/start")(artifact, accounts);
+        describe("seed", () => {
+            require("./charity/seed")(artifact, accounts);
         });
 
         describe("participate", () => {

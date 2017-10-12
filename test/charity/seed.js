@@ -22,7 +22,7 @@ module.exports = (artifact, accounts) => {
         var instance = await artifact.new();
 
         var validCharityRandom = helpers.random();
-        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validParticipant);
+        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
 
         var validStartTime = helpers.now() + helpers.timeInterval;
         var validRevealTime = validStartTime + helpers.timeInterval;
@@ -40,7 +40,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.start(
+        await instance.seed(
             validCharityHashedRandom,
             { from: validCharity }
         );

@@ -88,7 +88,7 @@ module.exports = (artifact, accounts) => {
         [validCharity, 49, 49, 2, 1000, 0, validRevealTime, validEndTime, { from: validOwner }],
         [validCharity, 49, 49, 2, 1000, validStartTime, 0, validEndTime, { from: validOwner }],
         [validCharity, 49, 49, 2, 1000, validStartTime, validRevealTime, 0, { from: validOwner }]].forEach((args) => {
-            promises.push(assert.isRejected(instance.start.apply(this, args)));
+            promises.push(assert.isRejected(instance.seed.apply(this, args)));
         });
 
         return Promise.all(promises);
@@ -119,7 +119,7 @@ module.exports = (artifact, accounts) => {
         // out of order dates
         [validCharity, 49, 49, 2, 1000, validRevealTime, validStartTime, validEndTime, { from: validOwner }],
         [validCharity, 49, 49, 2, 1000, validStartTime, validEndTime, validRevealTime, { from: validOwner }]].forEach((args) => {
-            promises.push(assert.isRejected(instance.start.apply(this, args)));
+            promises.push(assert.isRejected(instance.seed.apply(this, args)));
         });
 
         return Promise.all(promises);
