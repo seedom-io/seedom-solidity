@@ -124,7 +124,6 @@ module.exports = (artifact, accounts) => {
 
         await helpers.sleep(helpers.timeInterval);
 
-        // first participant should be allowed to end the charity
         await instance.end(validCharityRandom, { from: validCharity });
 
         var winner = await instance.winner.call();
@@ -134,6 +133,22 @@ module.exports = (artifact, accounts) => {
             || (winner == validParticipant2)
             || (winner == validParticipant3)
             , "one participant that revealed should have won");
+
+        var actualCharityBalance = await instance.balance.call(validCharity, { from: validParticipant });
+        var actualWinnerBalance = await instance.balance.call(winner, { from: validParticipant });
+        var actualOwnerBalance = await instance.balance.call(validOwner, { from: validParticipant });
+
+        mochaLogger.pending("charity balance: " + actualCharityBalance.toNumber());
+        mochaLogger.pending("winner balance: " + actualWinnerBalance.toNumber());
+        mochaLogger.pending("owner balance: " + actualOwnerBalance.toNumber());
+
+        var validCharityBalance = 70 * validValuePerEntry * validCharitySplit / 100;
+        var validWinnerBalance = 70 * validValuePerEntry * validWinnerSplit / 100;
+        var validOwnerBalance = 70 * validValuePerEntry * validOwnerSplit / 100;
+
+        assert.equal(actualCharityBalance.toNumber(), validCharityBalance, "charity balance incorrect");
+        assert.equal(actualWinnerBalance.toNumber(), validWinnerBalance, "winner balance incorrect");
+        assert.equal(actualOwnerBalance.toNumber(), validOwnerBalance, "owner balance incorrect");
 
     });
 

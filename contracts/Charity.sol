@@ -11,6 +11,14 @@ contract Charity is Ownable {
         bytes32 hashedRandom
     );
 
+    event Fund(
+        address indexed participant,
+        uint256 value,
+        uint256 refund,
+        uint256 newEntries,
+        uint256 totalEntries
+    );
+
     event Revelation(
         address indexed revealer,
         uint256 newRevealedEntries,
@@ -20,9 +28,9 @@ contract Charity is Ownable {
 
     event Win(
         address indexed winner,
-        uint256 charityRefund,
-        uint256 winnerRefund,
-        uint256 ownerRefund
+        uint256 charityReward,
+        uint256 winnerReward,
+        uint256 ownerReward
     );
 
     event Cancellation(
@@ -160,6 +168,8 @@ contract Charity is Ownable {
      */
     function clear() internal {
 
+        // clear out charity hashed random
+        charityHashedRandom = 0x0;
         // set no winner
         winner = address(0);
         // set not cancelled
@@ -252,6 +262,9 @@ contract Charity is Ownable {
         if (_refund > 0) {
             balancesMapping[_sender] += _refund;
         }
+
+        // send fund event
+        Fund(_sender, _value, _refund, _newEntries, totalEntries);
 
     }
 
@@ -409,7 +422,7 @@ contract Charity is Ownable {
         uint256 _ownerReward)
     {
         // calculate total wei received
-        uint256 _totalValue = totalEntries / valuePerEntry;
+        uint256 _totalValue = totalEntries * valuePerEntry;
         // divide it up amongst all entities (non-revealed winnings are forfeited)
         _charityReward = _totalValue * charitySplit / 100;
         _winnerReward = _totalValue * winnerSplit / 100;
@@ -422,7 +435,6 @@ contract Charity is Ownable {
      * must exist in case of catostropic failure to return wei.
      */
     function cancel() public onlyOwnerOrCharity {
-        require(now >= startTime); // we can cancel at any time
         require(winner == address(0)); // if someone won, we've already sent the money out
         require(!cancelled); // we can't cancel more than once
 

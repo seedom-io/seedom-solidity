@@ -40,6 +40,14 @@ contract('charity', (accounts) => {
             require("./charity/end")(artifact, accounts);
         });
 
+        describe("cancel", () => {
+            require("./charity/cancel")(artifact, accounts);
+        });
+
+        describe("withdraw", () => {
+            require("./charity/withdraw")(artifact, accounts);
+        });
+
     }
 
 });
