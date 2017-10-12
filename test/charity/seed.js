@@ -17,7 +17,7 @@ module.exports = (artifact, accounts) => {
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
 
-    it("should start properly from charity", async () => {
+    it("should seed properly from charity", async () => {
 
         var instance = await artifact.new();
 
@@ -48,6 +48,66 @@ module.exports = (artifact, accounts) => {
         var actualCharityHashedRandom = await instance.charityHashedRandom.call({ from: validParticipant });
 
         assert.equal(actualCharityHashedRandom, validCharityHashedRandom, "charity's hashed random does not match");
+
+    });
+
+    it("should reject seed from owner", async () => {
+        
+        var instance = await artifact.new();
+
+        var validCharityRandom = helpers.random();
+        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        await instance.construct(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        assert.isRejected(instance.seed(
+            validCharityHashedRandom,
+            { from: validOwner }
+        ));
+
+    });
+
+    it("should reject seed from participant", async () => {
+        
+        var instance = await artifact.new();
+
+        var validCharityRandom = helpers.random();
+        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        await instance.construct(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        assert.isRejected(instance.seed(
+            validCharityHashedRandom,
+            { from: validParticipant }
+        ));
 
     });
 
