@@ -33,7 +33,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -117,7 +117,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -164,7 +164,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -203,7 +203,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -238,7 +238,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -275,7 +275,7 @@ module.exports = (artifact, accounts) => {
 
         var instance = await artifact.new();
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,

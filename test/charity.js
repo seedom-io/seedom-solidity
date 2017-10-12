@@ -16,8 +16,8 @@ contract('charity', (accounts) => {
             require("./charity/instantiate")(artifact, accounts);
         });
 
-        describe("construct", () => {
-            require("./charity/construct")(artifact, accounts);
+        describe("kickoff", () => {
+            require("./charity/kickoff")(artifact, accounts);
         });
 
         describe("seed", () => {

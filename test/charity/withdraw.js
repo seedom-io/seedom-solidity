@@ -73,7 +73,7 @@ module.exports = (artifact, accounts) => {
         var validFinalBalance = getLatestBalance(validParticipant);
         mochaLogger.pending("initial balance: " + validFinalBalance.toString());
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -130,7 +130,7 @@ module.exports = (artifact, accounts) => {
         var validFinalBalance = getLatestBalance(validParticipant);
         mochaLogger.pending("initial balance: " + validFinalBalance.toString());
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -204,7 +204,7 @@ module.exports = (artifact, accounts) => {
         var validFinalBalance = getLatestBalance(validParticipant);
         mochaLogger.pending("initial balance: " + validFinalBalance.toString());
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,

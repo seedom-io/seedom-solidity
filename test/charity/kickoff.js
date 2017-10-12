@@ -35,11 +35,12 @@ module.exports = (artifact, accounts) => {
         assert.equal(actualTotalParticipants, 0, "total participants zero");
         assert.equal(actualTotalRevealers, 0, "total revealers zero");
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
+        var now = helpers.now();
+        var validStartTime = now + helpers.timeInterval;
         var validRevealTime = validStartTime + helpers.timeInterval;
         var validEndTime = validRevealTime + helpers.timeInterval;
 
-        await instance.construct(
+        await instance.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -51,23 +52,18 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        var actualCharity = await instance.charity.call({ from: validOwner });
-        var actualCharitySplit = await instance.charitySplit.call({ from: validOwner });
-        var actualWinnerSplit = await instance.winnerSplit.call({ from: validOwner });
-        var actualOwnerSplit = await instance.ownerSplit.call({ from: validOwner });
-        var actualValuePerEntry = await instance.valuePerEntry.call({ from: validOwner });
-        var actualStartTime = await instance.startTime.call({ from: validOwner });
-        var actualRevealTime = await instance.revealTime.call({ from: validOwner });
-        var actualEndTime = await instance.endTime.call({ from: validOwner });
+        var actualKickoff = await instance.currentKick.call({ from: validOwner });
+        var actualKickTimeDifference = actualKickoff[5] - now;
 
-        assert.equal(actualCharity, validCharity, "charity does not match");
-        assert.equal(actualCharitySplit.toNumber(), validCharitySplit, "charity split does not match");
-        assert.equal(actualWinnerSplit.toNumber(), validWinnerSplit, "winner split does not match");
-        assert.equal(actualOwnerSplit.toNumber(), validOwnerSplit, "validOwner split does not match");
-        assert.equal(actualValuePerEntry.toNumber(), validValuePerEntry, "wei per entry does not match");
-        assert.equal(actualStartTime.toNumber(), validStartTime, "start time does not match");
-        assert.equal(actualRevealTime.toNumber(), validRevealTime, "reveal time does not match");
-        assert.equal(actualEndTime.toNumber(), validEndTime, "end time does not match");
+        assert.equal(actualKickoff[0], validCharity, "charity does not match");
+        assert.equal(actualKickoff[1].toNumber(), validCharitySplit, "charity split does not match");
+        assert.equal(actualKickoff[2].toNumber(), validWinnerSplit, "winner split does not match");
+        assert.equal(actualKickoff[3].toNumber(), validOwnerSplit, "validOwner split does not match");
+        assert.equal(actualKickoff[4].toNumber(), validValuePerEntry, "wei per entry does not match");
+        assert.isAtMost(actualKickTimeDifference, 1, "wei per entry does not match");
+        assert.equal(actualKickoff[6].toNumber(), validStartTime, "start time does not match");
+        assert.equal(actualKickoff[7].toNumber(), validRevealTime, "reveal time does not match");
+        assert.equal(actualKickoff[8].toNumber(), validEndTime, "end time does not match");
 
     });
 
