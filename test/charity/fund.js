@@ -20,7 +20,7 @@ module.exports = (artifact, accounts) => {
     var validCharityRandom = helpers.random();
     var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
 
-    it("should allow funding after participation after start", async () => {
+    it("should allow funding after participation", async () => {
 
         var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
@@ -80,7 +80,7 @@ module.exports = (artifact, accounts) => {
 
     });
 
-    it("should reject funding without participation after start", async () => {
+    it("should reject funding without participation", async () => {
 
         var validRandom = helpers.random();
         var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);

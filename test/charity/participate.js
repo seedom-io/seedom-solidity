@@ -106,6 +106,65 @@ module.exports = (artifact, accounts) => {
 
     });
 
+    it("should accept funding with participation and refund after start", async () => {
+
+        var validRandom = helpers.random();
+        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+        var validRandom2 = validRandom + 1;
+        var validHashedRandom2 = helpers.hashedRandom(validRandom2, validParticipant2);
+
+        var validStartTime = helpers.now() + helpers.timeInterval;
+        var validRevealTime = validStartTime + helpers.timeInterval;
+        var validEndTime = validRevealTime + helpers.timeInterval;
+
+        var instance = await artifact.new();
+
+        await instance.kickoff(
+            validCharity,
+            validCharitySplit,
+            validWinnerSplit,
+            validOwnerSplit,
+            validValuePerEntry,
+            validStartTime,
+            validRevealTime,
+            validEndTime,
+            { from: validOwner }
+        );
+
+        await instance.seed(validCharityHashedRandom, { from: validCharity });
+
+        // wait for charity to start
+        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+
+        await instance.participate(
+            validHashedRandom,
+            { from: validParticipant, value: 10500 }
+        );
+
+        actualParticipant = await instance.participant.call(validParticipant, { from: validParticipant });
+        actualEntries = actualParticipant[0];
+        actualHashedRandom = actualParticipant[1];
+        actualRandom = actualParticipant[2];
+
+        assert.equal(actualEntries.toNumber(), 10, "entries should be 10");
+        assert.equal(actualHashedRandom, validHashedRandom, "hashed random does not match");
+        assert.equal(actualRandom.toNumber(), 0, "random should be zero");
+
+        actualBalance = await instance.balance.call(validParticipant, { from: validParticipant });
+        assert.equal(actualBalance.toNumber(), 500, "balance should be 500");
+
+        actualTotalEntries = await instance.totalEntries.call();
+        actualTotalRevealed = await instance.totalRevealed.call();
+        actualTotalParticipants = await instance.totalParticipants.call();
+        actualTotalRevealers = await instance.totalRevealers.call();
+
+        assert.equal(actualTotalEntries.toNumber(), 10, "total entries should be 10");
+        assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
+        assert.equal(actualTotalParticipants.toNumber(), 1, "total participants should be 1");
+        assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
+
+    });
+
     it("should fail participation without start", async () => {
 
         var validRandom = helpers.random();

@@ -138,7 +138,7 @@ contract Charity {
         bytes32 _hashedRandom,
         uint256 _random)
     {
-        Participant storage _participant = participantsMapping[_address];
+        Participant memory _participant = participantsMapping[_address];
         _entries = _participant.entries;
         _hashedRandom = _participant.hashedRandom;
         _random = _participant.random;
@@ -245,7 +245,7 @@ contract Charity {
      * function to receive entries and thereby increase your chances of winning.
      * Participation is only permitted between the start and reaveal times.
      */
-    function participate(bytes32 _hashedRandom) public openParticipation neverOwner {
+    function participate(bytes32 _hashedRandom) public openParticipation neverOwner payable {
         require(now >= kick.startTime); // ensure we are after the start
         require(now < kick.revealTime); // but before the reveal
         require(_hashedRandom != 0x0); // hashed random cannot be zero
@@ -262,7 +262,33 @@ contract Charity {
 
         // send out participation update
         Participation(_sender, _hashedRandom);
+
+        // did we also receive wei? if so, fund
+        if (msg.value > 0) {
+            fund(_participant);
+        }
     
+    }
+
+    function fund(Participant storage _participant) internal {
+
+        // calculate the number of entries from the wei sent
+        uint256 _newEntries = msg.value / kick.valuePerEntry;
+        // if we have any, update participant and total
+        if (_newEntries > 0) {
+            _participant.entries += _newEntries;
+            totalEntries += _newEntries;
+        }
+
+        uint256 _refund = msg.value % kick.valuePerEntry;
+        // refund any excess wei (partial entry)
+        if (_refund > 0) {
+            balancesMapping[msg.sender] += _refund;
+        }
+
+        // send fund event
+        Fund(msg.sender, msg.value, _refund, _newEntries, totalEntries);
+
     }
 
     /**
@@ -274,28 +300,11 @@ contract Charity {
         require(now < kick.revealTime); // but before the reveal
         require(msg.value > 0); // some money needs to be sent
 
-        address _sender = msg.sender;
         // find existing participant
-        Participant storage _participant = participantsMapping[_sender];
+        Participant storage _participant = participantsMapping[msg.sender];
         require(_participant.hashedRandom != 0x0); // make sure they participated
-
-        uint256 _value = msg.value;
-        // calculate the number of entries from the wei sent
-        uint256 _newEntries = _value / kick.valuePerEntry;
-        require(_newEntries > 0); // ensure at least one
-
-        // add new entries to participant and total
-        _participant.entries += _newEntries;
-        totalEntries += _newEntries;
-
-        uint256 _refund = _value % kick.valuePerEntry;
-        // refund any excess wei
-        if (_refund > 0) {
-            balancesMapping[_sender] += _refund;
-        }
-
-        // send fund event
-        Fund(_sender, _value, _refund, _newEntries, totalEntries);
+        // forward to funding
+        fund(_participant);
 
     }
 
@@ -370,7 +379,7 @@ contract Charity {
      */
     function calculateWinningRandom(
         uint256 _charityRandom,
-        uint256[] _cumulatives) internal view returns (uint256)
+        uint256[] memory _cumulatives) internal view returns (uint256)
     {
 
         uint256 _cumulative = 0;
