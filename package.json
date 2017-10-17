@@ -26,5 +26,6 @@
   "bugs": {
     "url": "https://github.com/TeamPalmTree/charity-solidity/issues"
   },
-  "homepage": "https://github.com/TeamPalmTree/charity-solidity#readme"
+  "homepage": "https://github.com/TeamPalmTree/charity-solidity#readme",
+  "dependencies": {}
 }
