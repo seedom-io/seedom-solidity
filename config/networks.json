@@ -1,0 +1,8 @@
+{
+    "local": {
+        "url": "http://localhost:8545"
+    },
+    "main": {
+        "url": "http://localhost:8545"
+    }
+}

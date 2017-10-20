@@ -354,7 +354,7 @@ contract Charity {
         // calculate social random & index from this random, set winner
         uint256 _winningRandom = calculateWinningRandom(_charityRandom, _cumulatives);
         uint256 _winnerIndex = _winningRandom % totalRevealed;
-        winner = findWinnerAddress(0, revealers.length - 1, _winnerIndex, _cumulatives);
+        winner = findWinnerAddress(_winnerIndex, _cumulatives);
 
         uint256 _ownerReward;
         uint256 _charityReward;
@@ -420,20 +420,15 @@ contract Charity {
      * <= winner index
      * < next revealer cumulative entries
      */
-    function findWinnerAddress(
-        uint256 _leftIndex,
-        uint256 _rightIndex,
-        uint256 _winnerIndex,
-        uint256[] _cumulatives) internal view returns (address)
+    function findWinnerAddress(uint256 _winnerIndex, uint256[] _cumulatives) internal view returns (address)
     {
-
+        uint256 _leftIndex = 0;
+        uint256 _rightIndex = revealers.length - 1;
         uint256 _midIndex;
-        address _midRevealerAddress;
         uint256 _nextIndex;
+        address _midRevealerAddress;
         uint256 _midRevealerCumulative;
         uint256 _nextRevealerCumulative;
-        bool _winnerGTEMid;
-        bool _winnerLTNext;
         // loop until revealer found
         while (true) {
 
@@ -449,12 +444,9 @@ contract Charity {
             // find the mid and very next revealer cumulatives
             _midRevealerCumulative = _cumulatives[_midIndex];
             _nextRevealerCumulative = _cumulatives[_nextIndex];
-            // see if we are in range of winner index
-            _winnerGTEMid = _winnerIndex >= _midRevealerCumulative;
-            _winnerLTNext = _winnerIndex < _nextRevealerCumulative;
 
-            if (_winnerGTEMid) {
-                if (_winnerLTNext) {
+            if (_winnerIndex >= _midRevealerCumulative) {
+                if (_winnerIndex < _nextRevealerCumulative) {
                     // we are in range, winner found!
                     return _midRevealerAddress;
                 }

@@ -1,0 +1,6 @@
+{
+    "contracts": [
+        "charity.sol",
+        "chronicle.sol"
+    ]
+}
