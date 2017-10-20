@@ -1,6 +1,8 @@
-var program = require('commander');
+#!/usr/bin/env node
 
-let action = (action) => {
+const program = require('commander');
+
+const action = (action) => {
     return require('./actions/' + action + '.js');
 };
 
