@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require('mz/fs');
 const readline = require('mz/readline');
 const h = require('../helpers');
+const compile = require('./compile');
 
 const defaultNetworkName = 'local';
 const iAmCompletelySure = 'I AM COMPLETELY SURE';
@@ -15,6 +16,9 @@ const defaultConfig = {
 }
 
 module.exports = async (networkName) => {
+
+    // first compile
+    await compile();
 
     console.log('deploying contracts...');
 
@@ -30,8 +34,8 @@ module.exports = async (networkName) => {
     const networkConfig = networksConfig[networkName];
 
     const upgrades = await getUpgrades(contractsConfig, deployments);
-    if (Object.keys(upgrades).length == 0) {
-        console.log('everything is up to date');
+    if (h.objLength(upgrades) == 0) {
+        console.log('everything is already deployed');
         return;
     }
 
