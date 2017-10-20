@@ -3,90 +3,88 @@ const util = require('util');
 const solc = require('solc');
 const path = require("path");
 const fs = require('mz/fs');
-const helpers = require('../helpers');
-
-const solBase = 'sol';
-const abiBase = 'abi';
-const bytecodeBase = 'bytecode';
-const configBase = 'config';
-const hashesConfigFilePath = path.join(configBase, 'hashes.json');
+const mkdirp = require('mz-modules').mkdirp;
+const h = require('../helpers');
 
 module.exports = async () => {
     
     console.log('compiling contracts...');
 
-    const files = await helpers.getFilesOfExtInDir(solBase);
+    const files = await h.getFilesOfExt(h.solBase, h.solExt);
     if (files.length === 0) {
         console.log('no contracts found');
         return;
     }
 
-    helpers.printLines(files);
+    h.printLines(files);
     const sources = await getSources(files);
     const output = solc.compile({ sources: sources }, true);
-    let hashes = await exportFiles(output.contracts);
-    await helpers.mergeObjectIntoJsonFile(hashes, hashesConfigFilePath);
+    await exportFiles(output.contracts);
 
     if ('errors' in output) {
-        helpers.printLines(output.errors);
+        h.printLines(output.errors);
     }
 
 }
 
-var getSources = async (files) => {
-    let sources = {};
+const getSources = async (files) => {
+    const sources = {};
     for (let file of files) {
-        let relativeFile = path.relative(solBase, file);
-        sources[relativeFile] = await fs.readFile(file, 'utf8');
+        let shortPath = path.relative(h.solBase, file);
+        sources[shortPath] = await h.readFile(file);
     };
     return sources;
 }
 
-var exportFiles = async (contracts) => {
+const exportFiles = async (contracts) => {
 
-    let hashes = {};
+    for (let key in contracts) {
+        // key: hey/contract.sol:Contract
 
-    for (let solKey in contracts) {
-        // solKey: hey/contract.sol:Contract
+        // shortPath: hey/contract.sol
+        let shortPath = getShortPath(key);
+        // contractName: hey/contract
+        let contractName = getContractName(shortPath);
+        // solShortDirPath: hey
+        let shortDirPath = getShortDirPath(contractName);
 
-        let solKeyFilePathEnd = solKey.indexOf(':');
-         // solFilePath: hey/contract.sol
-        let solFilePath = solKey.substr(0, solKeyFilePathEnd);
+        let abiDirPath = path.join(h.abiBase, shortDirPath);
+        let bytecodeDirPath = path.join(h.bytecodeBase, shortDirPath);
+        let hashDirPath = path.join(h.hashBase, shortDirPath);
+        // make sure abi & bytecode & hash dir paths exist
+        mkdirp(abiDirPath);
+        mkdirp(bytecodeDirPath);
+        mkdirp(hashDirPath);
 
-        let solFilePathExtIndex = solFilePath.indexOf('.sol');
-        // solFileNamePath: hey/contract
-        let solFileNamePath = solFilePath.substr(0, solFilePathExtIndex);
-        let solFileNamePathLastSlashIndex = solFileNamePath.lastIndexOf('/');
-        // solDirPath: hey
-        let solDirPath = solFileNamePath.substr(0, solFileNamePathLastSlashIndex);
-
-        // abiDirPath: abi/hey
-        let abiDirPath = path.join(abiBase, solDirPath);
-        // bytecodeDirPath: bytecode/hey
-        let bytecodeDirPath = path.join(bytecodeBase, solDirPath);
-        // make sure abi & bytecode dir paths exist
-        helpers.makeDirP(abiDirPath);
-        helpers.makeDirP(bytecodeDirPath);
-
-        // abiFilePath: abi/hey/contract.abi
-        let abiFilePath = path.join(abiDirPath, solFileNamePath) + ".abi";
-        // bytecodeFilePath: bytecode/hey/contract.abi
-        let bytecodeFilePath = path.join(bytecodeDirPath, solFileNamePath) + ".bytecode";
+        let abiPath = h.getAbiPath(contractName);
+        let bytecodePath = h.getBytecodePath(contractName);
+        let hashPath = h.getHashPath(contractName);
         
-        let contract = contracts[solKey];
+        let contract = contracts[key];
         let interface = contract.interface;
         let bytecode = contract.bytecode;
-        await fs.writeFile(abiFilePath, interface, 'utf8');
-        await fs.writeFile(bytecodeFilePath, bytecode, 'utf8');
-
-        // add hashes
         let metadata = JSON.parse(contract.metadata);
-        let solFileHash = metadata.sources[solFilePath].keccak256;
-        let fullSolFilePath = path.join(solBase, solFilePath);
-        hashes[fullSolFilePath] = solFileHash;
+        let hash = metadata.sources[shortPath].keccak256;
+
+        await h.writeFile(abiPath, interface);
+        await h.writeFile(bytecodePath, bytecode);
+        await h.writeFile(hashPath, hash);
         
     }
 
-    return hashes;
+}
 
+const getShortPath = (contractKey) => {
+    const keyShortPathEnd = contractKey.indexOf(':');
+    return contractKey.substr(0, keyShortPathEnd);
+}
+
+const getContractName = (shortPath) => {
+    const shortPathExtIndex = shortPath.indexOf('.' + h.solExt);
+    return shortPath.substr(0, shortPathExtIndex);
+}
+
+const getShortDirPath = (contractName) => {
+    const shortNamePathLastSlashIndex = contractName.lastIndexOf('/');
+    return contractName.substr(0, shortNamePathLastSlashIndex);
 }

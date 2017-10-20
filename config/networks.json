@@ -1,8 +1,13 @@
 {
     "local": {
-        "url": "http://localhost:8545"
+        "url": "http://localhost:8545",
+        "gas": "1500000",
+        "gasPrice": "30000000000000"
     },
     "main": {
-        "url": "http://localhost:8545"
+        "verify": true,
+        "url": "http://localhost:8545",
+        "gas": "1500000",
+        "gasPrice": "30000000000000"
     }
 }
