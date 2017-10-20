@@ -26,11 +26,14 @@ module.exports = async (networkName) => {
     const contractsConfig = await h.loadJsonFile(h.contractsConfigPath);
     const deploymentsPath = h.getDeploymentsPath(networkName);
     const deployments = await h.loadJsonFile(deploymentsPath);
-    const upgrades = await getUpgrades(contractsConfig, deployments);
-    console.log(upgrades);
-
     const networksConfig = await h.loadJsonFile(h.networksConfigPath);
     const networkConfig = networksConfig[networkName];
+
+    const upgrades = await getUpgrades(contractsConfig, deployments);
+    if (Object.keys(upgrades).length == 0) {
+        console.log('everything is up to date');
+        return;
+    }
 
     if (networkConfig.verify) {
         if (!(await verify(networkName))) {
@@ -44,9 +47,10 @@ module.exports = async (networkName) => {
     }
 
     const upgradeDeployments = await deploy(upgrades, networkConfig, web3);
-    console.log(upgradeDeployments);
 
     await logUpgradeDeployments(upgradeDeployments, deployments, deploymentsPath);
+
+    console.log('deployment upgrades complete');
 
 }
 
