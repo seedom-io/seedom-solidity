@@ -34,8 +34,14 @@ module.exports.printKeys = (obj) => {
 }
 
 module.exports.loadJsonFile = async (filePath) => {
+
     const json = await fs.readFile(filePath);
+    if (!json) {
+        return {};
+    }
+
     return JSON.parse(json);
+    
 }
 
 module.exports.writeJsonFile = async (obj, filePath) => {

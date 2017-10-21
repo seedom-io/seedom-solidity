@@ -27,7 +27,7 @@ module.exports = async (networkName, options) => {
         console.log('no network specified, defaulting to ' + defaultNetworkName);
         networkName = defaultNetworkName;
     }
-    
+
     const contractsConfig = await h.loadJsonFile(h.contractsConfigPath);
     const deploymentsPath = h.getDeploymentsPath(networkName);
     const deployments = await h.loadJsonFile(deploymentsPath);
@@ -40,10 +40,8 @@ module.exports = async (networkName, options) => {
         return;
     }
 
-    if (networkConfig.verify) {
-        if (!(await verify(networkName))) {
-            return;
-        }
+    if (!(await verify(networkName, networkConfig))) {
+        return;
     }
 
     const web3 = await getWeb3(networkName, networkConfig);
@@ -51,11 +49,34 @@ module.exports = async (networkName, options) => {
         return;
     }
 
-    const upgradeDeployments = await deploy(upgrades, networkConfig, web3);
+    await handleSnapshot(networkConfig, deployments, web3);
 
-    await logUpgradeDeployments(upgradeDeployments, deployments, deploymentsPath);
+    const contracts = await deploy(upgrades, networkConfig, web3);
+
+    await updateContracts(contracts, deployments, networkConfig.test);
+
+    await h.writeJsonFile(deployments, deploymentsPath);
 
     console.log('deployment upgrades complete');
+
+}
+
+const getLatestContract = (contractName, deployments) => {
+
+    if (!('contracts' in deployments)) {
+        return null;
+    }
+
+    if (!(contractName in deployments.contracts)) {
+        return null;
+    }
+
+    const contractDeployments = deployments.contracts[contractName];
+    if (contractDeployments.length == 0) {
+        return null;
+    }
+
+    return contractDeployments[0];
 
 }
 
@@ -64,23 +85,19 @@ const getUpgrades = async (contractsConfig, deployments, force) => {
     const upgrades = {};
 
     for (let contractName in contractsConfig) {
+
         const contractConfig = contractsConfig[contractName];
         const hash = await h.getHash(contractName);
+        const latestContract = getLatestContract(contractName, deployments);
 
-        let lastDeployed;
-        if (contractName in deployments) {
-            const contractDeployments = deployments[contractName];
-            if (contractDeployments.length > 0) {
-                // get the latest deployment, verify hash
-                const latestContractDeployment = contractDeployments[0];
-                lastDeployed = latestContractDeployment.deployed;
-                if ((latestContractDeployment.hash == hash) && !force) {
-                    continue;
-                }
-            }
+        if (!force && latestContract && (latestContract.hash == hash)) {
+            continue;
         }
 
-        console.log('legacy contract ' + contractName + ' last deployed on ' + lastDeployed);
+        console.log('missing, legacy, or forced contract ' + contractName + ' needs to be deployed');
+        
+        const lastDeployed = latestContract ? latestContract.deployed : null;
+
         upgrades[contractName] = {
             config: contractConfig,
             lastDeployed: lastDeployed,
@@ -108,7 +125,11 @@ const getWeb3 = async (networkName, networkConfig) => {
 
 }
 
-const verify = async (networkName) => {
+const verify = async (networkName, networkConfig) => {
+
+    if (!networkConfig.verify) {
+        return true;
+    }
 
     console.log('!!! deploying to ' + networkName + ' network !!!');
 
@@ -137,9 +158,31 @@ let testWeb3 = async (web3) => {
     }
 }
 
+const handleSnapshot = async (networkConfig, deployments, web3) => {
+
+    const isSnapshot = 'snapshot' in deployments;
+
+    if (!networkConfig.test) {
+
+        if (isSnapshot) {
+            delete deployments.snapshot;
+        }
+
+        return;
+        
+    }
+
+    if (isSnapshot) {
+        await revertTestRpc(web3, deployments.snapshot);
+    }
+
+    deployments.snapshot =  await snapshotTestRpc(web3);
+
+}
+
 const deploy = async (upgrades, networkConfig, web3) => {
 
-    const upgradeDeployment = {};
+    const contracts = {};
 
     for (let contractName in upgrades) {
 
@@ -170,7 +213,7 @@ const deploy = async (upgrades, networkConfig, web3) => {
         const address = result.options.address;
         console.log('contract ' + contractName + ' deployed successfully to ' + address);
 
-        upgradeDeployment[contractName] = {
+        contracts[contractName] = {
             address: address,
             deployed: h.now(),
             hash: upgrade.hash
@@ -178,7 +221,7 @@ const deploy = async (upgrades, networkConfig, web3) => {
 
     }
 
-    return upgradeDeployment;
+    return contracts;
 
 }
 
@@ -198,26 +241,60 @@ const getProperty = (property, contractConfig, networkConfig) => {
 
 }
 
-const logUpgradeDeployments = (upgradeDeployments, deployments, deploymentsPath) => {
+const updateContracts = (contracts, deployments, test) => {
 
-    for (let contractName in upgradeDeployments) {
+    if (!('contracts' in deployments) || test) {
+        deployments.contracts = {};
+    }
 
-        let upgradeDeployment = upgradeDeployments[contractName];
+    for (let contractName in contracts) {
 
-        if (!(contractName in deployments)) {
-            deployments[contractName] = [];
+        let result = contracts[contractName];
+
+        if (!(contractName in deployments.contracts)) {
+            deployments.contracts[contractName] = [];
         }
 
         const deployment = {
-            deployed: upgradeDeployment.deployed,
-            hash: upgradeDeployment.hash,
-            address: upgradeDeployment.address
+            deployed: result.deployed,
+            hash: result.hash,
+            address: result.address
         }
 
-        deployments[contractName].unshift(deployment);
+        deployments.contracts[contractName].unshift(deployment);
 
     }
 
-    h.writeJsonFile(deployments, deploymentsPath);
+}
 
+
+const snapshotTestRpc = async (web3) => {
+    const result = await callTestRpc(web3, 'evm_snapshot');
+    return result.result;
+}
+
+const revertTestRpc = async (web3, snapshot) => {
+    return await callTestRpc(web3, 'evm_revert', [ snapshot ]);
+}
+
+const callTestRpc = async (web3, method, args) => {
+
+    const request = {
+        jsonrpc: "2.0",
+        method: method,
+        id: new Date().getTime(),
+        params: args
+    };
+
+    return await promiseCallTestRpc(web3, request);
+
+};
+
+const promiseCallTestRpc = (web3, request) => {
+    return new Promise((fulfill, reject) => {
+        web3.currentProvider.send(request, (error, result) => {
+            if (error) reject(error)
+            else fulfill(result);
+        });
+    });
 }
