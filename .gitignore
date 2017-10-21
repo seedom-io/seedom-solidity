@@ -15,5 +15,5 @@ installed_contracts
 # mac
 .DS_Store
 
-# local deployments
-deployments/local.json
+# local deploy
+deploy/local.json
