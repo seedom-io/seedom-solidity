@@ -15,7 +15,7 @@ const defaultConfig = {
     gasPrice: 30000000000000
 }
 
-module.exports = async (networkName) => {
+module.exports = async (networkName, options) => {
 
     // first compile
     await compile();
@@ -27,13 +27,14 @@ module.exports = async (networkName) => {
         console.log('no network specified, defaulting to ' + defaultNetworkName);
         networkName = defaultNetworkName;
     }
+    
     const contractsConfig = await h.loadJsonFile(h.contractsConfigPath);
     const deploymentsPath = h.getDeploymentsPath(networkName);
     const deployments = await h.loadJsonFile(deploymentsPath);
     const networksConfig = await h.loadJsonFile(h.networksConfigPath);
     const networkConfig = networksConfig[networkName];
 
-    const upgrades = await getUpgrades(contractsConfig, deployments);
+    const upgrades = await getUpgrades(contractsConfig, deployments, options.force);
     if (h.objLength(upgrades) == 0) {
         console.log('everything is already deployed');
         return;
@@ -58,7 +59,7 @@ module.exports = async (networkName) => {
 
 }
 
-const getUpgrades = async (contractsConfig, deployments) => {
+const getUpgrades = async (contractsConfig, deployments, force) => {
 
     const upgrades = {};
 
@@ -73,7 +74,7 @@ const getUpgrades = async (contractsConfig, deployments) => {
                 // get the latest deployment, verify hash
                 const latestContractDeployment = contractDeployments[0];
                 lastDeployed = latestContractDeployment.deployed;
-                if (latestContractDeployment.hash == hash) {
+                if ((latestContractDeployment.hash == hash) && !force) {
                     continue;
                 }
             }
@@ -151,7 +152,7 @@ const deploy = async (upgrades, networkConfig, web3) => {
         const contract = new web3.eth.Contract(abi);
 
         const transaction = contract.deploy({
-            data: '0x' + bytecode,
+            data: bytecode,
             arguments: contractConfig.args
         });
 
@@ -164,16 +165,13 @@ const deploy = async (upgrades, networkConfig, web3) => {
             from: account,
             gas: gas,
             gasPrice: gasPrice
-        }).on('error', (error) => {
-            console.log('error: ' + error);
-        }).on('receipt', (receipt) => {
-            console.log('receipt: ' + receipt.contractAddress); // contains the new contract address
-        }).on('confirmation', function (confirmationNumber, receipt) {
-            console.log('confirmation: ' + confirmationNumber);
         });
 
+        const address = result.options.address;
+        console.log('contract ' + contractName + ' deployed successfully to ' + address);
+
         upgradeDeployment[contractName] = {
-            result: result,
+            address: address,
             deployed: h.now(),
             hash: upgrade.hash
         };
@@ -213,7 +211,7 @@ const logUpgradeDeployments = (upgradeDeployments, deployments, deploymentsPath)
         const deployment = {
             deployed: upgradeDeployment.deployed,
             hash: upgradeDeployment.hash,
-            address: upgradeDeployment.result.contractAddress
+            address: upgradeDeployment.address
         }
 
         deployments[contractName].unshift(deployment);

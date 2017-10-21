@@ -118,7 +118,7 @@ const exportFiles = async (contracts) => {
         
         let contract = contracts[key];
         let interface = contract.interface;
-        let bytecode = contract.bytecode;
+        let bytecode = '0x' + contract.bytecode;
         let metadata = JSON.parse(contract.metadata);
         let hash = metadata.sources[shortPath].keccak256;
 

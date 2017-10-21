@@ -16,6 +16,7 @@ program
     .command('deploy [network]')
     .alias('d')
     .description('deploy charity')
-    .action(async (network) => await action('deploy')(network));
+    .option('-f, --force', 'force deployment')
+    .action(async (network, options) => await action('deploy')(network, options));
 
 program.parse(process.argv);
