@@ -1,7 +1,6 @@
 {
     "local": {
         "url": "http://localhost:8545",
-        "test": true,
         "gas": "1500000",
         "gasPrice": "30000000000000"
     },

@@ -15,6 +15,7 @@ contract Charity {
         uint256 totalEntries
     );
 
+
     event Revelation(
         address indexed revealer,
         uint256 newRevealedEntries,

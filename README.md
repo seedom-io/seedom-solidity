@@ -11,9 +11,11 @@
 - Start Ethereum TestRPC `testrpc`
 
 ## Chronicle commands
-### `chronicle c | compile`
+### `chronicle c | compile -f | --force`
 compiles everything
 ### `chronicle d | deploy [network=local] -f | --force`
 deploys anything needed to the network specified
-### `chronicle t | test [suite=all]`
-runs the test suite for the suite specified (coming soon)
+### `chronicle s | simulate`
+runs a testrpc simulator and deploys
+### `chronicle t | test [...suites]`
+runs the test suites specified or all if none specified
