@@ -1,0 +1,34 @@
+[parity]
+chain="./config/chain.json"
+base_path = "./parity"
+db_path = "./parity/chains"
+keys_path = "./parity/keys"
+
+[mining]
+reseal_min_period = 0
+min_gas_price = 0
+
+[rpc]
+interface = "all"
+apis = ["all"]
+hosts = ["all"]
+
+[ipc]
+path = "./parity/jsonrpc.ipc"
+
+[dapps]
+path = "./parity/dapps"
+
+[ipfs]
+enable = false # this is the default
+hosts = ["all"]
+
+[ui]
+path = "./parity/signer"
+
+[secretstore]
+path = "./parity/secretstore"
+
+[misc]
+logging = "trace"
+log_file = "./parity/parity.log"

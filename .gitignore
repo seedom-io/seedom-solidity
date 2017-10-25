@@ -9,11 +9,11 @@ shippable
 # npm
 node_modules
 
-# ethpm
-installed_contracts
-
 # mac
 .DS_Store
 
-# local deployment
-deployment/local.json
+# test deployment
+deployment/test.json
+
+# parity
+parity/*

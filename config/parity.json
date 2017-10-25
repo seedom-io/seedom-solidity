@@ -1,0 +1,66 @@
+{
+    "toml": {
+        "parity": {},
+        "ui": {},
+        "rpc": {
+            "interface": "all",
+            "apis": [ "all" ],
+            "hosts": [ "all" ]
+        },
+        "websockets": {
+            "interface": "all",
+            "apis": [ "all" ],
+            "hosts": [ "all" ]
+        },
+        "ipc": {
+            "apis": [ "all" ]
+        },
+        "dapps": {
+            "disable": true
+        },
+        "secretstore": {
+            "disable": true
+        },
+        "ipfs": {
+            "interface": "all",
+            "hosts": [ "all" ]
+        },
+        "mining": {
+            "reseal_min_period": 0,
+            "min_gas_price": 0
+        },
+        "misc": {
+            "logging": "info"
+        }
+    },
+    "chain": {
+        "name": "test",
+        "engine": {
+            "instantSeal": null
+        },
+        "params": {
+            "gasLimitBoundDivisor": "0x0400",
+            "accountStartNonce": "0x0",
+            "maximumExtraDataSize": "0x20",
+            "minGasLimit": "0x1388",
+            "networkID" : "0x11"
+        },
+        "genesis": {
+            "seal": {
+                "generic": "0x0"
+            },
+            "difficulty": "0x20000",
+            "author": "0x0000000000000000000000000000000000000000",
+            "timestamp": "0x00",
+            "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "extraData": "0x",
+            "gasLimit": "0x5B8D80"
+        },
+        "accounts": {
+            "0x0000000000000000000000000000000000000001": { "balance": "1", "builtin": { "name": "ecrecover", "pricing": { "linear": { "base": 3000, "word": 0 } } } },
+            "0x0000000000000000000000000000000000000002": { "balance": "1", "builtin": { "name": "sha256", "pricing": { "linear": { "base": 60, "word": 12 } } } },
+            "0x0000000000000000000000000000000000000003": { "balance": "1", "builtin": { "name": "ripemd160", "pricing": { "linear": { "base": 600, "word": 120 } } } },
+            "0x0000000000000000000000000000000000000004": { "balance": "1", "builtin": { "name": "identity", "pricing": { "linear": { "base": 15, "word": 3 } } } }
+        }
+    }
+}

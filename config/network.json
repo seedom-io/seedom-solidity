@@ -1,11 +1,24 @@
 {
-    "local": {
-        "url": "http://localhost:8545",
+    "test": {
+        "host": "localhost",
+        "port": 8545,
         "gas": "1500000",
-        "gasPrice": "30000000000000"
+        "gasPrice": "30000000000000",
+        "password": "password",
+        "accounts": [
+            {
+                "recovery": "recovery1",
+                "balance": "100000000000000000000"
+            },
+            {
+                "recovery": "recovery2",
+                "balance": "100000000000000000000"
+            }
+        ]
     },
     "main": {
-        "url": "http://localhost:8545",
+        "host": "localhost",
+        "port": 8545,
         "verify": true,
         "gas": "1500000",
         "gasPrice": "30000000000000"
