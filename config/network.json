@@ -8,11 +8,11 @@
         "accounts": [
             {
                 "recovery": "recovery1",
-                "balance": "100000000000000000000"
+                "balance": "1000000000000000000000000"
             },
             {
                 "recovery": "recovery2",
-                "balance": "100000000000000000000"
+                "balance": "1000000000000000000000000"
             }
         ]
     },
@@ -20,6 +20,7 @@
         "host": "localhost",
         "port": 8545,
         "verify": true,
+        "requires": "test",
         "gas": "1500000",
         "gasPrice": "30000000000000"
     }

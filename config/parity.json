@@ -1,13 +1,21 @@
 {
     "toml": {
         "parity": {},
-        "ui": {},
+        "ui": {
+            "force": true,
+            "disable": false,
+            "port": 8180,
+            "interface": "all"
+        },
         "rpc": {
             "interface": "all",
             "apis": [ "all" ],
             "hosts": [ "all" ]
         },
         "websockets": {
+            "disable": false,
+            "port": 8546,
+            "origins": [ "all" ],
             "interface": "all",
             "apis": [ "all" ],
             "hosts": [ "all" ]
@@ -16,7 +24,7 @@
             "apis": [ "all" ]
         },
         "dapps": {
-            "disable": true
+            "disable": false
         },
         "secretstore": {
             "disable": true
