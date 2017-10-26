@@ -5,16 +5,8 @@
         "gas": "1500000",
         "gasPrice": "30000000000000",
         "password": "password",
-        "accounts": [
-            {
-                "recovery": "recovery1",
-                "balance": "1000000000000000000000000"
-            },
-            {
-                "recovery": "recovery2",
-                "balance": "1000000000000000000000000"
-            }
-        ]
+        "balance": "1000000000000000000000000",
+        "accounts": 5
     },
     "main": {
         "host": "localhost",
