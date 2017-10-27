@@ -134,6 +134,9 @@ contract Charity {
         return revealers.length;
     }
 
+    function leaderboard(int numParticipants) public view returns (address[]) {
+    }
+
     function participant(address _address) public view returns (
         uint256 _entries,
         bytes32 _hashedRandom,
@@ -268,7 +271,7 @@ contract Charity {
         if (msg.value > 0) {
             fund(_participant);
         }
-    
+
     }
 
     function fund(Participant storage _participant) internal {
