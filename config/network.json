@@ -6,7 +6,7 @@
         "gasPrice": "30000000000000",
         "password": "password",
         "balance": "1000000000000000000000000",
-        "accounts": 5
+        "accounts": 10
     },
     "main": {
         "host": "localhost",

@@ -1,7 +1,7 @@
 var crypto = require('crypto');
 var keccak256 = require('js-sha3').keccak256;
 
-module.exports.timeInterval = 3;
+module.exports.timeInterval = 10;
 
 module.exports.now = function () {
     return Math.round((new Date()).getTime() / 1000);

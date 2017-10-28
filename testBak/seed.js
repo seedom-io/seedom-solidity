@@ -2,7 +2,7 @@ var chai = require('chai');
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 var assert = chai.assert;
-var helpers = require('../helpers');
+var th = require('./helpers');
 
 module.exports = (artifact, accounts) => {
 
@@ -17,18 +17,18 @@ module.exports = (artifact, accounts) => {
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
 
-    it("should seed properly from charity", async () => {
+    test("should seed properly from charity", async () => {
 
         var instance = await artifact.new();
 
-        var validCharityRandom = helpers.random();
-        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
+        var validCharityRandom = th.random();
+        var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
+        var validStartTime = th.now() + th.timeInterval;
+        var validRevealTime = validStartTime + th.timeInterval;
+        var validEndTime = validRevealTime + th.timeInterval;
 
-        await instance.kickoff(
+        await contracts.charity.methods.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -40,29 +40,29 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.seed(
+        await contracts.charity.methods.seed(
             validCharityHashedRandom,
             { from: validCharity }
         );
 
-        var actualCharityHashedRandom = await instance.charityHashedRandom.call({ from: validParticipant });
+        var actualCharityHashedRandom = await contracts.charity.methods.charityHashedRandom(),.call({ from: validParticipant });
 
         assert.equal(actualCharityHashedRandom, validCharityHashedRandom, "charity's hashed random does not match");
 
     });
 
-    it("should reject seed from owner", async () => {
+    test("should reject seed from owner", async () => {
         
         var instance = await artifact.new();
 
-        var validCharityRandom = helpers.random();
-        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
+        var validCharityRandom = th.random();
+        var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
+        var validStartTime = th.now() + th.timeInterval;
+        var validRevealTime = validStartTime + th.timeInterval;
+        var validEndTime = validRevealTime + th.timeInterval;
 
-        await instance.kickoff(
+        await contracts.charity.methods.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -74,25 +74,25 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        assert.isRejected(instance.seed(
+        assert.isRejected(contracts.charity.methods.seed(
             validCharityHashedRandom,
             { from: validOwner }
         ));
 
     });
 
-    it("should reject seed from participant", async () => {
+    test("should reject seed from participant", async () => {
         
         var instance = await artifact.new();
 
-        var validCharityRandom = helpers.random();
-        var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
+        var validCharityRandom = th.random();
+        var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
+        var validStartTime = th.now() + th.timeInterval;
+        var validRevealTime = validStartTime + th.timeInterval;
+        var validEndTime = validRevealTime + th.timeInterval;
 
-        await instance.kickoff(
+        await contracts.charity.methods.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -104,7 +104,7 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        assert.isRejected(instance.seed(
+        assert.isRejected(contracts.charity.methods.seed(
             validCharityHashedRandom,
             { from: validParticipant }
         ));

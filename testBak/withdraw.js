@@ -2,7 +2,7 @@ var chai = require('chai');
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 var assert = chai.assert;
-var helpers = require('../helpers');
+var th = require('./helpers');
 var mochaLogger = require('mocha-logger');
 var BigNumber = require('bignumber.js');
 
@@ -36,17 +36,17 @@ module.exports = (artifact, accounts) => {
     var validOwnerSplit = 2;
     var validValuePerEntry = 1000;
 
-    var validCharityRandom = helpers.random();
-    var validCharityHashedRandom = helpers.hashedRandom(validCharityRandom, validCharity);
+    var validCharityRandom = th.random();
+    var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
 
-    it("should withdraw no funds initially", async () => {
+    test("should withdraw no funds initially", async () => {
 
         var instance = await artifact.new();
 
         var initialBalance = getLatestBalance(validOwner);
         mochaLogger.pending("initial balance: " + initialBalance.toString());
 
-        var result = await instance.withdraw({ from: validOwner });
+        var result = await contracts.charity.methods.withdraw({ from: validOwner });
         var transactionCost = calculateTransactionCost(result.receipt);
 
         var actualFinalBalance = getLatestBalance(validOwner);
@@ -59,21 +59,21 @@ module.exports = (artifact, accounts) => {
 
     });
 
-    it("should withdraw partial entry refunds", async () => {
+    test("should withdraw partial entry refunds", async () => {
 
-        var validRandom = helpers.random();
-        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+        var validRandom = th.random();
+        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
+        var validStartTime = th.now() + th.timeInterval;
+        var validRevealTime = validStartTime + th.timeInterval;
+        var validEndTime = validRevealTime + th.timeInterval;
 
         var instance = await artifact.new();
 
         var validFinalBalance = getLatestBalance(validParticipant);
         mochaLogger.pending("initial balance: " + validFinalBalance.toString());
 
-        await instance.kickoff(
+        await contracts.charity.methods.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -85,12 +85,12 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.seed(validCharityHashedRandom, { from: validCharity });
+        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
-        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+        await th.sleep(th.timeInterval + (th.timeInterval / 2));
 
-        var result = await instance.participate(
+        var result = await contracts.charity.methods.participate(
             validHashedRandom,
             { from: validParticipant }
         );
@@ -98,12 +98,12 @@ module.exports = (artifact, accounts) => {
         validFinalBalance = validFinalBalance.minus(transactionCost);
 
         // run fallback function
-        result = await instance.sendTransaction({ from: validParticipant, value: 10500 });
+        result = await contracts.charity.methods.sendTransaction({ from: validParticipant, value: 10500 });
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
         validFinalBalance = validFinalBalance.minus(10500);
 
-        result = await instance.withdraw({ from: validParticipant });
+        result = await contracts.charity.methods.withdraw({ from: validParticipant });
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
         validFinalBalance = validFinalBalance.plus(500);
@@ -116,21 +116,21 @@ module.exports = (artifact, accounts) => {
 
     });
 
-    it("should withdraw partial entry and winning funds", async () => {
+    test("should withdraw partial entry and winning funds", async () => {
 
-        var validRandom = helpers.random();
-        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+        var validRandom = th.random();
+        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
+        var validStartTime = th.now() + th.timeInterval;
+        var validRevealTime = validStartTime + th.timeInterval;
+        var validEndTime = validRevealTime + th.timeInterval;
 
         var instance = await artifact.new();
 
         var validFinalBalance = getLatestBalance(validParticipant);
         mochaLogger.pending("initial balance: " + validFinalBalance.toString());
 
-        await instance.kickoff(
+        await contracts.charity.methods.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -142,12 +142,12 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.seed(validCharityHashedRandom, { from: validCharity });
+        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
-        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+        await th.sleep(th.timeInterval + (th.timeInterval / 2));
 
-        var result = await instance.participate(
+        var result = await contracts.charity.methods.participate(
             validHashedRandom,
             { from: validParticipant }
         );
@@ -155,29 +155,29 @@ module.exports = (artifact, accounts) => {
         validFinalBalance = validFinalBalance.minus(transactionCost);
 
         // run fallback function
-        result = await instance.sendTransaction({ from: validParticipant, value: 10500 });
+        result = await contracts.charity.methods.sendTransaction({ from: validParticipant, value: 10500 });
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
         validFinalBalance = validFinalBalance.minus(10500);
 
-        await helpers.sleep(helpers.timeInterval);
+        await th.sleep(th.timeInterval);
 
-        result = await instance.reveal(
+        result = await contracts.charity.methods.reveal(
             validRandom,
             { from: validParticipant }
         );
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
 
-        await helpers.sleep(helpers.timeInterval);
+        await th.sleep(th.timeInterval);
 
-        await instance.end(validCharityRandom, { from: validCharity });
+        await contracts.charity.methods.end(validCharityRandom, { from: validCharity });
 
         var validWinnings = 10 * validValuePerEntry * validWinnerSplit / 100;
         mochaLogger.pending("valid winnings: " + validWinnings);
         validFinalBalance = validFinalBalance.plus(validWinnings);
 
-        result = await instance.withdraw({ from: validParticipant });
+        result = await contracts.charity.methods.withdraw({ from: validParticipant });
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
         validFinalBalance = validFinalBalance.plus(500);
@@ -190,21 +190,21 @@ module.exports = (artifact, accounts) => {
 
     });
 
-    it("should withdraw partial entry and cancelled funds", async () => {
+    test("should withdraw partial entry and cancelled funds", async () => {
 
-        var validRandom = helpers.random();
-        var validHashedRandom = helpers.hashedRandom(validRandom, validParticipant);
+        var validRandom = th.random();
+        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
 
-        var validStartTime = helpers.now() + helpers.timeInterval;
-        var validRevealTime = validStartTime + helpers.timeInterval;
-        var validEndTime = validRevealTime + helpers.timeInterval;
+        var validStartTime = th.now() + th.timeInterval;
+        var validRevealTime = validStartTime + th.timeInterval;
+        var validEndTime = validRevealTime + th.timeInterval;
 
         var instance = await artifact.new();
 
         var validFinalBalance = getLatestBalance(validParticipant);
         mochaLogger.pending("initial balance: " + validFinalBalance.toString());
 
-        await instance.kickoff(
+        await contracts.charity.methods.kickoff(
             validCharity,
             validCharitySplit,
             validWinnerSplit,
@@ -216,12 +216,12 @@ module.exports = (artifact, accounts) => {
             { from: validOwner }
         );
 
-        await instance.seed(validCharityHashedRandom, { from: validCharity });
+        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
 
         // wait for charity to start
-        await helpers.sleep(helpers.timeInterval + (helpers.timeInterval / 2));
+        await th.sleep(th.timeInterval + (th.timeInterval / 2));
 
-        var result = await instance.participate(
+        var result = await contracts.charity.methods.participate(
             validHashedRandom,
             { from: validParticipant }
         );
@@ -229,14 +229,14 @@ module.exports = (artifact, accounts) => {
         validFinalBalance = validFinalBalance.minus(transactionCost);
 
         // run fallback function
-        result = await instance.sendTransaction({ from: validParticipant, value: 10500 });
+        result = await contracts.charity.methods.sendTransaction({ from: validParticipant, value: 10500 });
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
         validFinalBalance = validFinalBalance.minus(10500);
 
-        await instance.cancel({ from: validOwner });
+        await contracts.charity.methods.cancel({ from: validOwner });
 
-        result = await instance.withdraw({ from: validParticipant });
+        result = await contracts.charity.methods.withdraw({ from: validParticipant });
         transactionCost = calculateTransactionCost(result.receipt);
         validFinalBalance = validFinalBalance.minus(transactionCost);
         validFinalBalance = validFinalBalance.plus(10500);
