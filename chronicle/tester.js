@@ -4,8 +4,8 @@ const Web3 = require('web3');
 const path = require("path");
 const fs = require('mz/fs');
 const readline = require('mz/readline');
-const h = require('./helpers');
-const deploy = require('./deploy');
+const h = require('./helper');
+const deployer = require('./deployer');
 const parity = require('./parity');
 const cli = require('./cli');
 const Mocha = require('mocha');
@@ -28,9 +28,9 @@ module.exports = async (suiteNames, persist) => {
     const state = {};
     
     // do a first deploy (test network, yes force, yes forget, and yes persist)
-    state.deploy = await deploy.all(null, true, true, true);
+    state.deployer = await deployer.all(null, true, true, true);
     // get parity as a force deployment will have started it
-    state.parity = state.deploy.parity;
+    state.parity = state.deployer.parity;
 
     // now test
     cli.section("test");
@@ -38,7 +38,7 @@ module.exports = async (suiteNames, persist) => {
     // grab additional stuff required for testing
     state.web3 = state.parity.web3;
     state.accountAddresses = state.parity.accountAddresses;
-    state.deploymentPlans = state.deploy.deploymentPlans;
+    state.deploymentPlans = state.deployer.deploymentPlans;
     // set up suite
     setupSuite(state.accountAddresses, state.deploymentPlans, state.web3);
 
@@ -86,20 +86,26 @@ const getTestsFiles = async (suiteNames) => {
 const setupSuite = (accountAddresses, deploymentPlans, web3) => {
 
     global.suite = (name, tests) => {
-        
         Mocha.describe(name, function () {
-
-            tests(accountAddresses);
-    
+            tests();
         });
-    
     };
 
     global.test = (name, code) => {
         
         Mocha.it(name, async () => {
-            const web3Instances = await deploy.again(deploymentPlans, web3);
-            return await code(web3Instances, web3);
+
+            const web3Instances = await deployer.again(deploymentPlans, web3);
+            // setup initial stage
+            const stage = {
+                accounts: accountAddresses,
+                contracts: web3Instances,
+                web3: web3,
+                options: {}
+            };
+
+            return await code(stage);
+
         });
 
     };

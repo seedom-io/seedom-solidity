@@ -3,15 +3,15 @@ const Web3 = require('web3');
 const path = require('path');
 const fs = require('mz/fs');
 const readline = require('mz/readline');
-const h = require('./helpers');
-const compile = require('./compile');
+const h = require('./helper');
+const compiler = require('./compiler');
 const cli = require('./cli');
-const network = require('./network');
+const networks = require('./networks');
 const parity = require('./parity');
 
 const iAmCompletelySure = "I AM COMPLETELY SURE";
 
-const deployDefaults = {
+const defaults = {
     gas: 1500000,
     gasPrice: 30000000000000
 }
@@ -21,7 +21,7 @@ module.exports.all = async (networkName, force, forget, persist) => {
     const state = {};
     
     // compile first
-    state.compile = await compile();
+    state.compiler = await compiler();
 
     // now deploy
     cli.section("deploy");
@@ -148,7 +148,7 @@ const deploy = async (
     }
 
     // ask user for verification (optional)
-    if (state.deployNetwork.verify) {
+    if (state.network.verify) {
         cli.important("'%s' network requires verification", networkName);
         if (!(await verify(networkName))) {
             cli.success("deployment aborted");
@@ -169,7 +169,7 @@ const deploy = async (
             contractName,
             contractConfig,
             state.fromAddress,
-            state.deployNetwork,
+            state.network,
             state.web3
         );
 
@@ -204,7 +204,7 @@ const getParityState = async () => {
     const state = {};
 
     state.parity = await parity.start(false, true);
-    state.deployNetwork = state.parity.testNetwork;
+    state.network = state.parity.network;
     state.web3 = state.parity.web3;
     state.accountAddresses = state.parity.accountAddresses;
 
@@ -218,10 +218,10 @@ const getNetworkState = async (networkName) => {
 
     // load configs and parameters
     const networkConfig = await h.loadJsonFile(h.networkConfigFile);
-    state.deployNetwork = network.get(networkName, networkConfig);
+    state.network = networks.get(networkName, networkConfig);
 
     // get web3 instance
-    state.web3 = await network.getWeb3(networkParams);
+    state.web3 = await networks.getWeb3(networkParams);
     if (!web3) {
         return null;
     }
@@ -261,7 +261,7 @@ const deployFromConfig = async (
     contractName,
     contractConfig,
     fromAddress,
-    deployNetwork,
+    network,
     web3
 ) => {
 
@@ -271,17 +271,17 @@ const deployFromConfig = async (
         return null;
     }
 
-    const deployContract = contractConfig[contractName];
+    const contract = contractConfig[contractName];
     const abiFile = h.getAbiFile(contractName);
     const bytecodeFile = h.getBytecodeFile(contractName);
 
     const deploymentPlan = {
-        args: deployContract.args,
+        args: contract.args,
         fromAddress: fromAddress,
         abi: await h.loadJsonFile(abiFile),
         bytecode: await h.readFile(bytecodeFile),
-        gas: getDeploymentPlanProperty('gas', deployContract, deployNetwork),
-        gasPrice: getDeploymentPlanProperty('gasPrice', deployContract, deployNetwork)
+        gas: getDeploymentPlanProperty('gas', contract, network),
+        gasPrice: getDeploymentPlanProperty('gasPrice', contract, network)
     };
 
     const web3Instance = await deployFromPlan(deploymentPlan, web3);
@@ -295,18 +295,18 @@ const deployFromConfig = async (
 
 }
 
-const getDeploymentPlanProperty = (deployProperty, deployContract, deployNetwork) => {
+const getDeploymentPlanProperty = (property, contract, network) => {
 
-    if (deployProperty in deployContract) {
-        return deployContract[deployProperty];
+    if (property in contract) {
+        return contract[property];
     }
 
-    if (deployProperty in deployNetwork) {
-        return deployNetwork[deployProperty];
+    if (property in network) {
+        return network[property];
     }
 
-    if (deployProperty in deployDefaults) {
-        return deployDefaults[deployProperty];
+    if (property in defaults) {
+        return defaults[property];
     }
 
 }

@@ -1,10 +1,7 @@
-var chai = require('chai');
-var chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
-var assert = chai.assert;
-var th = require('./helpers');
+const th = require('./helpers');
+const parity = require('../parity');
 
-module.exports = (artifact, accounts) => {
+suite('kickoff', (accounts) => {
 
     var validOwner = accounts[0];
     var validCharity = accounts[1];

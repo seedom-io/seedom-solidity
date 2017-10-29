@@ -1,6 +1,6 @@
 const cli = require('./cli');
-const h = require('./helpers');
-const network = require('./network');
+const h = require('./helper');
+const networks = require('./networks');
 const fs = require('mz/fs');
 const fse = require('fs-extra');
 const childProcess = require("child_process");
@@ -27,14 +27,14 @@ module.exports.start = async (fresh, persist) => {
 
     // load network configs and parameters
     const networkConfig = await h.loadJsonFile(h.networkConfigFile);
-    const testNetwork = network.get(h.testNetworkName, networkConfig);
+    const network = networks.get(h.testNetworkName, networkConfig);
     const prepared = await getInitialized();
     
     // if dirs are prepped and we aren't forced, run parity
     if (prepared && !fresh) {
-        return await launch(testNetwork);
+        return await launch(network);
     } else {
-        return await initialize(testNetwork);
+        return await initialize(network);
     }
 
 }
@@ -53,7 +53,7 @@ const getInitialized = async () => {
     return items.length > 0;
 }
 
-const launch = async (testNetwork) => {
+const launch = async (network) => {
     
     // get parity chain data
     const parityChain = await h.loadJsonFile(h.parityChainFile);
@@ -62,12 +62,12 @@ const launch = async (testNetwork) => {
     // execute parity
     const execution = await executeUnlocked(accountAddresses);
     // get web3
-    const web3 = await network.getWeb3(testNetwork);
+    const web3 = await networks.getWeb3(network);
     // get authorization token
     const authorizationToken = await getLastAuthorizationToken();
     
     return {
-        testNetwork: testNetwork,
+        network: network,
         web3: web3,
         accountAddresses: accountAddresses,
         authorizationToken: authorizationToken,
@@ -138,7 +138,7 @@ const getLastAuthorizationToken = async () => {
     return lastAuthCodeLineParts[0];
 }
 
-const initialize = async (testNetwork) => {
+const initialize = async (network) => {
 
     cli.info("initializing parity");
 
@@ -155,21 +155,21 @@ const initialize = async (testNetwork) => {
     await h.writeJsonFile(h.parityChainFile, config.chain);
     cli.success("initial parity chain file written");
     // write password file
-    await h.writeFile(h.parityPasswordFile, testNetwork.password);
+    await h.writeFile(h.parityPasswordFile, network.password);
 
     // run parity to open rpc for account creation
     let execution = await execute();
     // get web3
-    const web3 = await network.getWeb3(testNetwork);
+    const web3 = await networks.getWeb3(network);
     // create accounts from network
-    const accountAddresses = await this.createAccounts(testNetwork, web3);
+    const accountAddresses = await this.createAccounts(network, web3);
     // generate authorization token
     const authorizationToken = await this.createAuthorizationToken(web3);
     // close parity
     execution.process.kill();
 
     // log accounts to the chain
-    await logAccounts(accountAddresses, testNetwork.balance, config.chain);
+    await logAccounts(accountAddresses, network.balance, config.chain);
     // write the chain file with accounts now added
     await h.writeJsonFile(h.parityChainFile, config.chain);
     cli.success("final parity chain file written with accounts");
@@ -181,7 +181,7 @@ const initialize = async (testNetwork) => {
     execution = await executeUnlocked(accountAddresses);
 
     return {
-        testNetwork: testNetwork,
+        network: network,
         web3: web3,
         accountAddresses: accountAddresses,
         authorizationToken: authorizationToken,
@@ -265,7 +265,7 @@ module.exports.createAccounts = async (network, web3) => {
 }
 
 module.exports.createAuthorizationToken = async (web3) => {
-    const authorizationToken = await network.providerCall(web3, 'signer_generateAuthorizationToken');
+    const authorizationToken = await networks.providerCall(web3, 'signer_generateAuthorizationToken');
     cli.success("created authorization token %s", authorizationToken);
     return authorizationToken;
 
@@ -273,7 +273,7 @@ module.exports.createAuthorizationToken = async (web3) => {
 
 module.exports.getTrace = async (transactionHash, web3) => {
 
-    const result = await network.providerCall(web3, 'trace_replayTransaction', [
+    const result = await networks.providerCall(web3, 'trace_replayTransaction', [
         transactionHash,
         ["trace"]
     ]);

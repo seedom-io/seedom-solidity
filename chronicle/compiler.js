@@ -4,7 +4,7 @@ const solc = require('solc');
 const path = require("path");
 const fs = require('mz/fs');
 const mkdirp = require('mz-modules/mkdirp');
-const h = require('./helpers');
+const h = require('./helper');
 const cli = require('./cli');
 
 module.exports = async (force) => {

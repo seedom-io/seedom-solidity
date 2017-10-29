@@ -1,7 +1,7 @@
 const Web3 = require('web3');
-const h = require('./helpers');
+const h = require('./helper');
 const cli = require('./cli');
-const deploy = require('./deploy');
+const deploy = require('./deployer');
 const parity = require('./parity');
 
 module.exports = async () => {
@@ -9,11 +9,11 @@ module.exports = async () => {
     const state = {};
     
     // first deploy (test network, no force, yes forget, and yes persist)
-    state.deploy = await deploy.all(null, false, true, true);
+    state.deployer = await deployer.all(null, false, true, true);
 
     // make sure parity is running
-    if ('parity' in state.deploy) {
-        state.parity = state.deploy.parity;
+    if ('parity' in state.deployer) {
+        state.parity = state.deployer.parity;
     } else {
         state.parity = await parity.start();
     }

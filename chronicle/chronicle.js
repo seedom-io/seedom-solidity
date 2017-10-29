@@ -17,7 +17,7 @@ program
     .option('-f, --force', "force compilation")
     .action((options) => {
         const force = options ? options.force : false;
-        require('./compile')(force);
+        require('./compiler')(force);
     });
 
 program
@@ -37,7 +37,7 @@ program
     .option('-f, --force', "force deployment")
     .action((network, options) => {
         const force = options ? options.force : false;
-        require('./deploy').all(network, force);
+        require('./deployer').all(network, force);
     });
 
 program
@@ -45,7 +45,7 @@ program
     .alias('r')
     .description("run chronicle")
     .action(() => {
-        require('./run')();
+        require('./runner')();
     });
 
 program
@@ -53,7 +53,7 @@ program
     .alias('t')
     .description("test chronicle")
     .action((suites) => {
-        require('./test')(suites);
+        require('./tester')(suites);
     });
 
 program.parse(process.argv);

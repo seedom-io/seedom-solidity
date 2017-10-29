@@ -17,10 +17,10 @@ module.exports.tomlExt = 'toml';
 module.exports.passExt = 'pass';
 
 module.exports.buildDir = 'build';
+module.exports.testDir = 'test';
 module.exports.configDir = 'config';
 module.exports.contractDir = 'contract';
 module.exports.deploymentDir = 'deployment';
-module.exports.testDir = 'test';
 module.exports.parityDir = 'parity';
 
 module.exports.buildAbiDir = path.join(this.buildDir, 'abi');

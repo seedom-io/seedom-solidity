@@ -3,14 +3,6 @@ var keccak256 = require('js-sha3').keccak256;
 
 module.exports.timeInterval = 10;
 
-module.exports.now = function () {
-    return Math.round((new Date()).getTime() / 1000);
-}
-
-module.exports.sleep = function (seconds) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-}
-
 var minFirstDecimal = 9;
 var maxFirstDecimal = 255;
 module.exports.random = function (firstDecimal) {

@@ -1,10 +1,11 @@
-suite('instantiate', (accounts) => {
+const instantiate = require('../stage/instantiate');
 
-    var validOwner = accounts[0];
+suite('instantiate', () => {
 
-    test("should set the owner to us", async (contracts) => {
-        var actualOwner = await contracts.charity.methods.owner().call({from: validOwner});
-        assert.equalIgnoreCase(actualOwner, validOwner, "owner wasn't us");
+    test("should set the owner to us", async (stage) => {
+        await instantiate.stage(stage);
+        var actualOwner = await stage.contracts.charity.methods.owner().call({from: stage.owner});
+        assert.equalIgnoreCase(actualOwner, stage.owner, "owner wasn't us");
     });
 
 });
