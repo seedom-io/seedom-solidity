@@ -5,22 +5,20 @@ const instantiate = require('./instantiate');
 
 module.exports.dependent = 'instantiate';
 
-module.exports.options = () => {
-    return [
-        [ "-c, --charity <address>", "charity" ],
-        [ "-cs, --charitySplit <number>", "charity split" ],
-        [ "-ws, --winnerSplit <number>", "winner split" ],
-        [ "-ow, --ownerSplit <number>", "owner split" ],
-        [ "-vpe, --valuePerEntry <string>", "value per entry" ],
-        [ "-st, --startTime <time>", "start time" ],
-        [ "-rt, --revealTime <time>", "reveal time" ],
-        [ "-et, --endTime <time>", "end time" ]
-    ];
-}
+module.exports.options = [
+    [ "-c, --charity <address>", "charity" ],
+    [ "-cs, --charitySplit <number>", "charity split" ],
+    [ "-ws, --winnerSplit <number>", "winner split" ],
+    [ "-ow, --ownerSplit <number>", "owner split" ],
+    [ "-vpe, --valuePerEntry <string>", "value per entry" ],
+    [ "-st, --startTime <time>", "start time" ],
+    [ "-rt, --revealTime <time>", "reveal time" ],
+    [ "-et, --endTime <time>", "end time" ]
+];
 
 module.exports.stage = async (stage) => {
-    
-    stage.charity = stage.options.charity ? stage.accounts[stage.options.charity] : stage.accounts[1];
+
+    stage.charity = stage.options.charity ? stage.accountAddresses[stage.options.charity] : stage.accountAddresses[1];
     stage.charitySplit = stage.options.charitySplit ? stage.options.charitySplit : 49;
     stage.winnerSplit = stage.options.winnerSplit ? stage.options.winnerSplit : 49;
     stage.ownerSplit = stage.options.ownerSplit ? stage.options.ownerSplit : 2;
@@ -29,7 +27,7 @@ module.exports.stage = async (stage) => {
     stage.revealTime = stage.options.revealTime ? stage.options.revealTime : stage.startTime + h.timeInterval;
     stage.endTime = stage.options.endTime ? stage.options.endTime : stage.revealTime + h.timeInterval;
 
-    await parity.send(stage.web3, stage.contracts.charity.methods.kickoff(
+    await parity.send(stage.web3, stage.web3Instances.charity.methods.kickoff(
         stage.charity,
         stage.charitySplit,
         stage.winnerSplit,

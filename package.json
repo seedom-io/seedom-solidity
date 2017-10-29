@@ -26,6 +26,7 @@
         "mz": "^2.7.0",
         "mz-modules": "^2.0.0",
         "node-dir": "^0.1.17",
+        "progress": "^2.0.0",
         "solc": "^0.4.17",
         "zeppelin-solidity": "^1.3.0"
     },

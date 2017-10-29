@@ -2,7 +2,8 @@ const clc = require('cli-color');
 const figlet = require('figlet');
 const ls = require('log-symbols');
 const f = require('figures');
-const columnify = require ('columnify');
+const columnify = require('columnify');
+const Progress = require('progress');
 
 const normalize = (params) => {
     if (Array.isArray(params) && (params.length == 1) && Array.isArray(params[0])) {
@@ -83,4 +84,16 @@ module.exports.fail = (name, error) => {
 
 module.exports.nl = () => {
     this.log('');
+}
+
+module.exports.progress = (text) => {
+
+    const progress = new Progress(tab + tab + ls.info + tab + clc.yellow(text) + tab + '[:bar]', { total: 45 });
+    const timer = setInterval(function () {
+        progress.tick();
+        if (progress.complete) {
+            clearInterval(timer);
+        }
+    }, 100);
+
 }

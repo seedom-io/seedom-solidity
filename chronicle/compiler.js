@@ -10,7 +10,7 @@ const cli = require('./cli');
 module.exports = async (force) => {
 
     // now compile
-    cli.section("compile");
+    cli.section("compiler");
     
     // get all contracts
     const contractNames = await getContractNames();

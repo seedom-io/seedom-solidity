@@ -22,6 +22,7 @@ module.exports.configDir = 'config';
 module.exports.contractDir = 'contract';
 module.exports.deploymentDir = 'deployment';
 module.exports.parityDir = 'parity';
+module.exports.stageDir = 'stage';
 
 module.exports.buildAbiDir = path.join(this.buildDir, 'abi');
 module.exports.buildBytecodeDir = path.join(this.buildDir, 'bytecode');

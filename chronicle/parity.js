@@ -9,7 +9,7 @@ const mkdirp = require('mz-modules/mkdirp');
 const path = require("path");
 const dir = require('node-dir');
 
-const startupDelay = 3;
+const startupDelay = 5;
 
 module.exports.SendErrorException = 'SendErrorException';
 module.exports.NoTraceDataException = 'NoTraceDataException';
@@ -102,7 +102,8 @@ const executeUnlocked = async (accountAddresses) => {
 
 const execute = async (args) => {
 
-    cli.info("starting parity...");
+    //cli.info("starting parity...");
+    cli.progress("starting parity");
 
     let actualArgs = [
         '--config',
@@ -113,9 +114,9 @@ const execute = async (args) => {
         actualArgs = actualArgs.concat(args);
     }
 
-    const process = childProcess.spawn('parity', actualArgs);
+    const parityProcess = childProcess.spawn('parity', actualArgs);
 
-    const closed = new Promise((fulfill, reject) => {
+    const parityClosed = new Promise((fulfill, reject) => {
         process.on('closed', () => {
             fulfill();
         })
@@ -124,8 +125,8 @@ const execute = async (args) => {
     await h.sleep(startupDelay);
 
     return {
-        process: process,
-        closed: closed
+        process: parityProcess,
+        closed: parityClosed
     }
 
 }

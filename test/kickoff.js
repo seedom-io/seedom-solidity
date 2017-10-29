@@ -10,12 +10,12 @@ suite('kickoff', () => {
         
         await instantiate.stage(stage);
 
-        const actualWinner = await stage.contracts.charity.methods.winner().call({ from: stage.owner });
-        const actualCancelled = await stage.contracts.charity.methods.cancelled().call({ from: stage.owner });
-        const actualTotalEntries = await stage.contracts.charity.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await stage.contracts.charity.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await stage.contracts.charity.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await stage.contracts.charity.methods.totalRevealers().call({ from: stage.owner });
+        const actualWinner = await stage.web3Instances.charity.methods.winner().call({ from: stage.owner });
+        const actualCancelled = await stage.web3Instances.charity.methods.cancelled().call({ from: stage.owner });
+        const actualTotalEntries = await stage.web3Instances.charity.methods.totalEntries().call({ from: stage.owner });
+        const actualTotalRevealed = await stage.web3Instances.charity.methods.totalRevealed().call({ from: stage.owner });
+        const actualTotalParticipants = await stage.web3Instances.charity.methods.totalParticipants().call({ from: stage.owner });
+        const actualTotalRevealers = await stage.web3Instances.charity.methods.totalRevealers().call({ from: stage.owner });
 
         assert.equal(actualWinner, 0, "winner zero");
         assert.isOk(actualCancelled, "initially cancelled");
@@ -26,7 +26,7 @@ suite('kickoff', () => {
 
         await kickoff.stage(stage);
 
-        const actualKickoff = await stage.contracts.charity.methods.currentKick().call({ from: stage.owner });
+        const actualKickoff = await stage.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
         const actualKickTimeDifference = actualKickoff._kickTime - stage.now;
 
         assert.equalIgnoreCase(actualKickoff._charity, stage.charity, "charity does not match");
@@ -63,7 +63,7 @@ suite('kickoff', () => {
         
         for (let testArgs of testData) {
             await assert.isRejected(
-                parity.send(stage.web3, stage.contracts.charity.methods.kickoff.apply(null, testArgs).send({ from: stage.owner })),
+                parity.send(stage.web3, stage.web3Instances.charity.methods.kickoff.apply(null, testArgs).send({ from: stage.owner })),
                 parity.SomethingThrownException,
                 null,
                 testArgs
@@ -102,7 +102,7 @@ suite('kickoff', () => {
 
         for (let testArgs of testData) {
             await assert.isRejected(
-                parity.send(stage.web3, stage.contracts.charity.methods.kickoff.apply(null, testArgs).send({ from: stage.owner })),
+                parity.send(stage.web3, stage.web3Instances.charity.methods.kickoff.apply(null, testArgs).send({ from: stage.owner })),
                 parity.SomethingThrownException,
                 null,
                 testArgs

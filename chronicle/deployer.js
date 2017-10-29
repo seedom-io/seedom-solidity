@@ -24,7 +24,7 @@ module.exports.all = async (networkName, force, forget, persist) => {
     state.compiler = await compiler();
 
     // now deploy
-    cli.section("deploy");
+    cli.section("deployer");
     
     // if no network specified, default to test
     if (!networkName) {
@@ -138,7 +138,7 @@ const deploy = async (
     // get base state
     if (networkName == h.testNetworkName) {
         state = await getParityState();
-        cli.section("deploy");
+        cli.section("deployer");
     } else {
         state = await getNetworkState(networkName);
     }
@@ -161,6 +161,7 @@ const deploy = async (
 
     state.deployments = {};
     state.deploymentPlans = {};
+    state.web3Instances = {};
     // deploy contracts one at a time
     for (let contractName of contractNames) {
         
@@ -182,6 +183,8 @@ const deploy = async (
 
         // save deployment plans
         state.deploymentPlans[contractName] = result.deploymentPlan;
+        // save web3 instances
+        state.web3Instances[contractName] = result.web3Instance;
 
     }
 

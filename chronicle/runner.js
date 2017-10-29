@@ -18,7 +18,7 @@ module.exports = async () => {
         state.parity = await parity.start();
     }
 
-    cli.section("run");
+    cli.section("runner");
 
     cli.important("press ctl-c to end");
 

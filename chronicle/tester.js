@@ -33,17 +33,18 @@ module.exports = async (suiteNames, persist) => {
     state.parity = state.deployer.parity;
 
     // now test
-    cli.section("test");
+    cli.section("tester");
 
     // grab additional stuff required for testing
     state.web3 = state.parity.web3;
     state.accountAddresses = state.parity.accountAddresses;
     state.deploymentPlans = state.deployer.deploymentPlans;
+    state.web3Instances = state.deployer.web3Instances;
     // set up suite
-    setupSuite(state.accountAddresses, state.deploymentPlans, state.web3);
+    setupSuite(state.accountAddresses, state.deploymentPlans, state.web3Instances, state.web3);
 
     // get test files for suites
-    const testFiles = await getTestsFiles(suiteNames);
+    const testFiles = await getTestFiles(suiteNames);
     const mocha = createMocha(testFiles);
     await promiseRun(mocha);
 
@@ -62,7 +63,7 @@ const promiseRun = (mocha) => {
     });
 }
 
-const getTestsFiles = async (suiteNames) => {
+const getTestFiles = async (suiteNames) => {
     
     if (suiteNames.length > 0) {
 
@@ -83,7 +84,7 @@ const getTestsFiles = async (suiteNames) => {
 
 }
 
-const setupSuite = (accountAddresses, deploymentPlans, web3) => {
+const setupSuite = (accountAddresses, deploymentPlans, web3Instances, web3) => {
 
     global.suite = (name, tests) => {
         Mocha.describe(name, function () {
@@ -95,16 +96,18 @@ const setupSuite = (accountAddresses, deploymentPlans, web3) => {
         
         Mocha.it(name, async () => {
 
-            const web3Instances = await deployer.again(deploymentPlans, web3);
             // setup initial stage
             const stage = {
-                accounts: accountAddresses,
-                contracts: web3Instances,
+                accountAddresses: accountAddresses,
+                web3Instances: web3Instances,
                 web3: web3,
                 options: {}
             };
 
             return await code(stage);
+
+            // get new web 3 instances for next test
+            web3Instances = await deployer.again(deploymentPlans, web3);
 
         });
 

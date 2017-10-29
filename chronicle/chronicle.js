@@ -2,6 +2,7 @@
 
 const program = require('commander');
 const cli = require('./cli');
+const stager = require('./stager');
 
 cli.logo('chronicle');
 
@@ -56,4 +57,6 @@ program
         require('./tester')(suites);
     });
 
-program.parse(process.argv);
+stager.prepare(program).then(() => {
+    program.parse(process.argv);
+});
