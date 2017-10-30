@@ -3,6 +3,7 @@ const cli = require('./cli');
 const dir = require('node-dir');
 const path = require("path");
 const deployer = require('./deployer');
+const chrono = require('chrono-node');
 
 module.exports.main = async (state) => {
     
@@ -16,18 +17,29 @@ module.exports.main = async (state) => {
     // now stage
     cli.section("stager");
 
+    // setup state
     state.parity = state.deployer.parity;
     state.accountAddresses = state.parity.accountAddresses;
     state.deploymentPlans = state.deployer.deploymentPlans;
     state.web3Instances = state.deployer.web3Instances;
     state.web3 = state.parity.web3;
 
-    state.stateModule.stage(state, {});
+    // print out set options
+    for (let option of state.options) {
+        const name = option.name();
+        const value = state[name];
+        if (value) {
+            cli.info("%s = %s", name, value);
+        }
+    }
+
+    // stage with state and fresh stage
+    state.stageModule.stage(state, {});
 
     cli.success("%s staging complete", state.stageName);
     
     // kill parity
-    if (!persist) {
+    if (!state.persist) {
         state.parity.execution.process.kill();
     }
 
@@ -54,9 +66,13 @@ const getStageModules = async (stageFiles) => {
 
         const relativeStageFile = path.relative(h.stageDir, stageFile);
         const relativeStageFileExtIndex = relativeStageFile.indexOf('.' + h.jsExt);
-        const stageName = relativeStageFile.substr(0, relativeStageFileExtIndex);
+        const stageName = relativeStageFile.substr(0, relativeStageFileExtIndex).replace(path.delimiter, ':');
         const requireStageFile = path.join('../', stageFile);
         const stageModule = require(requireStageFile);
+
+        if (!('optionize' in stageModule)) {
+            continue;
+        }
 
         if (!('stage' in stageModule)) {
             continue;
@@ -78,35 +94,22 @@ const command = (program, stageModules) => {
 
         let command = program.command('stage:' + stageName);
 
-        if ('options' in stageModule) {
-            for (let option of stageModule.options) {
-                command = command.option(option[0], option[1]);
-            }
+        if ('optionize' in stageModule) {
+            command = stageModule.optionize(command);
         }
-
-        let dependentStageModules = [{
-            name: stageName,
-            module: stageModule
-        }];
-
-        let currentStageModule = stageModule;
-        // add required stage modules in order
-        while ('dependent' in currentStageModule) {
-
-            const dependentStageName = currentStageModule.dependent;
-            currentStageModule = stageModules[dependentStageName];
-
-            dependentStageModules.unshift({
-                name: dependentStageName,
-                module: currentStageModule
-            });
-
-        };
         
-        command.action((options) => {
-            this.stage(stageName, dependentStageModules, options);
+        command.action((state) => {
+            state.stageName = stageName;
+            state.stageModule = stageModule;
+            this.main(state);
         });
 
     }
 
+}
+
+global.parseDate = (string) => {
+    const results = chrono.parse(string);
+    const date = results[0].start.date();
+    return h.time(date);
 }

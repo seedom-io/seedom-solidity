@@ -4,14 +4,14 @@ const parity = require('../chronicle/parity');
 const kickoff = require('./kickoff');
 
 module.exports.options = [
-    [ "-c, --charity <address>", "charity" ],
-    [ "-cs, --charitySplit <number>", "charity split" ],
-    [ "-ws, --winnerSplit <number>", "winner split" ],
-    [ "-ow, --ownerSplit <number>", "owner split" ],
-    [ "-vpe, --valuePerEntry <string>", "value per entry" ],
-    [ "-st, --startTime <time>", "start time" ],
-    [ "-rt, --revealTime <time>", "reveal time" ],
-    [ "-et, --endTime <time>", "end time" ]
+    ["-c, --charity <address>", "charity"],
+    ["-cs, --charitySplit <number>", "charity split"],
+    ["-ws, --winnerSplit <number>", "winner split"],
+    ["-ow, --ownerSplit <number>", "owner split"],
+    ["-vpe, --valuePerEntry <string>", "value per entry"],
+    ["-st, --startTime <time>", "start time"],
+    ["-rt, --revealTime <time>", "reveal time"],
+    ["-et, --endTime <time>", "end time"]
 ];
 
 module.exports.stage = async (state, stage) => {

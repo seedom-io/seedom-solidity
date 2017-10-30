@@ -3,16 +3,17 @@ const h = require('./helper');
 const parity = require('../chronicle/parity');
 const instantiate = require('./instantiate');
 
-module.exports.options = [
-    ["-c, --charity <address>", "charity"],
-    ["-cs, --charitySplit <number>", "charity split"],
-    ["-ws, --winnerSplit <number>", "winner split"],
-    ["-ow, --ownerSplit <number>", "owner split"],
-    ["-vpe, --valuePerEntry <string>", "value per entry"],
-    ["-st, --startTime <time>", "start time"],
-    ["-rt, --revealTime <time>", "reveal time"],
-    ["-et, --endTime <time>", "end time"]
-];
+module.exports.optionize = (command) => {
+    return instantiate.optionize(command)
+        .option("--charity <address>", "charity")
+        .option("--charitySplit <number>", "charity split")
+        .option("--winnerSplit <number>", "winner split")
+        .option("--ownerSplit <number>", "owner split")
+        .option("--valuePerEntry <string>", "value per entry")
+        .option("--startTime <time>", "start time", parseDate)
+        .option("--revealTime <time>", "reveal time", parseDate)
+        .option("--endTime <time>", "end time", parseDate);
+}
 
 module.exports.stage = async (state, stage) => {
 

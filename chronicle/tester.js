@@ -101,7 +101,7 @@ const setupSuite = (state) => {
     global.test = (name, code) => {
         
         Mocha.it(name, async () => {
-            // run test against current state with fresh stage
+            // run test against current state with fresh stages
             return await code(state, {});
             // update web 3 instances for next test
             state.web3Instances = await deployer.again(state.deploymentPlans, state.web3);
