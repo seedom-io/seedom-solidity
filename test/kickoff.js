@@ -4,9 +4,9 @@ const parity = require('../chronicle/parity');
 const instantiate = require('../stage/instantiate');
 const kickoff = require('../stage/kickoff');
 
-suite('kickoff', () => {
+suite('kickoff', (state) => {
 
-    test("should kickoff properly", async (state, stage) => {
+    test("should kickoff properly", async (stage) => {
 
         await kickoff.stage(state, stage);
 
@@ -25,7 +25,7 @@ suite('kickoff', () => {
 
     });
 
-    test("should fail to kickoff with invalid data", async (state, stage) => {
+    test("should fail to kickoff with invalid data", async (stage) => {
 
         await instantiate.stage(state, stage);
 
@@ -56,7 +56,7 @@ suite('kickoff', () => {
 
     });
 
-    test("should fail to kickoff with invalid dates", async (state, stage) => {
+    test("should fail to kickoff with invalid dates", async (stage) => {
 
         await instantiate.stage(state, stage);
 

@@ -1,14 +1,14 @@
 const instantiate = require('../stage/instantiate');
 
-suite('instantiate', () => {
+suite('instantiate', (state) => {
 
-    test("should set the owner to us", async (state, stage) => {
+    test("should set the owner to us", async (stage) => {
         await instantiate.stage(state, stage);
         var actualOwner = await state.web3Instances.charity.methods.owner().call({from: stage.owner});
         assert.equalIgnoreCase(actualOwner, stage.owner, "owner wasn't us");
     });
 
-    test("should have zeroed out properties", async (state, stage) => {
+    test("should have zeroed out properties", async (stage) => {
 
         await instantiate.stage(state, stage);
 

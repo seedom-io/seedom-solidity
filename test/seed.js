@@ -4,38 +4,39 @@ const parity = require('../chronicle/parity');
 const instantiate = require('../stage/instantiate');
 const kickoff = require('../stage/kickoff');
 
-suite('kickoff', () => {
+suite('seed', (state) => {
 
-    test("should seed properly from charity", async () => {
+    test("should seed properly from charity", async (stage) => {
 
-        await instantiate.stage(stage);
-        await kickoff.stage(stage);
+        await kickoff.stage(state, stage);
 
-        await contracts.charity.methods.seed(
-            validCharityHashedRandom,
-            { from: validCharity }
-        );
+        var charityRandom = th.random();
+        var charityHashedRandom = th.hashedRandom(charityRandom, stage.charity);
 
-        var actualCharityHashedRandom = await contracts.charity.methods.charityHashedRandom(),.call({ from: validParticipant });
+        await parity.send(state.web3, state.web3Instances.charity.methods.seed(
+            charityHashedRandom
+        ).send({ from: stage.charity }));
 
-        assert.equal(actualCharityHashedRandom, validCharityHashedRandom, "charity's hashed random does not match");
+        var actualCharityHashedRandom = await state.web3Instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
+
+        assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
 
     });
-
+/*
     test("should reject seed from owner", async () => {
         
         var instance = await artifact.new();
 
-        var validCharityRandom = th.random();
-        var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
+        var charityRandom = th.random();
+        var charityHashedRandom = th.hashedRandom(charityRandom, charity);
 
         var validStartTime = th.now() + th.timeInterval;
         var validRevealTime = validStartTime + th.timeInterval;
         var validEndTime = validRevealTime + th.timeInterval;
 
         await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
+            charity,
+            charitySplit,
             validWinnerSplit,
             validOwnerSplit,
             validValuePerEntry,
@@ -46,7 +47,7 @@ suite('kickoff', () => {
         );
 
         assert.isRejected(contracts.charity.methods.seed(
-            validCharityHashedRandom,
+            charityHashedRandom,
             { from: validOwner }
         ));
 
@@ -56,16 +57,16 @@ suite('kickoff', () => {
         
         var instance = await artifact.new();
 
-        var validCharityRandom = th.random();
-        var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
+        var charityRandom = th.random();
+        var charityHashedRandom = th.hashedRandom(charityRandom, charity);
 
         var validStartTime = th.now() + th.timeInterval;
         var validRevealTime = validStartTime + th.timeInterval;
         var validEndTime = validRevealTime + th.timeInterval;
 
         await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
+            charity,
+            charitySplit,
             validWinnerSplit,
             validOwnerSplit,
             validValuePerEntry,
@@ -76,10 +77,10 @@ suite('kickoff', () => {
         );
 
         assert.isRejected(contracts.charity.methods.seed(
-            validCharityHashedRandom,
+            charityHashedRandom,
             { from: validParticipant }
         ));
 
     });
-
-}
+*/
+});
