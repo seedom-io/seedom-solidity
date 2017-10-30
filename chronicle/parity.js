@@ -103,7 +103,7 @@ const executeUnlocked = async (accountAddresses) => {
 const execute = async (args) => {
 
     //cli.info("starting parity...");
-    cli.progress("starting parity");
+    const timer = cli.progress("starting parity", 5);
 
     let actualArgs = [
         '--config',
@@ -122,7 +122,8 @@ const execute = async (args) => {
         })
     });
 
-    await h.sleep(startupDelay);
+    //await h.sleep(startupDelay);
+    await timer;
 
     return {
         process: parityProcess,
@@ -251,7 +252,7 @@ module.exports.createAccounts = async (network, web3) => {
     for (let i = 0; i < network.accounts; i++) {
 
         const recovery = network.password + i;
-        const address = await network.providerCall(web3, 'parity_newAccountFromPhrase', [
+        const address = await networks.providerCall(web3, 'parity_newAccountFromPhrase', [
             recovery, network.password
         ]);
 

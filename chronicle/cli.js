@@ -86,14 +86,19 @@ module.exports.nl = () => {
     this.log('');
 }
 
-module.exports.progress = (text) => {
+module.exports.progress = (text, seconds) => {
 
-    const progress = new Progress(tab + tab + ls.info + tab + clc.yellow(text) + tab + '[:bar]', { total: 45 });
-    const timer = setInterval(function () {
-        progress.tick();
-        if (progress.complete) {
-            clearInterval(timer);
-        }
-    }, 100);
+    const total = seconds * 10;
+    const progress = new Progress(tab + tab + ls.info + tab + clc.yellow(text + tab + '[:bar]'), { total: total });
+
+    return new Promise(resolve => {
+        const timer = setInterval(function () {
+            progress.tick();
+            if (progress.complete) {
+                clearInterval(timer);
+                resolve();
+            }
+        }, 100);
+    });
 
 }
