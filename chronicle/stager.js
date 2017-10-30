@@ -5,32 +5,26 @@ const path = require("path");
 const deployer = require('./deployer');
 
 module.exports.main = async (state) => {
-
-    // stageName, dependentStageModules, options, persist
     
     // do a first deploy (test network, yes force, yes forget, and yes persist)
-    state.deployer = await deployer.main(null, true, true, true);
-    // get parity as a force deployment will have started it
-    state.parity = state.deployer.parity;
+    state.deployer = await deployer.main({
+        force: true,
+        forget: true,
+        persist: true
+    });
 
     // now stage
     cli.section("stager");
 
-    const stage = {
-        web3: state.parity.web3,
-        accountAddresses: state.parity.accountAddresses,
-        deploymentPlans: state.deployer.deploymentPlans,
-        web3Instances: state.deployer.web3Instances,
-        options: options
-    }
+    state.parity = state.deployer.parity;
+    state.accountAddresses = state.parity.accountAddresses;
+    state.deploymentPlans = state.deployer.deploymentPlans;
+    state.web3Instances = state.deployer.web3Instances;
+    state.web3 = state.parity.web3;
 
-    // run modules in order
-    for (let dependentStageModule of dependentStageModules) {
-        dependentStageModule.module.stage(stage);
-        cli.success("%s stage done", dependentStageModule.name);
-    }
+    state.stateModule.stage(state, {});
 
-    cli.success("staging complete");
+    cli.success("%s staging complete", state.stageName);
     
     // kill parity
     if (!persist) {

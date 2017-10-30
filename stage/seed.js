@@ -14,11 +14,11 @@ module.exports.options = [
     [ "-et, --endTime <time>", "end time" ]
 ];
 
-module.exports.stage = async (stage) => {
+module.exports.stage = async (state, stage) => {
 
     await kickoff.stage(stage);
 
-    stage.charity = stage.charity ? stage.accountAddresses[stage.charity] : stage.accountAddresses[1];
+    stage.charity = stage.charity ? state.accountAddresses[stage.charity] : state.accountAddresses[1];
     stage.charitySplit = stage.charitySplit ? stage.charitySplit : 49;
     stage.winnerSplit = stage.winnerSplit ? stage.winnerSplit : 49;
     stage.ownerSplit = stage.ownerSplit ? stage.ownerSplit : 2;
@@ -27,7 +27,7 @@ module.exports.stage = async (stage) => {
     stage.revealTime = stage.revealTime ? stage.revealTime : stage.startTime + h.timeInterval;
     stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + h.timeInterval;
 
-    await parity.send(stage.web3, stage.web3Instances.charity.methods.kickoff(
+    await parity.send(state.web3, state.web3Instances.charity.methods.kickoff(
         stage.charity,
         stage.charitySplit,
         stage.winnerSplit,
