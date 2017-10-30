@@ -15,7 +15,7 @@ module.exports.SendErrorException = 'SendErrorException';
 module.exports.NoTraceDataException = 'NoTraceDataException';
 module.exports.SomethingThrownException = 'SomethingThrownException';
 
-module.exports.start = async (fresh, persist) => {
+module.exports.main = async (state) => {
 
     cli.section("parity");
 
@@ -27,15 +27,21 @@ module.exports.start = async (fresh, persist) => {
 
     // load network configs and parameters
     const networkConfig = await h.loadJsonFile(h.networkConfigFile);
-    const network = networks.get(h.testNetworkName, networkConfig);
+    state.network = networks.get(h.testNetworkName, networkConfig);
     const prepared = await getInitialized();
     
     // if dirs are prepped and we aren't forced, run parity
-    if (prepared && !fresh) {
-        return await launch(network);
+    if (prepared && !state.fresh) {
+        Object.assign(state, await launch(state.network));
     } else {
-        return await initialize(network);
+        Object.assign(state, await initialize(state.network));
     }
+
+    if (!state.persist) {
+        state.execution.process.kill();
+    }
+
+    return state;
 
 }
 
@@ -67,7 +73,6 @@ const launch = async (network) => {
     const authorizationToken = await getLastAuthorizationToken();
     
     return {
-        network: network,
         web3: web3,
         accountAddresses: accountAddresses,
         authorizationToken: authorizationToken,
@@ -183,7 +188,6 @@ const initialize = async (network) => {
     execution = await executeUnlocked(accountAddresses);
 
     return {
-        network: network,
         web3: web3,
         accountAddresses: accountAddresses,
         authorizationToken: authorizationToken,

@@ -4,18 +4,23 @@ const cli = require('./cli');
 const deploy = require('./deployer');
 const parity = require('./parity');
 
-module.exports = async () => {
-
-    const state = {};
+module.exports.main = async (state) => {
     
     // first deploy (test network, no force, yes forget, and yes persist)
-    state.deployer = await deployer.all(null, false, true, true);
+    state.deployer = await deployer.all({
+        force: false,
+        forget: true,
+        persist: true
+    });
 
     // make sure parity is running
     if ('parity' in state.deployer) {
         state.parity = state.deployer.parity;
     } else {
-        state.parity = await parity.start();
+        state.parity = await parity.main({
+            fresh: false,
+            persist: true
+        });
     }
 
     cli.section("runner");
@@ -24,5 +29,7 @@ module.exports = async () => {
 
     // wait for ctl-c or for something to die on its own
     await state.parity.execution.closed;
+
+    return state;
 
 }

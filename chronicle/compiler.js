@@ -7,30 +7,27 @@ const mkdirp = require('mz-modules/mkdirp');
 const h = require('./helper');
 const cli = require('./cli');
 
-module.exports = async (force) => {
+module.exports.main = async (state) => {
 
     // now compile
     cli.section("compiler");
     
     // get all contracts
-    const contractNames = await getContractNames();
-    if (h.objLength(contractNames) == 0) {
+    state.contractNames = await getContractNames();
+    if (h.objLength(state.contractNames) == 0) {
         cli.warning("no solidity contracts found");
         init.shutdown();
     }
 
     // see what contracts actually need updating based on hashes
-    const updatedContractNames = await getUpdatedContractNames(contractNames, force);
-    if (h.objLength(updatedContractNames) == 0) {
+    state.updatedContractNames = await getUpdatedContractNames(state.contractNames, state.force);
+    if (h.objLength(state.updatedContractNames) == 0) {
         cli.success("everything is already compiled");
     } else {
-        await compile(updatedContractNames);
+        await compile(state.updatedContractNames);
     }
 
-    return {
-        contractNames: contractNames,
-        updatedContractNames: updatedContractNames
-    }
+    return state;
 
 }
 

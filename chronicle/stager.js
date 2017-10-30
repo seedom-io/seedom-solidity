@@ -4,12 +4,12 @@ const dir = require('node-dir');
 const path = require("path");
 const deployer = require('./deployer');
 
-module.exports.stage = async (stageName, dependentStageModules, options, persist) => {
+module.exports.main = async (state) => {
 
-    const state = {};
+    // stageName, dependentStageModules, options, persist
     
     // do a first deploy (test network, yes force, yes forget, and yes persist)
-    state.deployer = await deployer.all(null, true, true, true);
+    state.deployer = await deployer.main(null, true, true, true);
     // get parity as a force deployment will have started it
     state.parity = state.deployer.parity;
 
@@ -36,6 +36,8 @@ module.exports.stage = async (stageName, dependentStageModules, options, persist
     if (!persist) {
         state.parity.execution.process.kill();
     }
+
+    return state;
 
 }
 

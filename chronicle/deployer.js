@@ -16,29 +16,28 @@ const defaults = {
     gasPrice: 30000000000000
 }
 
-module.exports.all = async (networkName, force, forget, persist) => {
-    
-    const state = {};
+module.exports.main = async (state) => {
     
     // compile first
-    state.compiler = await compiler();
+    state.compiler = await compiler.main({
+        force: false
+    });
 
     // now deploy
     cli.section("deployer");
     
     // if no network specified, default to test
-    if (!networkName) {
+    if (!state.networkName) {
         cli.info("'%s' network chosen as no network specified", h.testNetworkName);
-        networkName = h.testNetworkName
+        state.networkName = h.testNetworkName
     }
 
-    state.networkName = networkName;
     const contractConfig = await h.loadJsonFile(h.contractConfigFile);
     state.contractHashes = await getContractHashes(contractConfig);
-    const networkDeploymentFile = h.getDeploymentFile(networkName);
+    const networkDeploymentFile = h.getDeploymentFile(state.networkName);
     const networkDeployment = await getNetworkDeployment(networkDeploymentFile);
 
-    const contractNames = force
+    const contractNames = state.force
         ? Object.keys(contractConfig)
         : await getLegacyContractNames(state.contractHashes, networkDeployment);
     
@@ -49,14 +48,14 @@ module.exports.all = async (networkName, force, forget, persist) => {
         Object.assign(state, await deploy(
             contractNames,
             contractConfig,
-            networkName,
+            state.networkName,
             state.contractHashes,
-            forget ? null : networkDeployment
+            state.forget ? null : networkDeployment
         ));
     }
 
     // shut down?
-    if (!persist) {
+    if (!state.persist) {
         if (state.parity) {
             state.parity.execution.process.kill();
         }
@@ -206,7 +205,11 @@ const getParityState = async () => {
     
     const state = {};
 
-    state.parity = await parity.start(false, true);
+    state.parity = await parity.main({
+        fresh: false,
+        persist: true
+    });
+
     state.network = state.parity.network;
     state.web3 = state.parity.web3;
     state.accountAddresses = state.parity.accountAddresses;

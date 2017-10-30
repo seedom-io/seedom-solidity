@@ -17,8 +17,9 @@ program
     .description("compile contracts")
     .option('-f, --force', "force compilation")
     .action((options) => {
-        const force = options ? options.force : false;
-        require('./compiler')(force);
+        require('./compiler').main({
+            force: options.force ? true : false
+        });
     });
 
 program
@@ -27,8 +28,9 @@ program
     .description("start parity")
     .option('-f, --fresh', "fresh start")
     .action((options) => {
-        const fresh = options ? options.fresh : false;
-        require('./parity').start(fresh);
+        require('./parity').main({
+            fresh: options.fresh ? true : false
+        });
     });
 
 program
@@ -37,8 +39,10 @@ program
     .description("deploy chronicle")
     .option('-f, --force', "force deployment")
     .action((network, options) => {
-        const force = options ? options.force : false;
-        require('./deployer').all(network, force);
+        require('./deployer').main({
+            networkName: network,
+            force: options.force ? true : false
+        });
     });
 
 program
@@ -46,7 +50,7 @@ program
     .alias('r')
     .description("run chronicle")
     .action(() => {
-        require('./runner')();
+        require('./runner').main({});
     });
 
 program
@@ -54,7 +58,9 @@ program
     .alias('t')
     .description("test chronicle")
     .action((suites) => {
-        require('./tester')(suites);
+        require('./tester').main({
+            suiteNames: suites
+        });
     });
 
 stager.prepare(program).then(() => {

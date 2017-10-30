@@ -1,41 +1,15 @@
-const th = require('./helpers');
-const parity = require('../parity');
+const ch = require('../chronicle/helper');
+const sh = require('../stage/helper');
+const parity = require('../chronicle/parity');
+const instantiate = require('../stage/instantiate');
+const kickoff = require('../stage/kickoff');
 
-suite('kickoff', (accounts) => {
-
-    var validOwner = accounts[0];
-    var validCharity = accounts[1];
-    var validParticipant = accounts[2];
-    var validParticipant2 = accounts[3];
-    var validParticipant3 = accounts[4];
-    var validParticipant4 = accounts[5];
-    var validCharitySplit = 49;
-    var validWinnerSplit = 49;
-    var validOwnerSplit = 2;
-    var validValuePerEntry = 1000;
+suite('kickoff', () => {
 
     test("should seed properly from charity", async () => {
 
-        var instance = await artifact.new();
-
-        var validCharityRandom = th.random();
-        var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
-
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + th.timeInterval;
-        var validEndTime = validRevealTime + th.timeInterval;
-
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
-        );
+        await instantiate.stage(stage);
+        await kickoff.stage(stage);
 
         await contracts.charity.methods.seed(
             validCharityHashedRandom,

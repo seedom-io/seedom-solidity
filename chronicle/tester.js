@@ -23,12 +23,17 @@ const defaultParams = {
     gasPrice: 30000000000000
 }
 
-module.exports = async (suiteNames, persist) => {
+module.exports.main = async (state) => {
 
-    const state = {};
+    // suiteNames, persist
     
     // do a first deploy (test network, yes force, yes forget, and yes persist)
-    state.deployer = await deployer.all(null, true, true, true);
+    state.deployer = await deployer.main({
+        force: true,
+        forget: true,
+        persist: true
+    });
+
     // get parity as a force deployment will have started it
     state.parity = state.deployer.parity;
 
@@ -36,22 +41,30 @@ module.exports = async (suiteNames, persist) => {
     cli.section("tester");
 
     // grab additional stuff required for testing
-    state.web3 = state.parity.web3;
     state.accountAddresses = state.parity.accountAddresses;
     state.deploymentPlans = state.deployer.deploymentPlans;
     state.web3Instances = state.deployer.web3Instances;
+    state.web3 = state.parity.web3;
+
     // set up suite
-    setupSuite(state.accountAddresses, state.deploymentPlans, state.web3Instances, state.web3);
+    setupSuite(
+        state.accountAddresses,
+        state.deploymentPlans,
+        state.web3Instances,
+        state.web3
+    );
 
     // get test files for suites
-    const testFiles = await getTestFiles(suiteNames);
+    const testFiles = await getTestFiles(state.suiteNames);
     const mocha = createMocha(testFiles);
     await promiseRun(mocha);
 
     // kill parity
-    if (!persist) {
+    if (!state.persist) {
         state.parity.execution.process.kill();
     }
+
+    return state;
 
 }
 
@@ -65,7 +78,7 @@ const promiseRun = (mocha) => {
 
 const getTestFiles = async (suiteNames) => {
     
-    if (suiteNames.length > 0) {
+    if (suiteNames && (suiteNames.length > 0)) {
 
         const testFiles = [];
 
@@ -84,7 +97,12 @@ const getTestFiles = async (suiteNames) => {
 
 }
 
-const setupSuite = (accountAddresses, deploymentPlans, web3Instances, web3) => {
+const setupSuite = (
+    accountAddresses,
+    deploymentPlans,
+    web3Instances,
+    web3
+) => {
 
     global.suite = (name, tests) => {
         Mocha.describe(name, function () {
@@ -100,8 +118,7 @@ const setupSuite = (accountAddresses, deploymentPlans, web3Instances, web3) => {
             const stage = {
                 accountAddresses: accountAddresses,
                 web3Instances: web3Instances,
-                web3: web3,
-                options: {}
+                web3: web3
             };
 
             return await code(stage);

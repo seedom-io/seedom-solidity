@@ -1,7 +1,7 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
 const parity = require('../chronicle/parity');
-const instantiate = require('./instantiate');
+const kickoff = require('./kickoff');
 
 module.exports.options = [
     [ "-c, --charity <address>", "charity" ],
@@ -16,8 +16,7 @@ module.exports.options = [
 
 module.exports.stage = async (stage) => {
 
-    // first instantiate
-    await instantiate.stage(stage);
+    await kickoff.stage(stage);
 
     stage.charity = stage.charity ? stage.accountAddresses[stage.charity] : stage.accountAddresses[1];
     stage.charitySplit = stage.charitySplit ? stage.charitySplit : 49;
