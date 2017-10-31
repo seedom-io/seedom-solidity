@@ -1,13 +1,13 @@
 const Web3 = require('web3');
 const h = require('./helper');
 const cli = require('./cli');
-const deploy = require('./deployer');
+const deployer = require('./deployer');
 const parity = require('./parity');
 
 module.exports.main = async (state) => {
     
     // first deploy (test network, no force, yes forget, and yes persist)
-    state.deployer = await deployer.all({
+    state.deployer = await deployer.main({
         force: false,
         forget: true,
         persist: true
