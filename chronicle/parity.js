@@ -289,7 +289,7 @@ module.exports.getTrace = async (transactionHash, web3) => {
 }
 
 module.exports.send = (web3, transaction, options) => {
-    
+
     return new Promise((accept, reject) => {
 
         transaction.send(options)
@@ -297,8 +297,10 @@ module.exports.send = (web3, transaction, options) => {
             .on('error', (error) => {
                 reject(this.SendErrorException);
             })
+            
+            .on('confirmation', async (num, receipt) => {
 
-            .on('receipt', async (receipt) => {
+                await h.sleep(1000);
 
                 const trace = await this.getTrace(receipt.transactionHash, web3);
                 

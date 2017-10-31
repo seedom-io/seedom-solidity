@@ -1,5 +1,6 @@
 const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
+const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
 const instantiate = require('../stage/instantiate');
 const kickoff = require('../stage/kickoff');
@@ -48,6 +49,7 @@ suite('kickoff', (state) => {
         ];
         
         for (let testArgs of testData) {
+            cli.info(testArgs);
             await assert.isRejected(
                 parity.send(state.web3, state.web3Instances.charity.methods.kickoff.apply(null, testArgs), { from: stage.owner }),
                 parity.SomethingThrownException,
@@ -86,6 +88,7 @@ suite('kickoff', (state) => {
         ];
 
         for (let testArgs of testData) {
+            cli.info(testArgs);
             await assert.isRejected(
                 parity.send(state.web3, state.web3Instances.charity.methods.kickoff.apply(null, testArgs), { from: stage.owner }),
                 parity.SomethingThrownException,

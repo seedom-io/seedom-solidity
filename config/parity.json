@@ -40,7 +40,8 @@
         },
         "footprint": {
             "tracing": "on",
-            "pruning": "archive"
+            "pruning": "archive",
+            "fat_db": "on"
         },
         "misc": {
             "logging": "info"

@@ -112,8 +112,8 @@ module.exports.objLength = (obj) => {
     return Object.keys(obj).length;
 }
 
-module.exports.sleep = function (seconds) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+module.exports.sleep = function (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 module.exports.getContractHash = async (contractName) => {
