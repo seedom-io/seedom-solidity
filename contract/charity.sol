@@ -40,11 +40,6 @@ contract Charity {
         uint256 balance
     );
 
-    event Debug(
-        uint256 a,
-        uint256 b
-    );
-
     struct Kick {
         address charity;
         uint256 charitySplit;
@@ -171,7 +166,6 @@ contract Charity {
         uint256 _revealTime,
         uint256 _endTime) public onlyOwner
     {
-        Debug(_startTime, now);
         require(_charity != 0x0);
         require(_charitySplit != 0);
         require(_winnerSplit != 0);

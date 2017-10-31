@@ -8,22 +8,18 @@ suite('seed', (state) => {
 
     test("should seed properly from charity", async (stage) => {
 
-        state.web3.charity.once('Debug', function(error, event) {
-            console.log(event);
-        });
-
         await kickoff.stage(state, stage);
 
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
 
-        /*await parity.send(state.web3, state.web3Instances.charity.methods.seed(
+        await parity.send(state.web3, state.web3Instances.charity.methods.seed(
             charityHashedRandom
         ), { from: stage.charity });
 
         const actualCharityHashedRandom = await state.web3Instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
 
-        assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");*/
+        assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
 
     });
 /*

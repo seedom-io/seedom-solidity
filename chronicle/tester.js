@@ -54,7 +54,7 @@ module.exports.main = async (state) => {
 
     // kill parity
     if (!state.persist) {
-        state.parity.execution.process.kill();
+        //state.parity.execution.process.kill();
     }
 
     return state;
@@ -93,7 +93,8 @@ const getTestFiles = async (suiteNames) => {
 const setupSuite = (state) => {
 
     global.suite = (name, tests) => {
-        Mocha.describe(name, () => {
+        Mocha.describe(name, function() {
+            this.timeout(15000);
 
             afterEach("redeploy", async () => {
                 // update web 3 instances for next test
@@ -106,7 +107,8 @@ const setupSuite = (state) => {
 
     global.test = (name, code) => {
         
-        Mocha.it(name, async () => {
+        Mocha.it(name, async function() {
+            this.timeout(15000);
             // run test against current state with fresh stages
             return await code({});
         });

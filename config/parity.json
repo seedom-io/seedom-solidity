@@ -1,6 +1,7 @@
 {
     "toml": {
-        "parity": {},
+        "parity": {
+        },
         "ui": {
             "force": true,
             "disable": false,

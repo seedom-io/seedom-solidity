@@ -101,7 +101,7 @@ module.exports.time = (date) => {
 }
 
 module.exports.now = () => {
-    return Math.round(Date.now() / 1000);
+    return this.time(new Date());
 }
 
 module.exports.isArray = (obj) => {

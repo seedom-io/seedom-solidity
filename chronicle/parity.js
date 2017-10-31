@@ -108,7 +108,7 @@ const executeUnlocked = async (accountAddresses) => {
 const execute = async (args) => {
 
     //cli.info("starting parity...");
-    const timer = cli.progress("starting parity", 5);
+    const timer = cli.progress("starting parity", startupDelay);
 
     let actualArgs = [
         '--config',
@@ -288,7 +288,7 @@ module.exports.getTrace = async (transactionHash, web3) => {
 
 }
 
-module.exports.send = async (web3, transaction, options) => {
+module.exports.send = (web3, transaction, options) => {
     
     return new Promise((accept, reject) => {
 
@@ -301,7 +301,6 @@ module.exports.send = async (web3, transaction, options) => {
             .on('receipt', async (receipt) => {
 
                 const trace = await this.getTrace(receipt.transactionHash, web3);
-                //console.log(trace);
                 
                 if (trace.length == 0) {
                     reject(this.NoTraceDataException);

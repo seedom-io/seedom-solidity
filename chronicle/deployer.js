@@ -54,8 +54,8 @@ module.exports.main = async (state) => {
         ));
 
         if (!state.forget) {
-            logDeployments(state.deployments, networkDeployment);
-            await h.writeJsonFile(networkDeploymentFile, networkDeployment);
+            logDeployments(state.deployments, state.networkDeployment);
+            await h.writeJsonFile(networkDeploymentFile, state.networkDeployment);
             cli.success("deployments written");
         }
 

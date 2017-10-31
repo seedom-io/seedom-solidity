@@ -10,15 +10,16 @@ suite('kickoff', (state) => {
 
         await kickoff.stage(state, stage);
 
+        const now = ch.now();
         const actualKickoff = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
-        const actualKickTimeDifference = actualKickoff._kickTime - ch.now();
+        const actualKickTimeDifference = actualKickoff._kickTime - now;
 
         assert.equalIgnoreCase(actualKickoff._charity, stage.charity, "charity does not match");
         assert.equal(actualKickoff._charitySplit, stage.charitySplit, "charity split does not match");
         assert.equal(actualKickoff._winnerSplit, stage.winnerSplit, "winner split does not match");
         assert.equal(actualKickoff._ownerSplit, stage.ownerSplit, "validOwner split does not match");
         assert.equal(actualKickoff._valuePerEntry, stage.valuePerEntry, "wei per entry does not match");
-        assert.isAtMost(actualKickTimeDifference, 5, "wei per entry does not match");
+        assert.isAtMost(actualKickTimeDifference, 10, "kick time delta too high");
         assert.equal(actualKickoff._startTime, stage.startTime, "start time does not match");
         assert.equal(actualKickoff._revealTime, stage.revealTime, "reveal time does not match");
         assert.equal(actualKickoff._endTime, stage.endTime, "end time does not match");
@@ -29,8 +30,9 @@ suite('kickoff', (state) => {
 
         await instantiate.stage(state, stage);
 
+        const now = ch.now();
         const charity = state.accountAddresses[1];
-        const startTime = ch.now() + sh.timeInterval;
+        const startTime = now + sh.timeInterval;
         const revealTime = startTime + sh.timeInterval;
         const endTime = revealTime + sh.timeInterval;
 
@@ -56,18 +58,16 @@ suite('kickoff', (state) => {
 
     });
 
-    /*
     test("should fail to kickoff with invalid dates", async (stage) => {
 
         await instantiate.stage(state, stage);
 
+        const now = ch.now();
         const charity = state.accountAddresses[1];
-
-        const startTime = ch.now() + sh.timeInterval;
+        const startTime = now + sh.timeInterval;
         const revealTime = startTime + sh.timeInterval;
         const endTime = revealTime + sh.timeInterval;
-
-        const oldStartTime = ch.now() - (sh.timeInterval * 3);
+        const oldStartTime = now - (sh.timeInterval * 3);
         const oldRevealTime = oldStartTime + sh.timeInterval;
         const oldEndTime = oldRevealTime + sh.timeInterval;
 
@@ -94,6 +94,6 @@ suite('kickoff', (state) => {
             );
         }
 
-    });*/
+    });
 
 });

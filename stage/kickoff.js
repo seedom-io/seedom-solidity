@@ -20,16 +20,17 @@ module.exports.stage = async (state, stage) => {
     // first instantiate
     await instantiate.stage(state, stage);
     
+    const now = ch.now();
     itemize('charity', state.accountAddresses[1], state, stage);
     itemize('charitySplit', 49, state, stage);
     itemize('winnerSplit', 49, state, stage);
     itemize('ownerSplit', 2, state, stage);
     itemize('valuePerEntry', 1000, state, stage);
-    itemize('startTime', ch.now() + h.timeInterval, state, stage);
+    itemize('startTime', now + h.timeInterval, state, stage);
     itemize('revealTime', stage.startTime + h.timeInterval, state, stage);
     itemize('endTime', stage.revealTime + h.timeInterval, state, stage);
 
-    await parity.send(state.web3, state.web3Instances.charity.methods.kickoff(
+    const transaction = state.web3Instances.charity.methods.kickoff(
         stage.charity,
         stage.charitySplit,
         stage.winnerSplit,
@@ -38,6 +39,8 @@ module.exports.stage = async (state, stage) => {
         stage.startTime,
         stage.revealTime,
         stage.endTime
-    ), { from: stage.owner });
+    );
+
+    await parity.send(state.web3, transaction, { from: stage.owner });
 
 }
