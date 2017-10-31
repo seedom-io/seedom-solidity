@@ -35,23 +35,30 @@ module.exports.main = async (state) => {
     const contractConfig = await h.loadJsonFile(h.contractConfigFile);
     state.contractHashes = await getContractHashes(contractConfig);
     const networkDeploymentFile = h.getDeploymentFile(state.networkName);
-    const networkDeployment = await getNetworkDeployment(networkDeploymentFile);
+    state.networkDeployment = await getNetworkDeployment(networkDeploymentFile);
 
     const contractNames = state.force
         ? Object.keys(contractConfig)
-        : await getLegacyContractNames(state.contractHashes, networkDeployment);
+        : await getLegacyContractNames(state.contractHashes, state.networkDeployment);
     
     // do deploy if we need to
     if (h.objLength(contractNames) == 0) {
         cli.success("everything is already deployed");
     } else {
+
         Object.assign(state, await deploy(
             contractNames,
             contractConfig,
             state.networkName,
-            state.contractHashes,
-            state.forget ? null : networkDeployment
+            state.contractHashes
         ));
+
+        if (!state.forget) {
+            logDeployments(state.deployments, networkDeployment);
+            await h.writeJsonFile(networkDeploymentFile, networkDeployment);
+            cli.success("deployments written");
+        }
+
     }
 
     // shut down?
@@ -80,10 +87,7 @@ const getContractHashes = async (contractConfig) => {
 
 const getNetworkDeployment = async (networkDeploymentFile) => {
     try {
-        return {
-            file: networkDeploymentFile,
-            deployments: await h.loadJsonFile(networkDeploymentFile)
-        }
+        return await h.loadJsonFile(networkDeploymentFile);
     } catch (error) {
         return {};
     }
@@ -96,7 +100,7 @@ const getLegacyContractNames = async (contractHashes, networkDeployment) => {
     for (let contractName in contractHashes) {
 
         const contractHash = contractHashes[contractName];
-        const latestDeployment = getLatestDeployment(contractName, networkDeployment);
+        const latestDeployment = this.getLatestDeployment(contractName, networkDeployment);
         if (latestDeployment && (latestDeployment.hash == contractHash)) {
             continue;
         }
@@ -110,13 +114,13 @@ const getLegacyContractNames = async (contractHashes, networkDeployment) => {
 
 }
 
-const getLatestDeployment = (contractName, networkDeployment) => {
+module.exports.getLatestDeployment = (contractName, networkDeployment) => {
 
-    if (!(contractName in networkDeployment.deployments)) {
+    if (!(contractName in networkDeployment)) {
         return null;
     }
 
-    const deployments = networkDeployment.deployments[contractName];
+    const deployments = networkDeployment[contractName];
     if (deployments.length == 0) {
         return null;
     }
@@ -185,13 +189,6 @@ const deploy = async (
         // save web3 instances
         state.web3Instances[contractName] = result.web3Instance;
 
-    }
-
-    // if we have a deployment, save it all, else forget
-    if (networkDeployment) {
-        logDeployments(state.deployments, networkDeployment);
-        await h.writeJsonFile(networkDeployment.file, networkDeployment.deployments);
-        cli.success("deployments written");
     }
 
     // done
@@ -338,18 +335,14 @@ const deployFromPlan = async (deploymentPlan, web3) => {
 
 const logDeployments = (deployments, networkDeployment) => {
 
-    if (!('deployments' in networkDeployment)) {
-        networkDeployment.deployments = {};
-    }
-
     for (let contractName in deployments) {
 
-        if (!(contractName in networkDeployment.deployments)) {
-            networkDeployment.deployments[contractName] = [];
+        if (!(contractName in networkDeployment)) {
+            networkDeployment[contractName] = [];
         }
 
         const deployment = deployments[contractName];
-        networkDeployment.deployments[contractName].unshift(deployment);
+        networkDeployment[contractName].unshift(deployment);
 
     }
 

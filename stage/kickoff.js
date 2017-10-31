@@ -19,15 +19,15 @@ module.exports.stage = async (state, stage) => {
 
     // first instantiate
     await instantiate.stage(state, stage);
-
-    stage.charity = state.charity ? state.accountAddresses[state.charity] : state.accountAddresses[1];
-    stage.charitySplit = state.charitySplit ? state.charitySplit : 49;
-    stage.winnerSplit = state.winnerSplit ? state.winnerSplit : 49;
-    stage.ownerSplit = state.ownerSplit ? state.ownerSplit : 2;
-    stage.valuePerEntry = state.valuePerEntry ? state.valuePerEntry : 1000;
-    stage.startTime = state.startTime ? state.startTime : stage.now + h.timeInterval;
-    stage.revealTime = state.revealTime ? state.revealTime : stage.startTime + h.timeInterval;
-    stage.endTime = state.endTime ? state.endTime : stage.revealTime + h.timeInterval;
+    
+    itemize('charity', state.accountAddresses[1], state, stage);
+    itemize('charitySplit', 49, state, stage);
+    itemize('winnerSplit', 49, state, stage);
+    itemize('ownerSplit', 2, state, stage);
+    itemize('valuePerEntry', 1000, state, stage);
+    itemize('startTime', ch.now() + h.timeInterval, state, stage);
+    itemize('revealTime', stage.startTime + h.timeInterval, state, stage);
+    itemize('endTime', stage.revealTime + h.timeInterval, state, stage);
 
     await parity.send(state.web3, state.web3Instances.charity.methods.kickoff(
         stage.charity,
@@ -38,6 +38,6 @@ module.exports.stage = async (state, stage) => {
         stage.startTime,
         stage.revealTime,
         stage.endTime
-    ).send({ from: stage.owner }));
+    ), { from: stage.owner });
 
 }

@@ -5,6 +5,5 @@ module.exports.optionize = (command) => {
 }
 
 module.exports.stage = async (state, stage) => {
-    stage.owner = state.accountAddresses[0];
-    stage.now = ch.now();
+    itemize('owner', state.accountAddresses[0], state, stage);
 }

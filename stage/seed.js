@@ -3,39 +3,23 @@ const h = require('./helper');
 const parity = require('../chronicle/parity');
 const kickoff = require('./kickoff');
 
-module.exports.options = [
-    ["-c, --charity <address>", "charity"],
-    ["-cs, --charitySplit <number>", "charity split"],
-    ["-ws, --winnerSplit <number>", "winner split"],
-    ["-ow, --ownerSplit <number>", "owner split"],
-    ["-vpe, --valuePerEntry <string>", "value per entry"],
-    ["-st, --startTime <time>", "start time"],
-    ["-rt, --revealTime <time>", "reveal time"],
-    ["-et, --endTime <time>", "end time"]
-];
+module.exports.optionize = (command) => {
+    return kickoff.optionize(command)
+        .option("--charity <address>", "charity")
+        .option("--charitySplit <number>", "charity split")
+        .option("--winnerSplit <number>", "winner split")
+        .option("--ownerSplit <number>", "owner split")
+        .option("--valuePerEntry <string>", "value per entry")
+        .option("--startTime <time>", "start time", parseDate)
+        .option("--revealTime <time>", "reveal time", parseDate)
+        .option("--endTime <time>", "end time", parseDate);
+}
 
 module.exports.stage = async (state, stage) => {
 
-    await kickoff.stage(stage);
+    // first kickoff
+    await kickoff.stage(state, stage);
 
-    stage.charity = stage.charity ? state.accountAddresses[stage.charity] : state.accountAddresses[1];
-    stage.charitySplit = stage.charitySplit ? stage.charitySplit : 49;
-    stage.winnerSplit = stage.winnerSplit ? stage.winnerSplit : 49;
-    stage.ownerSplit = stage.ownerSplit ? stage.ownerSplit : 2;
-    stage.valuePerEntry = stage.valuePerEntry ? stage.valuePerEntry : 1000;
-    stage.startTime = stage.startTime ? stage.startTime : stage.now + h.timeInterval;
-    stage.revealTime = stage.revealTime ? stage.revealTime : stage.startTime + h.timeInterval;
-    stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + h.timeInterval;
-
-    await parity.send(state.web3, state.web3Instances.charity.methods.kickoff(
-        stage.charity,
-        stage.charitySplit,
-        stage.winnerSplit,
-        stage.ownerSplit,
-        stage.valuePerEntry,
-        stage.startTime,
-        stage.revealTime,
-        stage.endTime
-    ).send({ from: stage.owner }));
+    itemize('charity', state.accountAddresses[1], state, stage);
 
 }

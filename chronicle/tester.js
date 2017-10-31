@@ -76,7 +76,7 @@ const getTestFiles = async (suiteNames) => {
         const testFiles = [];
 
         for (let suiteName of suiteNames) {
-            testFiles.push(path.join(h.testDir, suiteName, j.jsExt));
+            testFiles.push(path.join(h.testDir, suiteName + '.' + h.jsExt));
         }
 
         return testFiles;
@@ -93,7 +93,13 @@ const getTestFiles = async (suiteNames) => {
 const setupSuite = (state) => {
 
     global.suite = (name, tests) => {
-        Mocha.describe(name, function () {
+        Mocha.describe(name, () => {
+
+            afterEach("redeploy", async () => {
+                // update web 3 instances for next test
+                state.web3Instances = await deployer.again(state.deploymentPlans, state.web3);
+            });
+
             tests(state);
         });
     };
@@ -103,8 +109,6 @@ const setupSuite = (state) => {
         Mocha.it(name, async () => {
             // run test against current state with fresh stages
             return await code({});
-            // update web 3 instances for next test
-            state.web3Instances = await deployer.again(state.deploymentPlans, state.web3);
         });
 
     };

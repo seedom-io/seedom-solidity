@@ -288,33 +288,36 @@ module.exports.getTrace = async (transactionHash, web3) => {
 
 }
 
-module.exports.send = async (web3, transaction) => {
+module.exports.send = async (web3, transaction, options) => {
     
     return new Promise((accept, reject) => {
-        
-        transaction.on('error', (error) => {
-            reject(this.SendErrorException);
-        });
 
-        transaction.on('receipt', async (receipt) => {
+        transaction.send(options)
 
-            const trace = await this.getTrace(receipt.transactionHash, web3);
-            
-            if (trace.length == 0) {
-                reject(this.NoTraceDataException);
-                return;
-            }
+            .on('error', (error) => {
+                reject(this.SendErrorException);
+            })
 
-            for (let line of trace) {
-                if ('error' in line) {
-                    reject(this.SomethingThrownException);
+            .on('receipt', async (receipt) => {
+
+                const trace = await this.getTrace(receipt.transactionHash, web3);
+                //console.log(trace);
+                
+                if (trace.length == 0) {
+                    reject(this.NoTraceDataException);
                     return;
                 }
-            }
 
-            accept(receipt);
+                for (let line of trace) {
+                    if ('error' in line) {
+                        reject(this.SomethingThrownException);
+                        return;
+                    }
+                }
 
-        });
+                accept(receipt);
+
+            });
         
     });
 
