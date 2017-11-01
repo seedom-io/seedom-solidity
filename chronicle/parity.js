@@ -10,6 +10,7 @@ const path = require("path");
 const dir = require('node-dir');
 
 const startupDelay = 5;
+const killDelay = 5;
 const traceDelay = 1000;
 
 module.exports.SendError = 'SendError';
@@ -30,10 +31,9 @@ module.exports.main = async (state) => {
     const pid = await getPid();
     // kill if we are told to do so
     if (pid) {
-        cli.success("found parity running at pid %d", pid);
         // do we kill?
         if (state.kill) {
-            kill(pid);
+            await kill(pid);
             return;
         }
     }
@@ -184,14 +184,16 @@ const getPid = async () => {
 
 }
 
-const kill = (pid) => {
+const kill = async (pid) => {
+
+    let progress = cli.progress("killing parity", killDelay);
+
     try {
         process.kill(pid);
-        cli.success('parity killed');
-        return true;
     } catch (error) {
-        return false;
     }
+
+    await progress;
 }
 
 const getLastAuthorizationToken = async () => {
@@ -208,7 +210,7 @@ const initialize = async (network, pid) => {
 
     // if we received a pid, kill it
     if (pid) {
-        kill(pid);
+        await kill(pid);
     }
 
     // deinitialize

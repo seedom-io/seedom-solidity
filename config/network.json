@@ -4,7 +4,7 @@
         "gasPrice": "30000000000000",
         "password": "password",
         "balance": "100000000000000000000000000",
-        "accounts": 10
+        "accounts": 6
     },
     "main": {
         "url": "localhost:8545",

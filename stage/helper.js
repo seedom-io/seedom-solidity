@@ -1,7 +1,7 @@
 var crypto = require('crypto');
 var keccak256 = require('js-sha3').keccak256;
 
-module.exports.timeInterval = 10;
+module.exports.timeInterval = 8;
 
 var minFirstDecimal = 9;
 var maxFirstDecimal = 255;

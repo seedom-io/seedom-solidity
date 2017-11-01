@@ -16,8 +16,7 @@ global.chai.use(require('chai-as-promised'));
 global.chai.use(require('chai-string'));
 global.assert = global.chai.assert;
 
-const testTimeout = 10000;
-const beforeTimeout = 10000;
+const testTimeout = 100000;
 
 const defaultParams = {
     gas: 1500000,
@@ -89,9 +88,7 @@ const setupSuite = (state) => {
 
     global.suite = (name, tests) => {
         Mocha.describe(name, function() {
-
-            this.timeout(15000);
-
+            
             beforeEach("prepare", () => {
                 // clear out existing stage
                 state.stage = {};
@@ -110,7 +107,7 @@ const setupSuite = (state) => {
     global.test = (name, code) => {
         
         Mocha.it(name, async function() {
-            this.timeout(15000);
+            this.timeout(testTimeout);
             return await code();
         });
 
