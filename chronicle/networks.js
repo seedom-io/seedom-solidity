@@ -1,24 +1,47 @@
 const Web3 = require('web3');
 const cli = require('./cli');
+const net = require('net');
+const h = require('./helper');
 
 const jsonrpc = "2.0";
+const ipcTimeout = 3000;
 
-module.exports.getWeb3 = async (networkParams) => {
+module.exports.getWeb3 = async (network) => {
 
-    const web3 = createWeb3(networkParams);
+    const web3 = createWeb3(network);
+    const name = network.url ? network.url : 'test';
     if (await testWeb3(web3)) {
-        cli.success("connected to network %s:%d", networkParams.host, networkParams.port);
+        cli.success("connected to %s network", name);
         return web3;
     }
 
-    cli.error("network %s:%d could not be reached", networkParams.host, networkParams.port);
+    cli.error("could not connect to %s network", name);
     return null;
 
 }
 
-const createWeb3 = (networkParams) => {
-    const url = 'http://' + networkParams.host + ':' + networkParams.port;
-    return new Web3(new Web3.providers.HttpProvider(networkParams.url));
+const createWeb3 = (network) => {
+
+    let provider;
+
+    if (!('url' in network)) {
+
+        // assume local test; create web3 ipc provider
+        provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
+        // automatically timeout ipc connection
+        const socket = provider.connection;
+        socket.setTimeout(ipcTimeout);
+        socket.on('timeout', () => {
+            socket.destroy();
+        });
+
+    } else {
+        // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
+        provider = new Web3.providers.WebsocketProvider(network.url);
+    }
+
+    return new Web3(provider);
+
 }
 
 const testWeb3 = async (web3) => {

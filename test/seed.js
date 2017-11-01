@@ -10,7 +10,11 @@ suite('seed', (state) => {
 
         await kickoff.stage(state, stage);
 
-        const charityRandom = sh.random();
+        /*const actualKickoff = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
+
+        assert.equalIgnoreCase(actualKickoff._charity, stage.charity, "charity does not match");*/
+
+        /*const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
 
         await parity.send(state.web3, state.web3Instances.charity.methods.seed(
@@ -19,7 +23,7 @@ suite('seed', (state) => {
 
         const actualCharityHashedRandom = await state.web3Instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
 
-        assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
+        assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");*/
 
     });
 /*

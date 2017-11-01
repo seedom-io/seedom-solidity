@@ -21,6 +21,7 @@ module.exports.stage = async (state, stage) => {
     await instantiate.stage(state, stage);
     
     const now = ch.now();
+    
     itemize('charity', state.accountAddresses[1], state, stage);
     itemize('charitySplit', 49, state, stage);
     itemize('winnerSplit', 49, state, stage);

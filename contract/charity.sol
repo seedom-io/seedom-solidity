@@ -2,6 +2,18 @@ pragma solidity ^0.4.4;
 
 contract Charity {
 
+    event Kickoff(
+        address charity,
+        uint256 charitySplit,
+        uint256 winnerSplit,
+        uint256 ownerSplit,
+        uint256 valuePerEntry,
+        uint256 kickTime,
+        uint256 startTime,
+        uint256 revealTime,
+        uint256 endTime
+    );
+
     event Participation(
         address indexed participant,
         bytes32 hashedRandom
@@ -192,6 +204,18 @@ contract Charity {
 
         // clear out any pre-existing state
         clear();
+        // send out event
+        Kickoff(
+            _charity,
+            _charitySplit,
+            _winnerSplit,
+            _ownerSplit,
+            _valuePerEntry,
+            kick.kickTime,
+            _startTime,
+            _revealTime,
+            _endTime
+        );
 
     }
 

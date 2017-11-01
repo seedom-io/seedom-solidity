@@ -61,13 +61,6 @@ module.exports.main = async (state) => {
 
     }
 
-    // shut down?
-    if (!state.persist) {
-        if (state.parity) {
-            state.parity.execution.process.kill();
-        }
-    }
-
     return state;
 
 }
@@ -203,8 +196,7 @@ const getParityState = async () => {
     const state = {};
 
     state.parity = await parity.main({
-        fresh: false,
-        persist: true
+        fresh: false
     });
 
     state.network = state.parity.network;

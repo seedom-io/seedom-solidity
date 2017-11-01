@@ -1,7 +1,5 @@
 {
     "test": {
-        "host": "localhost",
-        "port": 8545,
         "gas": "1500000",
         "gasPrice": "30000000000000",
         "password": "password",
@@ -9,8 +7,7 @@
         "accounts": 10
     },
     "main": {
-        "host": "localhost",
-        "port": 8545,
+        "url": "localhost:8545",
         "verify": true,
         "requires": "test",
         "gas": "1500000",

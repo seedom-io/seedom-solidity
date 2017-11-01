@@ -3,6 +3,10 @@
 const program = require('commander');
 const cli = require('./cli');
 const stager = require('./stager');
+const wtfnode = require('wtfnode');
+
+// print out anything hanging after ctrl-c
+wtfnode.init();
 
 cli.logo('chronicle');
 
@@ -27,9 +31,11 @@ program
     .alias('p')
     .description("start parity")
     .option('-f, --fresh', "fresh start")
+    .option('-k, --kill', "kill parity")
     .action((options) => {
         require('./parity').main({
-            fresh: options.fresh ? true : false
+            fresh: options.fresh ? true : false,
+            kill: options.kill ? true : false
         });
     });
 
@@ -43,14 +49,6 @@ program
             networkName: network,
             force: options.force ? true : false
         });
-    });
-
-program
-    .command('run')
-    .alias('r')
-    .description("run chronicle")
-    .action(() => {
-        require('./runner').main({});
     });
 
 program

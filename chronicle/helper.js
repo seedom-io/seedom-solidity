@@ -15,6 +15,8 @@ module.exports.ipcExt = 'ipc';
 module.exports.logExt = 'log';
 module.exports.tomlExt = 'toml';
 module.exports.passExt = 'pass';
+module.exports.pidExt = 'pid';
+
 
 module.exports.buildDir = 'build';
 module.exports.testDir = 'test';
@@ -40,6 +42,7 @@ module.exports.parityIpcFile = path.join(this.parityDir, 'parity.' + this.ipcExt
 module.exports.parityLogFile = path.join(this.parityDir, 'parity.' + this.logExt);
 module.exports.parityPasswordFile = path.join(this.parityDir, 'parity.' + this.passExt);
 module.exports.paritySignerAuthCodesFile = path.join(this.paritySignerDir, 'authcodes');
+module.exports.parityPidFile = path.join(this.parityDir, 'parity.' + this.pidExt);
 
 module.exports.networkConfigFile = path.join(this.configDir, 'network.' + this.jsonExt);
 module.exports.contractConfigFile = path.join(this.configDir, 'contract.' + this.jsonExt);

@@ -25,11 +25,10 @@ const defaultParams = {
 
 module.exports.main = async (state) => {
     
-    // do a first deploy (test network, yes force, yes forget, and yes persist)
+    // do a first deploy (test network, yes force, yes forget)
     state.deployer = await deployer.main({
         force: true,
-        forget: true,
-        persist: true
+        forget: true
     });
 
     // get parity as a force deployment will have started it
@@ -51,11 +50,6 @@ module.exports.main = async (state) => {
     const testFiles = await getTestFiles(state.suiteNames);
     const mocha = createMocha(testFiles);
     await promiseRun(mocha);
-
-    // kill parity
-    if (!state.persist) {
-        //state.parity.execution.process.kill();
-    }
 
     return state;
 

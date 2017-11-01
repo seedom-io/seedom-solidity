@@ -23,10 +23,8 @@ module.exports.main = async (state) => {
     cli.section("stager");
 
     // setup our state from the deployer's
-    state.parity = state.deployer.parity;
     state.accountAddresses = state.deployer.accountAddresses;
     state.web3 = state.deployer.web3;
-
     // get all web 3 instances, including ones not deployed
     state.web3Instances = await getWeb3Instances(
         state.deployer.web3Instances,
@@ -46,11 +44,6 @@ module.exports.main = async (state) => {
 
     cli.success("%s staging complete", state.stageName);
 
-    // kill parity
-    if (!state.persist) {
-        state.parity.execution.process.kill();
-    }
-
     return state;
 
 }
@@ -58,18 +51,16 @@ module.exports.main = async (state) => {
 const getDeployer = async (networkName) => {
 
     if (networkName == h.testNetworkName) {
-        // do a first deploy (test network, yes force, yes forget, and yes persist)
+        // do a first deploy (test network, yes force, yes forget)
         return await deployer.main({
             force: true,
-            forget: true,
-            persist: true
+            forget: true
         });
     } else {
-        // do a first deploy (other network, no force, no forget, and yes persist)
+        // do a first deploy (other network, no force, no forget)
         return await deployer.main({
             force: false,
-            forget: false,
-            persist: true
+            forget: false
         });
     }
 

@@ -12,6 +12,7 @@ suite('kickoff', (state) => {
         await kickoff.stage(state, stage);
 
         const now = ch.now();
+        
         const actualKickoff = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
         const actualKickTimeDifference = actualKickoff._kickTime - now;
 
@@ -50,8 +51,10 @@ suite('kickoff', (state) => {
         
         for (let testArgs of testData) {
             cli.info(testArgs);
+            const transaction = state.web3Instances.charity.methods.kickoff.apply(null, testArgs);
+            const receipt = await parity.send(state.web3, transaction, { from: stage.owner });
             await assert.isRejected(
-                parity.send(state.web3, state.web3Instances.charity.methods.kickoff.apply(null, testArgs), { from: stage.owner }),
+                parity.check(state.web3, receipt),
                 parity.SomethingThrownException,
                 null,
                 testArgs
@@ -89,8 +92,10 @@ suite('kickoff', (state) => {
 
         for (let testArgs of testData) {
             cli.info(testArgs);
+            const transaction = state.web3Instances.charity.methods.kickoff.apply(null, testArgs);
+            const receipt = await parity.send(state.web3, transaction, { from: stage.owner });
             await assert.isRejected(
-                parity.send(state.web3, state.web3Instances.charity.methods.kickoff.apply(null, testArgs), { from: stage.owner }),
+                parity.check(state.web3, receipt),
                 parity.SomethingThrownException,
                 null,
                 testArgs

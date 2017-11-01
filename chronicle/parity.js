@@ -10,6 +10,7 @@ const path = require("path");
 const dir = require('node-dir');
 
 const startupDelay = 5;
+const traceDelay = 1000;
 
 module.exports.SendErrorException = 'SendErrorException';
 module.exports.NoTraceDataException = 'NoTraceDataException';
@@ -25,6 +26,18 @@ module.exports.main = async (state) => {
         return;
     }
 
+    // see if parity running
+    const pid = await getPid();
+    // kill if we are told to do so
+    if (pid) {
+        cli.success("found parity running at pid %d", pid);
+        // do we kill?
+        if (state.kill) {
+            kill(pid);
+            return;
+        }
+    }
+
     // load network configs and parameters
     const networkConfig = await h.loadJsonFile(h.networkConfigFile);
     state.network = networks.get(h.testNetworkName, networkConfig);
@@ -32,13 +45,9 @@ module.exports.main = async (state) => {
     
     // if dirs are prepped and we aren't forced, run parity
     if (prepared && !state.fresh) {
-        Object.assign(state, await launch(state.network));
+        Object.assign(state, await launch(state.network, pid));
     } else {
-        Object.assign(state, await initialize(state.network));
-    }
-
-    if (!state.persist) {
-        state.execution.process.kill();
+        Object.assign(state, await initialize(state.network, pid));
     }
 
     return state;
@@ -59,14 +68,18 @@ const getInitialized = async () => {
     return items.length > 0;
 }
 
-const launch = async (network) => {
+const launch = async (network, pid) => {
     
     // get parity chain data
     const parityChain = await h.loadJsonFile(h.parityChainFile);
     // get account addresses
     const accountAddresses = getChainAccountAddresses(parityChain.accounts);
+
     // execute parity
-    const execution = await executeUnlocked(accountAddresses);
+    if (!pid) {
+        await executeUnlocked(accountAddresses);
+    }
+
     // get web3
     const web3 = await networks.getWeb3(network);
     // get authorization token
@@ -75,8 +88,7 @@ const launch = async (network) => {
     return {
         web3: web3,
         accountAddresses: accountAddresses,
-        authorizationToken: authorizationToken,
-        execution: execution
+        authorizationToken: authorizationToken
     }
 
 }
@@ -97,18 +109,15 @@ const getChainAccountAddresses = (chainAccounts) => {
 }
 
 const executeUnlocked = async (accountAddresses) => {
-    return await execute([
+    await execute([
         '--unlock',
         accountAddresses.join(),
         '--password',
         h.parityPasswordFile
-    ]);
+    ], true);
 }
 
-const execute = async (args) => {
-
-    //cli.info("starting parity...");
-    const timer = cli.progress("starting parity", startupDelay);
+const execute = async (args, detached) => {
 
     let actualArgs = [
         '--config',
@@ -119,22 +128,70 @@ const execute = async (args) => {
         actualArgs = actualArgs.concat(args);
     }
 
-    const parityProcess = childProcess.spawn('parity', actualArgs);
+    let options = {};
+    // launch detached?
+    if (detached) {
+        options = {
+            detached: true,
+            stdio: 'ignore'
+        }
+    };
 
-    const parityClosed = new Promise((fulfill, reject) => {
-        process.on('closed', () => {
-            fulfill();
-        })
-    });
+    let process = childProcess.spawn('parity', actualArgs, options);
+    let pid = process.pid;
+    process.unref();
 
-    //await h.sleep(startupDelay);
-    await timer;
-
-    return {
-        process: parityProcess,
-        closed: parityClosed
+    // write the pid file if detached
+    if (detached) {
+        await h.writeFile(h.parityPidFile, pid);
     }
 
+    await cli.progress("parity starting", startupDelay);
+
+    return pid;
+
+}
+
+const getPid = async () => {
+    
+    let pid;
+    // check for chronicle parity pid
+    try {
+        pid = await h.readFile(h.parityPidFile);
+    } catch (error) {
+        return null;
+    }
+
+    // no pid, done
+    if (!pid) {
+        return null;
+    }
+
+    let running;
+
+    try {
+        running = process.kill(pid, 0);
+    }
+    catch (error) {
+        running = error.code === 'EPERM'
+    }
+
+    if (running) {
+        return pid;
+    }
+
+    return null;
+
+}
+
+const kill = (pid) => {
+    try {
+        process.kill(pid);
+        cli.success('parity killed');
+        return true;
+    } catch (error) {
+        return false;
+    }
 }
 
 const getLastAuthorizationToken = async () => {
@@ -145,9 +202,14 @@ const getLastAuthorizationToken = async () => {
     return lastAuthCodeLineParts[0];
 }
 
-const initialize = async (network) => {
+const initialize = async (network, pid) => {
 
     cli.info("initializing parity");
+
+    // if we received a pid, kill it
+    if (pid) {
+        kill(pid);
+    }
 
     // deinitialize
     await fse.emptyDir(h.parityDir);
@@ -165,7 +227,7 @@ const initialize = async (network) => {
     await h.writeFile(h.parityPasswordFile, network.password);
 
     // run parity to open rpc for account creation
-    let execution = await execute();
+    pid = await execute();
     // get web3
     const web3 = await networks.getWeb3(network);
     // create accounts from network
@@ -173,7 +235,7 @@ const initialize = async (network) => {
     // generate authorization token
     const authorizationToken = await this.createAuthorizationToken(web3);
     // close parity
-    execution.process.kill();
+    await kill(pid);
 
     // log accounts to the chain
     await logAccounts(accountAddresses, network.balance, config.chain);
@@ -185,13 +247,12 @@ const initialize = async (network) => {
     cli.success("initial chain database cleared for new genesis");
 
     // run and stop parity (genesis)
-    execution = await executeUnlocked(accountAddresses);
+    await executeUnlocked(accountAddresses);
 
     return {
         web3: web3,
         accountAddresses: accountAddresses,
-        authorizationToken: authorizationToken,
-        execution: execution
+        authorizationToken: authorizationToken
     }
 
 }
@@ -281,7 +342,7 @@ module.exports.getTrace = async (transactionHash, web3) => {
 
     const result = await networks.providerCall(web3, 'trace_replayTransaction', [
         transactionHash,
-        ["trace"]
+        ['trace']
     ]);
 
     return result.trace;
@@ -291,30 +352,14 @@ module.exports.getTrace = async (transactionHash, web3) => {
 module.exports.send = (web3, transaction, options) => {
 
     return new Promise((accept, reject) => {
-
+        
         transaction.send(options)
 
             .on('error', (error) => {
                 reject(this.SendErrorException);
             })
             
-            .on('confirmation', async (num, receipt) => {
-
-                await h.sleep(1000);
-
-                const trace = await this.getTrace(receipt.transactionHash, web3);
-                
-                if (trace.length == 0) {
-                    reject(this.NoTraceDataException);
-                    return;
-                }
-
-                for (let line of trace) {
-                    if ('error' in line) {
-                        reject(this.SomethingThrownException);
-                        return;
-                    }
-                }
+            .on('confirmation', (num, receipt) => {
 
                 accept(receipt);
 
@@ -323,3 +368,22 @@ module.exports.send = (web3, transaction, options) => {
     });
 
 };
+
+module.exports.check = async (web3, receipt) => {
+
+    // wait a tick before checking transaction trace
+    await h.sleep(traceDelay);
+
+    const trace = await this.getTrace(receipt.transactionHash, web3);
+    
+    if (trace.length == 0) {
+        throw this.NoTraceDataException;
+    }
+
+    for (let line of trace) {
+        if ('error' in line) {
+            throw this.SomethingThrownException;
+        }
+    }
+
+}
