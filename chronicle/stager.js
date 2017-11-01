@@ -3,6 +3,7 @@ const cli = require('./cli');
 const dir = require('node-dir');
 const path = require("path");
 const deployer = require('./deployer');
+const networks = require('./networks');
 const chrono = require('chrono-node');
 
 module.exports.main = async (state) => {
@@ -32,15 +33,14 @@ module.exports.main = async (state) => {
         state.web3
     );
 
-    const stage = {};
-    // stage with state and fresh stage
-    await state.stageModule.stage(state, stage);
+    cli.info("staging %s", state.stageName);
 
+    // start with fresh stage
+    state.stage = {};
+    // stage with state and fresh stage
+    await state.stageModule.stage(state);
     // print out set options
-    for (let stageItem in stage) {
-        const stageValue = stage[stageItem];
-        cli.info("%s = %s", stageItem, stageValue);
-    }
+    cli.json(state.stage, "final staging data:");
 
     cli.success("%s staging complete", state.stageName);
 
@@ -138,7 +138,7 @@ const command = (program, stageModules) => {
             command = stageModule.optionize(command);
         }
 
-        command.action((network, commander) => {
+        command.action(async (network, commander) => {
 
             const state = {
                 networkName: network,
@@ -155,7 +155,11 @@ const command = (program, stageModules) => {
                 }
             }
 
-            this.main(state);
+            await this.main(state);
+            // kill web3 if we have it
+            if (state.web3) {
+                networks.destroyWeb3(state.web3);
+            }
 
         });
 
@@ -167,19 +171,4 @@ global.parseDate = (string) => {
     const results = chrono.parse(string);
     const date = results[0].start.date();
     return h.time(date);
-}
-
-global.itemize = (name, fallback, state, stage) => {
-
-    if (name in stage) {
-        return;
-    }
-
-    if (name in state) {
-        stage[name] = state[name];
-        return;
-    }
-
-    stage[name] = fallback;
-
 }

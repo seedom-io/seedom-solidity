@@ -3,6 +3,7 @@
 const program = require('commander');
 const cli = require('./cli');
 const stager = require('./stager');
+const networks = require('./networks');
 const wtfnode = require('wtfnode');
 
 // print out anything hanging after ctrl-c
@@ -14,6 +15,13 @@ process.on('exit', () => {
     cli.nl();
 });
 
+const main = async (name, state) => {
+    await require('./' + name).main(state);
+    // kill web3 if we have it
+    if (state.web3) {
+        networks.destroyWeb3(state.web3);
+    }
+}
 
 program
     .command('compile')
@@ -21,7 +29,7 @@ program
     .description("compile contracts")
     .option('-f, --force', "force compilation")
     .action((options) => {
-        require('./compiler').main({
+        main('compile', {
             force: options.force ? true : false
         });
     });
@@ -33,7 +41,7 @@ program
     .option('-f, --fresh', "fresh start")
     .option('-k, --kill', "kill parity")
     .action((options) => {
-        require('./parity').main({
+        main('parity', {
             fresh: options.fresh ? true : false,
             kill: options.kill ? true : false
         });
@@ -45,7 +53,7 @@ program
     .description("deploy chronicle")
     .option('-f, --force', "force deployment")
     .action((network, options) => {
-        require('./deployer').main({
+        main('deployer', {
             networkName: network,
             force: options.force ? true : false
         });
@@ -56,7 +64,7 @@ program
     .alias('t')
     .description("test chronicle")
     .action((suites) => {
-        require('./tester').main({
+        main('tester', {
             suiteNames: suites
         });
     });

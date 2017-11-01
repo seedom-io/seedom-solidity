@@ -4,6 +4,7 @@ module.exports.optionize = (command) => {
     return command;
 }
 
-module.exports.stage = async (state, stage) => {
-    itemize('owner', state.accountAddresses[0], state, stage);
+module.exports.stage = async (state) => {
+    state.stage.owner = state.accountAddresses[0];
+    return state;
 }

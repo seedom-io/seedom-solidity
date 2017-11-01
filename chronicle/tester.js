@@ -8,6 +8,7 @@ const h = require('./helper');
 const deployer = require('./deployer');
 const parity = require('./parity');
 const cli = require('./cli');
+const stager = require('./stager');
 const Mocha = require('mocha');
 
 global.chai = require('chai');
@@ -88,14 +89,21 @@ const setupSuite = (state) => {
 
     global.suite = (name, tests) => {
         Mocha.describe(name, function() {
+
             this.timeout(15000);
 
-            afterEach("redeploy", async () => {
+            beforeEach("prepare", () => {
+                // clear out existing stage
+                state.stage = {};
+            });
+
+            afterEach("deploy", async () => {
                 // update web 3 instances for next test
                 state.web3Instances = await deployer.again(state.deploymentPlans, state.web3);
             });
 
             tests(state);
+
         });
     };
 
@@ -103,8 +111,7 @@ const setupSuite = (state) => {
         
         Mocha.it(name, async function() {
             this.timeout(15000);
-            // run test against current state with fresh stages
-            return await code({});
+            return await code();
         });
 
     };

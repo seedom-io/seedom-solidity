@@ -134,7 +134,6 @@ const deploy = async (
     // get base state
     if (networkName == h.testNetworkName) {
         state = await getParityState();
-        cli.section("deployer");
     } else {
         state = await getNetworkState(networkName);
     }
@@ -202,6 +201,9 @@ const getParityState = async () => {
     state.network = state.parity.network;
     state.web3 = state.parity.web3;
     state.accountAddresses = state.parity.accountAddresses;
+
+    cli.section("deployer");
+    cli.success("retrieved state information from parity");
 
     return state;
 

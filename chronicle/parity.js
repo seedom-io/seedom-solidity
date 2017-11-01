@@ -12,9 +12,9 @@ const dir = require('node-dir');
 const startupDelay = 5;
 const traceDelay = 1000;
 
-module.exports.SendErrorException = 'SendErrorException';
-module.exports.NoTraceDataException = 'NoTraceDataException';
-module.exports.SomethingThrownException = 'SomethingThrownException';
+module.exports.SendError = 'SendError';
+module.exports.NoTraceData = 'NoTraceData';
+module.exports.SomethingThrown = 'SomethingThrown';
 
 module.exports.main = async (state) => {
 
@@ -356,7 +356,7 @@ module.exports.send = (web3, transaction, options) => {
         transaction.send(options)
 
             .on('error', (error) => {
-                reject(this.SendErrorException);
+                reject(this.SendError);
             })
             
             .on('confirmation', (num, receipt) => {
@@ -377,13 +377,19 @@ module.exports.check = async (web3, receipt) => {
     const trace = await this.getTrace(receipt.transactionHash, web3);
     
     if (trace.length == 0) {
-        throw this.NoTraceDataException;
+        throw this.NoTraceData;
     }
 
     for (let line of trace) {
         if ('error' in line) {
-            throw this.SomethingThrownException;
+            throw this.SomethingThrown;
         }
     }
 
+}
+
+module.exports.sendAndCheck = async (web3, transaction, options) => {
+    let receipt = await this.send(web3, transaction, options);
+    await this.check(web3, receipt);
+    return receipt;
 }

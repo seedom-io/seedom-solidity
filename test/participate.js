@@ -1,59 +1,29 @@
-var chai = require('chai');
-var chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
-var assert = chai.assert;
-var th = require('./helpers');
+const ch = require('../chronicle/helper');
+const sh = require('../stage/helper');
+const cli = require('../chronicle/cli');
+const parity = require('../chronicle/parity');
+const instantiate = require('../stage/instantiate');
+const participate = require('../stage/participate');
 
-module.exports = (artifact, accounts) => {
-
-    var validOwner = accounts[0];
-    var validCharity = accounts[1];
-    var validParticipant = accounts[2];
-    var validParticipant2 = accounts[3];
-    var validParticipant3 = accounts[4];
-    var validParticipant4 = accounts[5];
-    var validCharitySplit = 49;
-    var validWinnerSplit = 49;
-    var validOwnerSplit = 2;
-    var validValuePerEntry = 1000;
-
-    var validCharityRandom = th.random();
-    var validCharityHashedRandom = th.hashedRandom(validCharityRandom, validCharity);
+suite('participate', (state) => {
 
     test("should accept two participants properly after start", async () => {
 
-        var validRandom = th.random();
-        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
-        var validRandom2 = validRandom + 1;
-        var validHashedRandom2 = th.hashedRandom(validRandom2, validParticipant2);
+        await participate.stage(state);
 
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + th.timeInterval;
-        var validEndTime = validRevealTime + th.timeInterval;
-
-        var instance = await artifact.new();
-
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
-        );
-
-        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
-
-        // wait for charity to start
-        await th.sleep(th.timeInterval + (th.timeInterval / 2));
+        // wait for start
+        await th.sleep(th.timeInterval);
 
         await contracts.charity.methods.participate(
             validHashedRandom,
             { from: validParticipant }
         );
+
+        const participant = stage.accountAddresses[2];
+        const transaction = state.web3Instances.charity.methods.participate(charityHashedRandom);
+        await assert.isFulfilled(
+            parity.sendAndCheck(state.web3, transaction, { from: participant })
+        )
 
         var actualParticipant = await contracts.charity.methods.participant, validParticipant, { from: validParticipant });
         var actualEntries = actualParticipant[0];
@@ -106,6 +76,7 @@ module.exports = (artifact, accounts) => {
 
     });
 
+    /*
     test("should accept funding with participation and refund after start", async () => {
 
         var validRandom = th.random();
@@ -376,5 +347,6 @@ module.exports = (artifact, accounts) => {
         assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
 
     });
+    */
 
 }

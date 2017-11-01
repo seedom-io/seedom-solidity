@@ -2,15 +2,18 @@ const instantiate = require('../stage/instantiate');
 
 suite('instantiate', (state) => {
 
-    test("should set the owner to us", async (stage) => {
-        await instantiate.stage(state, stage);
+    test("should set the owner to us", async () => {
+        await instantiate.stage(state);
+        const stage = state.stage;
         var actualOwner = await state.web3Instances.charity.methods.owner().call({from: stage.owner});
         assert.equalIgnoreCase(actualOwner, stage.owner, "owner wasn't us");
     });
 
-    test("should have zeroed out properties", async (stage) => {
+    test("should have zeroed out properties", async () => {
 
-        await instantiate.stage(state, stage);
+        await instantiate.stage(state);
+
+        const stage = state.stage;
 
         const actualWinner = await state.web3Instances.charity.methods.winner().call({ from: stage.owner });
         const actualCancelled = await state.web3Instances.charity.methods.cancelled().call({ from: stage.owner });

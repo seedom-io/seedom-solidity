@@ -4,7 +4,6 @@ const net = require('net');
 const h = require('./helper');
 
 const jsonrpc = "2.0";
-const ipcTimeout = 3000;
 
 module.exports.getWeb3 = async (network) => {
 
@@ -25,16 +24,8 @@ const createWeb3 = (network) => {
     let provider;
 
     if (!('url' in network)) {
-
         // assume local test; create web3 ipc provider
         provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
-        // automatically timeout ipc connection
-        const socket = provider.connection;
-        socket.setTimeout(ipcTimeout);
-        socket.on('timeout', () => {
-            socket.destroy();
-        });
-
     } else {
         // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
         provider = new Web3.providers.WebsocketProvider(network.url);
@@ -50,6 +41,10 @@ const testWeb3 = async (web3) => {
     } catch (error) {
         return false;
     }
+}
+
+module.exports.destroyWeb3 = (web3) => {
+    web3.currentProvider.connection.destroy();
 }
 
 module.exports.get = (networkName, networkConfig) => {

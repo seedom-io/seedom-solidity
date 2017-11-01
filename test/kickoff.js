@@ -7,12 +7,13 @@ const kickoff = require('../stage/kickoff');
 
 suite('kickoff', (state) => {
 
-    test("should kickoff properly", async (stage) => {
+    test("should kickoff properly", async () => {
 
-        await kickoff.stage(state, stage);
+        await kickoff.stage(state);
 
         const now = ch.now();
-        
+        const stage = state.stage;
+
         const actualKickoff = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
         const actualKickTimeDifference = actualKickoff._kickTime - now;
 
@@ -28,11 +29,12 @@ suite('kickoff', (state) => {
 
     });
 
-    test("should fail to kickoff with invalid data", async (stage) => {
+    test("should fail to kickoff with invalid data", async () => {
 
-        await instantiate.stage(state, stage);
+        await instantiate.stage(state);
 
         const now = ch.now();
+        const stage = state.stage;
         const charity = state.accountAddresses[1];
         const startTime = now + sh.timeInterval;
         const revealTime = startTime + sh.timeInterval;
@@ -52,10 +54,9 @@ suite('kickoff', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             const transaction = state.web3Instances.charity.methods.kickoff.apply(null, testArgs);
-            const receipt = await parity.send(state.web3, transaction, { from: stage.owner });
             await assert.isRejected(
-                parity.check(state.web3, receipt),
-                parity.SomethingThrownException,
+                parity.sendAndCheck(state.web3, transaction, { from: stage.owner }),
+                parity.SomethingThrown,
                 null,
                 testArgs
             );
@@ -63,11 +64,12 @@ suite('kickoff', (state) => {
 
     });
 
-    test("should fail to kickoff with invalid dates", async (stage) => {
+    test("should fail to kickoff with invalid dates", async () => {
 
-        await instantiate.stage(state, stage);
+        await instantiate.stage(state);
 
         const now = ch.now();
+        const stage = state.stage;
         const charity = state.accountAddresses[1];
         const startTime = now + sh.timeInterval;
         const revealTime = startTime + sh.timeInterval;
@@ -93,10 +95,9 @@ suite('kickoff', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             const transaction = state.web3Instances.charity.methods.kickoff.apply(null, testArgs);
-            const receipt = await parity.send(state.web3, transaction, { from: stage.owner });
             await assert.isRejected(
-                parity.check(state.web3, receipt),
-                parity.SomethingThrownException,
+                parity.sendAndCheck(state.web3, transaction, { from: stage.owner }),
+                parity.SomethingThrown,
                 null,
                 testArgs
             );
