@@ -1,24 +1,14 @@
-var crypto = require('crypto');
-var keccak256 = require('js-sha3').keccak256;
+const crypto = require('crypto');
+const keccak256 = require('js-sha3').keccak256;
 
 module.exports.timeInterval = 8;
 
-var minFirstDecimal = 9;
-var maxFirstDecimal = 255;
+const minFirstDecimal = 9;
+const maxFirstDecimal = 255;
 module.exports.random = function (firstDecimal) {
-
     const buffer = Buffer.alloc(32);
-
-    // allow customization of first decimal
-    if (!firstDecimal) {
-        firstDecimal = Math.floor((Math.random() * (maxFirstDecimal - minFirstDecimal)) + minFirstDecimal);
-    }
-
-    buffer[0] = firstDecimal;
-    crypto.randomFillSync(buffer, 1, 31);
-
+    crypto.randomFillSync(buffer, 0, 32);
     return '0x' + buffer.toString('hex');
-
 }
 
 module.exports.hashedRandom = function (random, participant) {

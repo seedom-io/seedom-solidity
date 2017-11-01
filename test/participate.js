@@ -2,7 +2,8 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const instantiate = require('../stage/instantiate');
+const kickoff = require('../stage/kickoff');
+const seed = require('../stage/seed');
 const participate = require('../stage/participate');
 
 suite('participate', (state) => {
@@ -79,218 +80,148 @@ suite('participate', (state) => {
         assert.equal(actualTotalRevealers, 0, "total revealers not zero");
 
     });
-/*
-    test("should fail participation without start", async () => {
 
-        var validRandom = th.random();
-        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
+    test("should fail participation without seed", async () => {
 
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + th.timeInterval;
-        var validEndTime = validRevealTime + th.timeInterval;
+        await kickoff.stage(state);
 
-        var instance = await artifact.new();
+        const stage = state.stage;
+        const startTime = stage.startTime;
+        const participant = state.accountAddresses[2];
 
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
+        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
+        await cli.progress("waiting for start phase", startTime - kick._kickTime);
+
+        const random = sh.random();
+        const hashedRandom = sh.hashedRandom(random, participant);
+
+        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown
         );
 
-        // wait for charity to start
-        await th.sleep(th.timeInterval + (th.timeInterval / 2));
+    });
 
-        assert.isRejected(contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validParticipant }
-        ));
+    test("should fail participation without instantiation", async () => {
+
+        const participant = state.accountAddresses[2];
+        const random = sh.random();
+        const hashedRandom = sh.hashedRandom(random, participant);
+
+        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown
+        );
 
     });
 
-    test("should fail participation without construct", async () => {
-
-        var validRandom = th.random();
-        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
-
-        var instance = await artifact.new();
-
-        assert.isRejected(contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validParticipant }
-        ));
-
-    });
-
+    
     test("should reject participation before and after participation phase", async () => {
 
-        var validRandom = th.random();
-        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
+        await seed.stage(state);
 
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + 1;
-        var validEndTime = validRevealTime + th.timeInterval;
+        const participant = state.accountAddresses[2];
+        const random = sh.random();
+        const hashedRandom = sh.hashedRandom(random, participant);
 
-        var instance = await artifact.new();
-
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
+        let transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown
         );
 
-        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
+        const stage = state.stage;
+        const revealTime = stage.revealTime;
 
-        assert.isRejected(contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validParticipant }
-        ));
+        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
+        await cli.progress("waiting for reveal phase", revealTime - kick._kickTime);
 
-        await th.sleep(th.timeInterval + 1 + (th.timeInterval / 2));
-
-        assert.isRejected(contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validParticipant }
-        ));
+        transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown
+        );
 
     });
 
     test("should fail owner participation", async () => {
 
-        var validRandom = th.random();
-        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
+        await seed.stage(state);
+        
+        const stage = state.stage;
+        const random = sh.random();
+        const hashedRandom = sh.hashedRandom(random, stage.owner);
+        const startTime = stage.startTime;
 
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + th.timeInterval;
-        var validEndTime = validRevealTime + th.timeInterval;
+        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
+        await cli.progress("waiting for start phase", startTime - kick._kickTime);
 
-        var instance = await artifact.new();
-
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
+        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: stage.owner }),
+            parity.SomethingThrown
         );
-
-        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
-
-        // wait for charity to start
-        await th.sleep(th.timeInterval + (th.timeInterval / 2));
-
-        assert.isRejected(contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validOwner }
-        ));
 
     });
 
     test("should reject multiple participation from same address", async () => {
 
-        var validRandom = th.random();
-        var validHashedRandom = th.hashedRandom(validRandom, validParticipant);
+        await seed.stage(state);
+        
+        const participant = state.accountAddresses[2];
+        let random = sh.random();
+        let hashedRandom = sh.hashedRandom(random, participant);
+        const stage = state.stage;
+        const startTime = stage.startTime;
 
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + th.timeInterval;
-        var validEndTime = validRevealTime + th.timeInterval;
+        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
+        await cli.progress("waiting for start phase", startTime - kick._kickTime);
 
-        var instance = await artifact.new();
-
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
+        let transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isFulfilled(
+            parity.sendAndCheck(state.web3, transaction, { from: participant })
         );
 
-        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
-
-        // wait for charity to start
-        await th.sleep(th.timeInterval + (th.timeInterval / 2));
-
-        await contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validParticipant }
+        transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown
         );
 
-        assert.isRejected(contracts.charity.methods.participate(
-            validHashedRandom,
-            { from: validParticipant }
-        ));
+        // generate a new random just for fun
+        random = sh.random();
+        hashedRandom = sh.hashedRandom(random, participant);
+
+        transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown
+        );
 
     });
 
-    test("should reject participation of bad hashed randoms after start", async () => {
+    test("reject participation of bad hashed randoms after start", async () => {
 
-        var validStartTime = th.now() + th.timeInterval;
-        var validRevealTime = validStartTime + th.timeInterval;
-        var validEndTime = validRevealTime + th.timeInterval;
+        await seed.stage(state);
+        
+        const participant = state.accountAddresses[2];
+        const stage = state.stage;
+        const startTime = stage.startTime;
 
-        var instance = await artifact.new();
+        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
+        await cli.progress("waiting for start phase", startTime - kick._kickTime);
 
-        await contracts.charity.methods.kickoff(
-            validCharity,
-            validCharitySplit,
-            validWinnerSplit,
-            validOwnerSplit,
-            validValuePerEntry,
-            validStartTime,
-            validRevealTime,
-            validEndTime,
-            { from: validOwner }
+        const hashedRandom = '0x0000000000000000000000000000000000000000000000000000000000000000';
+        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.SomethingThrown,
+            null,
+            hashedRandom
         );
 
-        await contracts.charity.methods.seed(validCharityHashedRandom, { from: validCharity });
-
-        // wait for charity to start
-        await th.sleep(th.timeInterval + (th.timeInterval / 2));
-
-        assert.isRejected(contracts.charity.methods.participate(0, { from: validParticipant }));
-
-        var actualParticipant = await contracts.charity.methods.participant, validParticipant, { from: validParticipant });
-    var actualEntries = actualParticipant[0];
-    var actualHashedRandom = actualParticipant[1];
-    var actualRandom = actualParticipant[2];
-
-    assert.equal(actualEntries.toNumber(), 0, "entries should be zero");
-    assert.equal(actualHashedRandom, 0, "hashed random should be zero");
-    assert.equal(actualRandom.toNumber(), 0, "random should be zero");
-
-    var actualBalance = await contracts.charity.methods.balance, validParticipant, { from: validParticipant });
-assert.equal(actualBalance.toNumber(), 0, "balance should be zero");
-
-var actualTotalEntries = await contracts.charity.methods.totalEntries, );
-var actualTotalRevealed = await contracts.charity.methods.totalRevealed, );
-var actualTotalParticipants = await contracts.charity.methods.totalParticipants, );
-var actualTotalRevealers = await contracts.charity.methods.totalRevealers, );
-
-assert.equal(actualTotalEntries.toNumber(), 0, "total entries should be zero");
-assert.equal(actualTotalRevealed.toNumber(), 0, "total revealed not zero");
-assert.equal(actualTotalParticipants.toNumber(), 0, "total participants should be zero");
-assert.equal(actualTotalRevealers.toNumber(), 0, "total revealers not zero");
-
     });
-    */
 
 });

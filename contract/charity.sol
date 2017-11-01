@@ -344,7 +344,7 @@ contract Charity {
     function reveal(uint256 _random) public openParticipation neverOwner {
         require(now >= kick.revealTime); // ensure we are after the reveal
         require(now < kick.endTime); // but before the end
-        require(bytes32(_random)[0] > 0x8); // random avoids bit-flipping and padding
+        require(_random != 0);
 
         // find the original participant
         address _sender = msg.sender;

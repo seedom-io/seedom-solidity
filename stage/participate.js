@@ -17,7 +17,6 @@ module.exports.stage = async (state) => {
     const stage = state.stage;
     const startTime = stage.startTime;
     const kick = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
-
     await cli.progress("waiting for start phase", startTime - kick._kickTime);
 
     stage.participantFunds = stage.participantFunds ? stage.participantFunds : 0;
