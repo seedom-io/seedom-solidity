@@ -51,10 +51,10 @@ module.exports.main = async (state) => {
 const getDeployer = async (networkName) => {
 
     if (networkName == h.testNetworkName) {
-        // do a first deploy (test network, yes force, yes forget)
+        // do a first deploy (test network, yes force, no forget)
         return await deployer.main({
             force: true,
-            forget: true
+            forget: false
         });
     } else {
         // do a first deploy (other network, no force, no forget)
