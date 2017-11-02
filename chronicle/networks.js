@@ -4,6 +4,7 @@ const net = require('net');
 const h = require('./helper');
 
 const jsonrpc = "2.0";
+const paritySendDelay = 1000;
 
 module.exports.getWeb3 = async (network) => {
 
@@ -24,14 +25,35 @@ const createWeb3 = (network) => {
     let provider;
 
     if (!('url' in network)) {
-        // assume local test; create web3 ipc provider
-        provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
+        // assume local test; create web3 ipc provider (parity)
+        provider = createParityProvider();
     } else {
         // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
         provider = new Web3.providers.WebsocketProvider(network.url);
     }
 
     return new Web3(provider);
+
+}
+
+const createParityProvider = () => {
+
+    const provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
+    // FIXME: parity cannot execute transactions as fast as we send them; we need a delay in between
+    provider.send = function (payload, callback) {
+
+        let delay = 0;
+        if (payload.method == 'eth_sendTransaction' || payload.method == 'eth_sendRawTransaction') {
+            delay = paritySendDelay;
+        }
+
+        setTimeout(() => {
+            Object.getPrototypeOf(provider).send.call(provider, payload, callback);
+        }, delay);
+
+    };
+
+    return provider;
 
 }
 
@@ -58,7 +80,7 @@ module.exports.get = (networkName, networkConfig) => {
 
 }
 
-module.exports.providerCall = async (web3, method, args) => {
+module.exports.callProvider = async (web3, method, args) => {
 
     const request = {
         jsonrpc: jsonrpc,

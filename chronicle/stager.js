@@ -27,20 +27,31 @@ module.exports.main = async (state) => {
     state.accountAddresses = state.deployer.accountAddresses;
     state.web3 = state.deployer.web3;
     // get all web 3 instances, including ones not deployed
-    state.web3Instances = await getWeb3Instances(
-        state.deployer.web3Instances,
+    const instances = await getInstances(
+        state.deployer.contractConfig,
+        state.deployer.instances,
         state.deployer.networkDeployment,
         state.web3
     );
 
-    cli.info("staging %s", state.stageName);
+    // something bad happened
+    if (!instances) {
+        cli.error("'%s' contract is missing from deployment", contractName);
+        return state;
+    }
 
     // start with fresh stage
-    state.stage = {};
+    state.stage = {
+        instances: instances
+    };
+
+    cli.info("staging %s", state.stageName);
+
     // stage with state and fresh stage
     await state.stageModule.stage(state);
-    // print out set options
-    cli.json(state.stage, "final staging data:");
+    
+    // print out stage for all to see
+    printStage(state.stage);
 
     cli.success("%s staging complete", state.stageName);
 
@@ -66,25 +77,44 @@ const getDeployer = async (networkName) => {
 
 }
 
-const getWeb3Instances = async (deployedWeb3Instances, networkDeployment, web3) => {
+const getInstances = async (
+    contractConfig,
+    deployedinstances,
+    networkDeployment,
+    web3
+) => {
 
-    const web3Instances = {};
+    const instances = {};
 
-    // look through all network deployments
-    for (let contractName in networkDeployment) {
-        if (contractName in deployedWeb3Instances) {
-            // move over existing instances
-            web3Instances[contractName] = deployedWeb3Instances[contractName];
-        } else {
-            // create missing ones
-            const latestDeployment = deployer.getLatestDeployment(contractName, networkDeployment);
-            const abiFile = h.getAbiFile(contractName);
-            web3Instances[contractName] = new web3.eth.Contract(abiFile, latestDeployment.address);
+    // the contract config is the source of truth
+    for (let contractName in contractConfig) {
+
+        // first check existing deployed web3 instances for this contract
+        if (contractName in deployedinstances) {
+            instances[contractName] = deployedinstances[contractName];
+            continue;
         }
+
+        // we didn't find it there, let's check for latest deployments
+        const latestDeployment = deployer.getLatestDeployment(contractName, networkDeployment);
+        if (!latestDeployment) {
+            return null;
+        }
+
+        // we found a latest deployment! let's hook up a new web3 instance
+        const abiFile = h.getAbiFile(contractName);
+        instances[contractName] = new web3.eth.Contract(abiFile, latestDeployment.address);
+
     }
 
-    return web3Instances;
+    return instances;
 
+}
+
+const printStage = (stage) => {
+    const instancelessStage = Object.assign({}, stage);
+    delete instancelessStage.instances;
+    cli.json(instancelessStage, "final staging data");
 }
 
 module.exports.prepare = async (program) => {
@@ -170,5 +200,5 @@ const command = (program, stageModules) => {
 global.parseDate = (string) => {
     const results = chrono.parse(string);
     const date = results[0].start.date();
-    return h.time(date);
+    return h.timestamp(date);
 }

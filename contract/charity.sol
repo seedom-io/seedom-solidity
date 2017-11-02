@@ -116,6 +116,10 @@ contract Charity {
         cancelled = true;
     }
 
+    function timestamp() public view returns (uint256) {
+        return now;
+    }
+
     function currentKick() public view returns (
         address _charity,
         uint256 _charitySplit,

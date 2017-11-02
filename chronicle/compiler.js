@@ -15,8 +15,8 @@ module.exports.main = async (state) => {
     // get all contracts
     state.contractNames = await getContractNames();
     if (h.objLength(state.contractNames) == 0) {
-        cli.warning("no solidity contracts found");
-        init.shutdown();
+        cli.error("no solidity contracts found");
+        return state;
     }
 
     // see what contracts actually need updating based on hashes

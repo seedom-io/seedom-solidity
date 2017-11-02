@@ -104,6 +104,6 @@ module.exports.progress = (text, seconds) => {
 }
 
 module.exports.json = (obj, text, ...params) => {
-    this.info(text, normalize(params));
+    this.info(clc.underline(text), normalize(params));
     this.log('\n' + clc.yellow(JSON.stringify(obj, null, 4)) + '\n');
 }

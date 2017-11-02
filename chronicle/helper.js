@@ -99,12 +99,14 @@ module.exports.writeFile = async (file, data) => {
     await fs.writeFile(file, data, defaultEncoding);
 }
 
-module.exports.time = (date) => {
-    return Math.round(date.getTime() / 1000);
-}
+module.exports.timestamp = (date) => {
 
-module.exports.now = () => {
-    return this.time(new Date());
+    if (!date) {
+        date = new Date();
+    }
+
+    return Math.round(date.getTime() / 1000);
+    
 }
 
 module.exports.isArray = (obj) => {

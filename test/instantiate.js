@@ -5,7 +5,7 @@ suite('instantiate', (state) => {
     test("should set the owner to us", async () => {
         await instantiate.stage(state);
         const stage = state.stage;
-        var actualOwner = await state.web3Instances.charity.methods.owner().call({from: stage.owner});
+        const actualOwner = await stage.instances.charity.methods.owner().call({from: stage.owner});
         assert.equalIgnoreCase(actualOwner, stage.owner, "owner wasn't us");
     });
 
@@ -15,12 +15,12 @@ suite('instantiate', (state) => {
 
         const stage = state.stage;
 
-        const actualWinner = await state.web3Instances.charity.methods.winner().call({ from: stage.owner });
-        const actualCancelled = await state.web3Instances.charity.methods.cancelled().call({ from: stage.owner });
-        const actualTotalEntries = await state.web3Instances.charity.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await state.web3Instances.charity.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await state.web3Instances.charity.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await state.web3Instances.charity.methods.totalRevealers().call({ from: stage.owner });
+        const actualWinner = await stage.instances.charity.methods.winner().call({ from: stage.owner });
+        const actualCancelled = await stage.instances.charity.methods.cancelled().call({ from: stage.owner });
+        const actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: stage.owner });
+        const actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: stage.owner });
+        const actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: stage.owner });
+        const actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: stage.owner });
 
         assert.equal(actualWinner, 0, "winner zero");
         assert.isOk(actualCancelled, "initially cancelled");

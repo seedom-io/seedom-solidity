@@ -13,7 +13,6 @@ const startupDelay = 5;
 const killDelay = 5;
 const traceDelay = 1000;
 
-module.exports.SendError = 'SendError';
 module.exports.NoTraceData = 'NoTraceData';
 module.exports.SomethingThrown = 'SomethingThrown';
 
@@ -24,7 +23,7 @@ module.exports.main = async (state) => {
     // ensure parity installed
     if (!(await getInstalled())) {
         cli.error("parity does not exist in path, please install (https://parity.io)");
-        return;
+        return state;
     }
 
     // see if parity running
@@ -34,7 +33,7 @@ module.exports.main = async (state) => {
         // do we kill?
         if (state.kill) {
             await kill(pid);
-            return;
+            return state;
         }
     }
 
@@ -319,7 +318,7 @@ module.exports.createAccounts = async (network, web3) => {
     for (let i = 0; i < network.accounts; i++) {
 
         const recovery = network.password + i;
-        const address = await networks.providerCall(web3, 'parity_newAccountFromPhrase', [
+        const address = await networks.callProvider(web3, 'parity_newAccountFromPhrase', [
             recovery, network.password
         ]);
 
@@ -334,7 +333,7 @@ module.exports.createAccounts = async (network, web3) => {
 }
 
 module.exports.createAuthorizationToken = async (web3) => {
-    const authorizationToken = await networks.providerCall(web3, 'signer_generateAuthorizationToken');
+    const authorizationToken = await networks.callProvider(web3, 'signer_generateAuthorizationToken');
     cli.success("created authorization token %s", authorizationToken);
     return authorizationToken;
 
@@ -342,7 +341,7 @@ module.exports.createAuthorizationToken = async (web3) => {
 
 module.exports.getTrace = async (transactionHash, web3) => {
 
-    const result = await networks.providerCall(web3, 'trace_replayTransaction', [
+    const result = await networks.callProvider(web3, 'trace_replayTransaction', [
         transactionHash,
         ['trace']
     ]);
@@ -351,47 +350,42 @@ module.exports.getTrace = async (transactionHash, web3) => {
 
 }
 
-module.exports.send = (web3, transaction, options) => {
+module.exports.sendMethod = (method, options) => {
+    return verifySend(method.send(options));
+};
 
-    return new Promise((accept, reject) => {
-        
-        transaction.send(options)
+module.exports.sendFallback = (web3, instance, options) => {
 
-            .on('error', (error) => {
-                reject(this.SendError);
-            })
-            
-            .on('confirmation', (num, receipt) => {
+    // set to in transaction
+    const transaction = Object.assign({
+        to: instance.options.address
+    }, options);
 
-                accept(receipt);
-
-            });
-        
-    });
+    return verifySend(web3.eth.sendTransaction(transaction));
 
 };
 
-module.exports.check = async (web3, receipt) => {
+const verifySend = (call) => {
 
-    // wait a tick before checking transaction trace
-    await h.sleep(traceDelay);
+    return new Promise((accept, reject) => {
 
-    const trace = await this.getTrace(receipt.transactionHash, web3);
+        call
     
-    if (trace.length == 0) {
-        throw this.NoTraceData;
-    }
+        .on('error', (error) => {
+            reject(error);
+        })
+        
+        .on('confirmation', (num, receipt) => {
 
-    for (let line of trace) {
-        if ('error' in line) {
-            throw this.SomethingThrown;
-        }
-    }
+            if (!receipt.status) {
+                reject(this.SomethingThrown);
+                return;
+            }
 
-}
+            accept(receipt);
+            
+        });
 
-module.exports.sendAndCheck = async (web3, transaction, options) => {
-    let receipt = await this.send(web3, transaction, options);
-    await this.check(web3, receipt);
-    return receipt;
+    });
+
 }

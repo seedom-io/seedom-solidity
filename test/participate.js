@@ -17,7 +17,7 @@ suite('participate', (state) => {
         // validate every participant
         for (let participant of stage.participants) {
 
-            const actualParticipant = await state.web3Instances.charity.methods.participant(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -26,15 +26,15 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await state.web3Instances.charity.methods.balance(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
         }
 
-        let actualTotalEntries = await state.web3Instances.charity.methods.totalEntries().call({ from: stage.owner });
-        let actualTotalRevealed = await state.web3Instances.charity.methods.totalRevealed().call({ from: stage.owner });
-        let actualTotalParticipants = await state.web3Instances.charity.methods.totalParticipants().call({ from: stage.owner });
-        let actualTotalRevealers = await state.web3Instances.charity.methods.totalRevealers().call({ from: stage.owner });
+        const actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: stage.owner });
+        const actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: stage.owner });
+        const actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: stage.owner });
+        const actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: stage.owner });
 
         assert.equal(actualTotalEntries, 0, "total entries should be zero");
         assert.equal(actualTotalRevealed, 0, "total revealed not zero");
@@ -54,7 +54,7 @@ suite('participate', (state) => {
         // validate every participant
         for (let participant of stage.participants) {
 
-            const actualParticipant = await state.web3Instances.charity.methods.participant(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -63,15 +63,15 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await state.web3Instances.charity.methods.balance(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 500, "refund balance should be correct");
 
         }
 
-        let actualTotalEntries = await state.web3Instances.charity.methods.totalEntries().call({ from: stage.owner });
-        let actualTotalRevealed = await state.web3Instances.charity.methods.totalRevealed().call({ from: stage.owner });
-        let actualTotalParticipants = await state.web3Instances.charity.methods.totalParticipants().call({ from: stage.owner });
-        let actualTotalRevealers = await state.web3Instances.charity.methods.totalRevealers().call({ from: stage.owner });
+        let actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: stage.owner });
+        let actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: stage.owner });
+        let actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: stage.owner });
+        let actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: stage.owner });
 
         const entries = stage.participants.length * 10;
         assert.equal(actualTotalEntries, entries, "total entries should be zero");
@@ -86,18 +86,18 @@ suite('participate', (state) => {
         await kickoff.stage(state);
 
         const stage = state.stage;
-        const startTime = stage.startTime;
         const participant = state.accountAddresses[2];
 
-        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
-        await cli.progress("waiting for start phase", startTime - kick._kickTime);
+        const now = await sh.timestamp(stage.instances.charity);
+        const startTime = stage.startTime;
+        await cli.progress("waiting for start phase", startTime - now);
 
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        const method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
@@ -105,13 +105,14 @@ suite('participate', (state) => {
 
     test("should fail participation without instantiation", async () => {
 
+        const stage = state.stage;
         const participant = state.accountAddresses[2];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        const method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
@@ -122,25 +123,24 @@ suite('participate', (state) => {
 
         await seed.stage(state);
 
+        const stage = state.stage;
         const participant = state.accountAddresses[2];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        let transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        let method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
-        const stage = state.stage;
+        const now = await sh.timestamp(stage.instances.charity);
         const revealTime = stage.revealTime;
+        await cli.progress("waiting for reveal phase", revealTime - now);
 
-        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
-        await cli.progress("waiting for reveal phase", revealTime - kick._kickTime);
-
-        transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
@@ -153,14 +153,14 @@ suite('participate', (state) => {
         const stage = state.stage;
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, stage.owner);
+
+        const now = await sh.timestamp(stage.instances.charity);
         const startTime = stage.startTime;
+        await cli.progress("waiting for start phase", startTime - now);
 
-        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
-        await cli.progress("waiting for start phase", startTime - kick._kickTime);
-
-        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        const method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: stage.owner }),
+            parity.sendMethod(method, { from: stage.owner }),
             parity.SomethingThrown
         );
 
@@ -170,23 +170,23 @@ suite('participate', (state) => {
 
         await seed.stage(state);
         
+        const stage = state.stage;
         const participant = state.accountAddresses[2];
         let random = sh.random();
         let hashedRandom = sh.hashedRandom(random, participant);
-        const stage = state.stage;
+
+        const now = await sh.timestamp(stage.instances.charity);
         const startTime = stage.startTime;
+        await cli.progress("waiting for start phase", startTime - now);
 
-        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
-        await cli.progress("waiting for start phase", startTime - kick._kickTime);
-
-        let transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        let method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isFulfilled(
-            parity.sendAndCheck(state.web3, transaction, { from: participant })
+            parity.sendMethod(method, { from: participant })
         );
 
-        transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
@@ -194,9 +194,9 @@ suite('participate', (state) => {
         random = sh.random();
         hashedRandom = sh.hashedRandom(random, participant);
 
-        transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
@@ -206,17 +206,17 @@ suite('participate', (state) => {
 
         await seed.stage(state);
         
-        const participant = state.accountAddresses[2];
         const stage = state.stage;
-        const startTime = stage.startTime;
+        const participant = state.accountAddresses[2];
 
-        const kick = await state.web3Instances.charity.methods.currentKick().call({ from: participant });
-        await cli.progress("waiting for start phase", startTime - kick._kickTime);
+        const now = await sh.timestamp(stage.instances.charity);
+        const startTime = stage.startTime;
+        await cli.progress("waiting for start phase", startTime - now);
 
         const hashedRandom = '0x0000000000000000000000000000000000000000000000000000000000000000';
-        const transaction = state.web3Instances.charity.methods.participate(hashedRandom);
+        const method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown,
             null,
             hashedRandom

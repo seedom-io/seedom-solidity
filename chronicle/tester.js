@@ -40,7 +40,6 @@ module.exports.main = async (state) => {
     // grab additional stuff required for testing
     state.accountAddresses = state.parity.accountAddresses;
     state.deploymentPlans = state.deployer.deploymentPlans;
-    state.web3Instances = state.deployer.web3Instances;
     state.web3 = state.parity.web3;
 
     // set up suite against state
@@ -86,17 +85,19 @@ const getTestFiles = async (suiteNames) => {
 
 const setupSuite = (state) => {
 
+    // set up the initial stage with deployer web3 instances
+    state.stage = {
+        instances: state.deployer.instances
+    };
+
     global.suite = (name, tests) => {
         Mocha.describe(name, function() {
-            
-            beforeEach("prepare", () => {
-                // clear out existing stage
-                state.stage = {};
-            });
 
             afterEach("deploy", async () => {
-                // update web 3 instances for next test
-                state.web3Instances = await deployer.again(state.deploymentPlans, state.web3);
+                // deploy and start with a fresh stage after each test
+                state.stage = {
+                    instances: await deployer.again(state.deploymentPlans, state.web3)
+                };
             });
 
             tests(state);

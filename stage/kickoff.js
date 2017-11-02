@@ -19,8 +19,8 @@ module.exports.stage = async (state) => {
     // first instantiate
     await instantiate.stage(state);
     
-    const now = ch.now();
     const stage = state.stage;
+    const now = await h.timestamp(stage.instances.charity);
 
     stage.charity = stage.charity ? stage.charity : state.accountAddresses[1];
     stage.charitySplit = stage.charitySplit ? stage.charitySplit : 49;
@@ -31,7 +31,7 @@ module.exports.stage = async (state) => {
     stage.revealTime = stage.revealTime ? stage.revealTime : stage.startTime + h.timeInterval;
     stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + h.timeInterval;
 
-    const transaction = state.web3Instances.charity.methods.kickoff(
+    const method = stage.instances.charity.methods.kickoff(
         stage.charity,
         stage.charitySplit,
         stage.winnerSplit,
@@ -42,7 +42,7 @@ module.exports.stage = async (state) => {
         stage.endTime
     );
 
-    await parity.sendAndCheck(state.web3, transaction, { from: stage.owner });
+    await parity.sendMethod(method, { from: stage.owner });
 
     return state;
 

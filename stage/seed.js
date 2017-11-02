@@ -18,8 +18,8 @@ module.exports.stage = async (state) => {
     stage.charityRandom = stage.charityRandom ? stage.charityRandom : h.random();
     stage.charityHashedRandom = h.hashedRandom(stage.charityRandom, stage.charity);
 
-    const transaction = state.web3Instances.charity.methods.seed(stage.charityHashedRandom);
-    await parity.sendAndCheck(state.web3, transaction, { from: stage.charity });
+    const method = stage.instances.charity.methods.seed(stage.charityHashedRandom);
+    await parity.sendMethod(method, { from: stage.charity });
 
     return state;
 

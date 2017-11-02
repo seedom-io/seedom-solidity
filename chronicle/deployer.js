@@ -32,13 +32,13 @@ module.exports.main = async (state) => {
         state.networkName = h.testNetworkName
     }
 
-    const contractConfig = await h.loadJsonFile(h.contractConfigFile);
-    state.contractHashes = await getContractHashes(contractConfig);
+    state.contractConfig = await h.loadJsonFile(h.contractConfigFile);
+    const contractHashes = await getContractHashes(state.contractConfig);
     const networkDeploymentFile = h.getDeploymentFile(state.networkName);
     state.networkDeployment = await getNetworkDeployment(networkDeploymentFile);
 
     const contractNames = state.force
-        ? Object.keys(contractConfig)
+        ? Object.keys(state.contractConfig)
         : await getLegacyContractNames(state.contractHashes, state.networkDeployment);
     
     // do deploy if we need to
@@ -48,11 +48,12 @@ module.exports.main = async (state) => {
 
         Object.assign(state, await deploy(
             contractNames,
-            contractConfig,
+            state.contractConfig,
             state.networkName,
-            state.contractHashes
+            contractHashes
         ));
 
+        // log deployment information to network file if we want to
         if (!state.forget) {
             logDeployments(state.deployments, state.networkDeployment);
             await h.writeJsonFile(networkDeploymentFile, state.networkDeployment);
@@ -156,7 +157,7 @@ const deploy = async (
 
     state.deployments = {};
     state.deploymentPlans = {};
-    state.web3Instances = {};
+    state.instances = {};
     // deploy contracts one at a time
     for (let contractName of contractNames) {
         
@@ -171,15 +172,15 @@ const deploy = async (
 
         // save deployments
         state.deployments[contractName] = {
-            deployed: h.now(),
-            address: result.web3Instance.options.address,
+            deployed: h.timestamp(),
+            address: result.instance.options.address,
             hash: contractHashes[contractName]
         }
 
         // save deployment plans
         state.deploymentPlans[contractName] = result.deploymentPlan;
         // save web3 instances
-        state.web3Instances[contractName] = result.web3Instance;
+        state.instances[contractName] = result.instance;
 
     }
 
@@ -242,15 +243,15 @@ const verify = async () => {
 
 module.exports.again = async (deploymentPlans, web3) => {
 
-    const web3Instances = {};
+    const instances = {};
     
     for (let contractName in deploymentPlans) {
         const deploymentPlan = deploymentPlans[contractName];
-        const web3Instance = await deployFromPlan(deploymentPlan, web3);
-        web3Instances[contractName] = web3Instance;
+        const instance = await deployFromPlan(deploymentPlan, web3);
+        instances[contractName] = instance;
     }
 
-    return web3Instances;
+    return instances;
 
 }
 
@@ -281,12 +282,12 @@ const deployFromConfig = async (
         gasPrice: getDeploymentPlanProperty('gasPrice', contract, network)
     };
 
-    const web3Instance = await deployFromPlan(deploymentPlan, web3);
-    const contractAddress = web3Instance.options.address;
-    cli.success("'%s' contract deployed to %s", contractName, contractAddress);
+    const instance = await deployFromPlan(deploymentPlan, web3);
+    const instanceAddress = instance.options.address;
+    cli.success("'%s' contract deployed to %s", contractName, instanceAddress);
 
     return {
-        web3Instance: web3Instance,
+        instance: instance,
         deploymentPlan: deploymentPlan
     };
 
@@ -310,20 +311,20 @@ const getDeploymentPlanProperty = (property, contract, network) => {
 
 const deployFromPlan = async (deploymentPlan, web3) => {
 
-    const web3Contract = new web3.eth.Contract(deploymentPlan.abi);
+    const contract = new web3.eth.Contract(deploymentPlan.abi);
 
-    const web3Transaction = web3Contract.deploy({
+    const transaction = contract.deploy({
         data: deploymentPlan.bytecode,
         arguments: deploymentPlan.args
     });
 
-    const web3Instance = await web3Transaction.send({
+    const instance = await transaction.send({
         from: deploymentPlan.fromAddress,
         gas: deploymentPlan.gas,
         gasPrice: deploymentPlan.gasPrice
     });
 
-    return web3Instance;
+    return instance;
 
 }
 

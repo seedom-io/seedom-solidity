@@ -12,19 +12,19 @@ suite('seed', (state) => {
 
         const stage = state.stage;
 
-        const actualKickoff = await state.web3Instances.charity.methods.currentKick().call({ from: stage.owner });
+        const actualKickoff = await stage.instances.charity.methods.currentKick().call({ from: stage.owner });
 
         assert.equalIgnoreCase(actualKickoff._charity, stage.charity, "charity does not match");
 
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
 
-        const transaction = state.web3Instances.charity.methods.seed(charityHashedRandom);
+        const method = stage.instances.charity.methods.seed(charityHashedRandom);
         await assert.isFulfilled(
-            parity.sendAndCheck(state.web3, transaction, { from: stage.charity })
+            parity.sendMethod(method, { from: stage.charity })
         )
 
-        const actualCharityHashedRandom = await state.web3Instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
+        const actualCharityHashedRandom = await stage.instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
 
         assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
 
@@ -38,9 +38,9 @@ suite('seed', (state) => {
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
 
-        const transaction = state.web3Instances.charity.methods.seed(charityHashedRandom);
+        const method = stage.instances.charity.methods.seed(charityHashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: stage.owner }),
+            parity.sendMethod(method, { from: stage.owner }),
             parity.SomethingThrown
         );
 
@@ -55,9 +55,9 @@ suite('seed', (state) => {
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
         const participant = state.accountAddresses[2];
 
-        const transaction = state.web3Instances.charity.methods.seed(charityHashedRandom);
+        const method = stage.instances.charity.methods.seed(charityHashedRandom);
         await assert.isRejected(
-            parity.sendAndCheck(state.web3, transaction, { from: participant }),
+            parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
         );
 
