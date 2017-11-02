@@ -74,7 +74,7 @@ module.exports.pass = (name) => {
 }
 
 module.exports.suite = (name) => {
-    this.subsection("suite: %s", name);
+    this.subsection("suite:%s", name);
 }
 
 module.exports.fail = (name, error) => {
