@@ -88,7 +88,9 @@ const compile = async (contractNames) => {
     await exportFiles(output.contracts);
     // print out any solc warnings/errors
     if ('errors' in output) {
-        h.printLines(output.errors);
+        for (let line of errors) {
+            cli.info(line);
+        }
     }
 
     cli.success("contract compilation complete");

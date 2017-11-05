@@ -4,7 +4,8 @@ const net = require('net');
 const h = require('./helper');
 
 const jsonrpc = "2.0";
-const paritySendDelay = 1000;
+
+module.exports.paritySendDelay = 1000;
 
 module.exports.getWeb3 = async (network) => {
 
@@ -40,11 +41,11 @@ const createParityProvider = () => {
 
     const provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
     // FIXME: parity cannot execute transactions as fast as we send them; we need a delay in between
-    provider.send = function (payload, callback) {
+    provider.send = (payload, callback) => {
 
         let delay = 0;
         if (payload.method == 'eth_sendTransaction' || payload.method == 'eth_sendRawTransaction') {
-            delay = paritySendDelay;
+            delay = this.paritySendDelay;
         }
 
         setTimeout(() => {

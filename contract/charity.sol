@@ -35,6 +35,21 @@ contract Charity {
         uint256 totalRevealers
     );
 
+    event WinningInput(
+        uint256 winningRandom,
+        uint256 winningEntryIndex
+    );
+
+    event WinnerSearch(
+        uint256 leftIndex,
+        uint256 rightIndex,
+        uint256 midIndex,
+        address midRevealerAddress,
+        uint256 midRevealerCumulative,
+        uint256 nextIndex,
+        uint256 nextRevealerCumulative
+    );
+
     event Win(
         address indexed winner,
         uint256 charityReward,
@@ -380,10 +395,13 @@ contract Charity {
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
 
         uint256[] memory _cumulatives = new uint256[](revealers.length);
-        // calculate social random & index from this random, set winner
+        // calculate social random & index from this random
         uint256 _winningRandom = calculateWinningRandom(_charityRandom, _cumulatives);
-        uint256 _winnerIndex = _winningRandom % totalRevealed;
-        winner = findWinnerAddress(_winnerIndex, _cumulatives);
+        uint256 _winningEntryIndex = _winningRandom % totalRevealed;
+        // send out winning input
+        WinningInput(_winningRandom, _winningEntryIndex);
+        // find winner
+        winner = findWinnerAddress(_winningEntryIndex, _cumulatives);
 
         uint256 _ownerReward;
         uint256 _charityReward;
@@ -449,7 +467,9 @@ contract Charity {
      * <= winner index
      * < next revealer cumulative entries
      */
-    function findWinnerAddress(uint256 _winnerIndex, uint256[] _cumulatives) internal view returns (address)
+    function findWinnerAddress(
+        uint256 _winningEntryIndex,
+        uint256[] memory _cumulatives) internal returns (address)
     {
         uint256 _leftIndex = 0;
         uint256 _rightIndex = revealers.length - 1;
@@ -461,7 +481,7 @@ contract Charity {
         // loop until revealer found
         while (true) {
 
-            // the winner is the last revealer!
+            // the winner is the last revealer! (edge case)
             if (_leftIndex == _rightIndex) {
                 return revealers[_leftIndex];
             }
@@ -473,17 +493,28 @@ contract Charity {
             // find the mid and very next revealer cumulatives
             _midRevealerCumulative = _cumulatives[_midIndex];
             _nextRevealerCumulative = _cumulatives[_nextIndex];
+            // send out search progress
+            WinnerSearch(
+                _leftIndex,
+                _rightIndex,
+                _midIndex,
+                _midRevealerAddress,
+                _midRevealerCumulative,
+                _nextIndex,
+                _nextRevealerCumulative
+            );
 
-            if (_winnerIndex >= _midRevealerCumulative) {
-                if (_winnerIndex < _nextRevealerCumulative) {
+            if (_winningEntryIndex >= _midRevealerCumulative) {
+                if (_winningEntryIndex < _nextRevealerCumulative) {
                     // we are in range, winner found!
                     return _midRevealerAddress;
                 }
                 // winner is greater, move right
                 _leftIndex = _nextIndex;
+            } else {
+                // winner is less, move left
+                _rightIndex = _midIndex;
             }
-            // winner is less, move left
-            _rightIndex = _midIndex;
 
         }
 

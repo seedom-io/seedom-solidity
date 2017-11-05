@@ -35,10 +35,11 @@ suite('kickoff', (state) => {
         const stage = state.stage;
         const now = await sh.timestamp(stage.instances.charity);
         const charity = state.accountAddresses[1];
-        const startTime = now + sh.timeInterval;
-        const revealTime = startTime + sh.timeInterval;
-        const endTime = revealTime + sh.timeInterval;
-
+        const phaseDuration = 5000;
+        const startTime = now + phaseDuration;
+        const revealTime = startTime + phaseDuration;
+        const endTime = revealTime + phaseDuration;
+        
         const testData = [
             [0, 49, 49, 2, 1000, startTime, revealTime, endTime],
             [charity, 0, 49, 2, 1000, startTime, revealTime, endTime],
@@ -70,12 +71,13 @@ suite('kickoff', (state) => {
         const stage = state.stage;
         const now = await sh.timestamp(stage.instances.charity);
         const charity = state.accountAddresses[1];
-        const startTime = now + sh.timeInterval;
-        const revealTime = startTime + sh.timeInterval;
-        const endTime = revealTime + sh.timeInterval;
-        const oldStartTime = now - (sh.timeInterval * 3);
-        const oldRevealTime = oldStartTime + sh.timeInterval;
-        const oldEndTime = oldRevealTime + sh.timeInterval;
+        const phaseDuration = 5000;
+        const startTime = now + phaseDuration;
+        const revealTime = startTime + phaseDuration;
+        const endTime = revealTime + phaseDuration;
+        const oldStartTime = now - phaseDuration * 3;
+        const oldRevealTime = oldStartTime + phaseDuration;
+        const oldEndTime = oldRevealTime + phaseDuration;
 
         const testData = [
             // old dates

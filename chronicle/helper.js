@@ -50,12 +50,6 @@ module.exports.parityConfigFile = path.join(this.configDir, 'parity.' + this.jso
 
 module.exports.testNetworkName = 'test';
 
-module.exports.printLines = (lines) => {
-    for (let line of lines) {
-        console.log(line);
-    }
-}
-
 module.exports.printKeys = (obj) => {
     for (let key in obj) {
         console.log(key);

@@ -6,7 +6,7 @@ const cli = require('../chronicle/cli');
 
 module.exports.optionize = (command) => {
     return seed.optionize(command)
-        .option("--participantFunds <number>", "initial participant funds", parseInt)
+        .option("--participationFunds <number>", "initial participant funds", parseInt);
 }
 
 module.exports.stage = async (state) => {
@@ -19,20 +19,20 @@ module.exports.stage = async (state) => {
     const startTime = stage.startTime;
     await cli.progress("waiting for start phase", startTime - now);
 
-    stage.participantFunds = stage.participantFunds ? stage.participantFunds : 0;
+    stage.participationFunds = stage.participationFunds ? stage.participationFunds : 0;
     stage.participants = [];
     
     // start after charity
-    for (let i = 2; i < state.accountAddresses.length; i++) {
+    for (let i = 0; i < stage.participantsCount; i++) {
 
-        const address = state.accountAddresses[i];
+        const address = state.accountAddresses[i + 2];
         const random = h.random();
         const hashedRandom = h.hashedRandom(random, address);
 
         const method = stage.instances.charity.methods.participate(hashedRandom);
-        await parity.sendMethod(method, { from: address, value: stage.participantFunds });
+        await parity.sendMethod(method, { from: address, value: stage.participationFunds });
 
-        cli.info("staged participant %s", address);
+        cli.info("staged participant %s with %d wei", address, stage.participationFunds);
 
         stage.participants.push({
             address: address,

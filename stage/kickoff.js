@@ -1,6 +1,7 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
 const parity = require('../chronicle/parity');
+const networks = require('../chronicle/networks');
 const instantiate = require('./instantiate');
 
 module.exports.optionize = (command) => {
@@ -27,10 +28,20 @@ module.exports.stage = async (state) => {
     stage.winnerSplit = stage.winnerSplit ? stage.winnerSplit : 49;
     stage.ownerSplit = stage.ownerSplit ? stage.ownerSplit : 2;
     stage.valuePerEntry = stage.valuePerEntry ? stage.valuePerEntry : 1000;
-    stage.startTime = stage.startTime ? stage.startTime : now + h.timeInterval;
-    stage.revealTime = stage.revealTime ? stage.revealTime : stage.startTime + h.timeInterval;
-    stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + h.timeInterval;
 
+    stage.participantsCount = state.accountAddresses.length - 2;
+    // double the parity send delay to get overall transaction duration
+    stage.transactionDuration = Math.floor(networks.paritySendDelay / 1000) * 2;
+    // kick phase has max two transactions: kickoff and seed
+    stage.kickDuration = stage.transactionDuration * 2;
+    stage.startTime = stage.startTime ? stage.startTime : now + stage.kickDuration;
+    // start phase has max two transactions per participant
+    stage.startDuration = stage.participantsCount * stage.transactionDuration * 2;
+    stage.revealTime = stage.revealTime ? stage.revealTime : stage.startTime + stage.startDuration;
+    // reveal phase has max one transactions per participant
+    stage.revealDuration = stage.participantsCount * stage.transactionDuration;
+    stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + stage.revealDuration;
+    
     const method = stage.instances.charity.methods.kickoff(
         stage.charity,
         stage.charitySplit,

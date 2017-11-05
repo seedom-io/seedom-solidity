@@ -38,7 +38,7 @@ suite('participate', (state) => {
 
         assert.equal(actualTotalEntries, 0, "total entries should be zero");
         assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, stage.participants.length, "total participants incorrect");
+        assert.equal(actualTotalParticipants, stage.participantsCount, "total participants incorrect");
         assert.equal(actualTotalRevealers, 0, "total revealers not zero");
 
     });
@@ -47,7 +47,7 @@ suite('participate', (state) => {
 
         const stage = state.stage;
         // fund at refund generating amount
-        stage.participantFunds = 10500;
+        stage.participationFunds = 10500;
 
         await participate.stage(state);
 
@@ -68,15 +68,15 @@ suite('participate', (state) => {
 
         }
 
-        let actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: stage.owner });
-        let actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: stage.owner });
-        let actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: stage.owner });
-        let actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: stage.owner });
+        const actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: stage.owner });
+        const actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: stage.owner });
+        const actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: stage.owner });
+        const actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: stage.owner });
 
-        const entries = stage.participants.length * 10;
+        const entries = stage.participantsCount * 10;
         assert.equal(actualTotalEntries, entries, "total entries should be zero");
         assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, stage.participants.length, "total participants incorrect");
+        assert.equal(actualTotalParticipants, stage.participantsCount, "total participants incorrect");
         assert.equal(actualTotalRevealers, 0, "total revealers not zero");
 
     });

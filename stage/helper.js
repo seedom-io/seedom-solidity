@@ -1,8 +1,6 @@
 const crypto = require('crypto');
 const keccak256 = require('js-sha3').keccak256;
 
-module.exports.timeInterval = 8;
-
 module.exports.timestamp = async (contract) => {
     return parseInt(await contract.methods.timestamp().call());
 }
