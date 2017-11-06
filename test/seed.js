@@ -22,7 +22,7 @@ suite('seed', (state) => {
         const method = stage.instances.charity.methods.seed(charityHashedRandom);
         await assert.isFulfilled(
             parity.sendMethod(method, { from: stage.charity })
-        )
+        );
 
         const actualCharityHashedRandom = await stage.instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
 

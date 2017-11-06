@@ -572,12 +572,12 @@ contract Charity {
         address _sender = msg.sender;
         // determine where to find the refund amount
         uint256 _balance = balancesMapping[_sender];
+        // fail if no balance
+        require(_balance > 0);
         // execute the refund if we have one
-        if (_balance > 0) {
-            _sender.transfer(_balance);
-            // send withdrawal event
-            Withdrawal(_sender, _balance);
-        }
+        _sender.transfer(_balance);
+        // send withdrawal event
+        Withdrawal(_sender, _balance);
 
     }
 

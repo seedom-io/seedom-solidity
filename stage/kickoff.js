@@ -53,7 +53,7 @@ module.exports.stage = async (state) => {
         stage.endTime
     );
 
-    await parity.sendMethod(method, { from: stage.owner });
+    stage.kickoffReceipt = await parity.sendMethod(method, { from: stage.owner });
 
     return state;
 

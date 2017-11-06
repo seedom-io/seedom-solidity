@@ -20,7 +20,7 @@ module.exports.stage = async (state) => {
 
     // only the charity can end everything
     const method = stage.instances.charity.methods.end(stage.charityRandom);
-    await parity.sendMethod(method, { from: stage.charity });
+    stage.endReceipt = await parity.sendMethod(method, { from: stage.charity });
 
     // set the winner
     stage.winner = await stage.instances.charity.methods.winner().call({ from: stage.owner });

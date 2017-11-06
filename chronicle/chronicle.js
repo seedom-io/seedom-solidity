@@ -29,7 +29,7 @@ program
     .description("compile contracts")
     .option('-f, --force', "force compilation")
     .action((options) => {
-        main('compile', {
+        main('compiler', {
             force: options.force ? true : false
         });
     });

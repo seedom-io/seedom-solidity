@@ -20,6 +20,7 @@ module.exports.stage = async (state) => {
     await cli.progress("waiting for start phase", startTime - now);
 
     stage.participationFunds = stage.participationFunds ? stage.participationFunds : 0;
+    stage.participationReceipts = [];
     stage.participants = [];
     
     // start after charity
@@ -30,9 +31,11 @@ module.exports.stage = async (state) => {
         const hashedRandom = h.hashedRandom(random, address);
 
         const method = stage.instances.charity.methods.participate(hashedRandom);
-        await parity.sendMethod(method, { from: address, value: stage.participationFunds });
+        const receipt = await parity.sendMethod(method, { from: address, value: stage.participationFunds });
 
         cli.info("staged participant %s with %d wei", address, stage.participationFunds);
+
+        stage.participationReceipts.push(receipt);
 
         stage.participants.push({
             address: address,
