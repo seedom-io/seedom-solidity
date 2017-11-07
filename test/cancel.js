@@ -249,4 +249,42 @@ suite('cancel', (state) => {
 
     });
 
+    const testCancelRefundsAfterExpiration = async (account) => {
+
+        const stage = state.stage;
+        const now = await sh.timestamp(stage.instances.charity);
+        const expireTime = stage.expireTime;
+        await cli.progress("waiting for expiration time", expireTime - now);
+
+        await testCancelRefundsAfterFunding(account);
+
+    };
+
+    test("should cancel (from participant) after end expiration", async () => {
+        
+        // first reveal
+        await reveal.stage(state);
+        const stage = state.stage;
+        await testCancelRefundsAfterExpiration(stage.participants[0].address);
+
+    });
+
+    test("should cancel (by owner) and refund end expiration", async () => {
+        
+        // first reveal
+        await reveal.stage(state);
+        const stage = state.stage;
+        await testCancelRefundsAfterExpiration(stage.owner);
+
+    });
+
+    test("should cancel (by charity) and refund end expiration", async () => {
+        
+        // first reveal
+        await reveal.stage(state);
+        const stage = state.stage;
+        await testCancelRefundsAfterExpiration(stage.charity);
+
+    });
+
 });
