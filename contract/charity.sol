@@ -196,9 +196,9 @@ contract Charity {
         require(_winnerSplit != 0);
         require(_ownerSplit != 0);
         require(_valuePerEntry != 0);
-        require(_revealTime > now);
-        require(_endTime > _revealTime);
-        require(_expireTime > _endTime);
+        require(_revealTime >= now); // time for the charity to seed and others to participate
+        require(_endTime > _revealTime); // time for participants to reveal their randoms
+        require(_expireTime > _endTime); // time for charity to end everything (or community after expire)
         // we can only start a new charity if a winner has been chosen or the last
         // charity was cancelled
         require(winner != address(0) || cancelled);
@@ -260,7 +260,7 @@ contract Charity {
     }
 
     function seed(bytes32 _hashedRandom) public onlyCharity {
-        require(now >= kick.kickTime); // ensure we are after constkickruct
+        require(now >= kick.kickTime); // ensure we are in kick phase
         require(now < kick.revealTime); // but before the reveal
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't participate in a cancelled charity
@@ -358,7 +358,7 @@ contract Charity {
      * generate a global random number, which will determine the winner.
      */
     function reveal(uint256 _random) public playTime neverOwner {
-        require(now >= kick.revealTime); // ensure we are after the reveal
+        require(now >= kick.revealTime); // ensure we are in reveal phase
         require(now < kick.endTime); // but before the end
         require(_random != 0);
 
