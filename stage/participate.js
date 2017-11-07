@@ -15,9 +15,6 @@ module.exports.stage = async (state) => {
     await seed.stage(state);
 
     const stage = state.stage;
-    const now = await h.timestamp(stage.instances.charity);
-    const startTime = stage.startTime;
-    await cli.progress("waiting for start phase", startTime - now);
 
     stage.participationFunds = stage.participationFunds ? stage.participationFunds : 0;
     stage.participationReceipts = [];

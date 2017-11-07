@@ -8,7 +8,7 @@ const participate = require('../stage/participate');
 
 suite('participate', (state) => {
 
-    test("should accept participants properly after start", async () => {
+    test("should accept participants after seed", async () => {
 
         await participate.stage(state);
 
@@ -43,7 +43,7 @@ suite('participate', (state) => {
 
     });
 
-    test("should accept and refund participants properly after start", async () => {
+    test("should accept and refund participants after seed", async () => {
 
         const stage = state.stage;
         // fund at refund generating amount
@@ -87,11 +87,6 @@ suite('participate', (state) => {
 
         const stage = state.stage;
         const participant = state.accountAddresses[2];
-
-        const now = await sh.timestamp(stage.instances.charity);
-        const startTime = stage.startTime;
-        await cli.progress("waiting for start phase", startTime - now);
-
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
@@ -103,7 +98,7 @@ suite('participate', (state) => {
 
     });
 
-    test("should fail participation without instantiation", async () => {
+    test("should fail participation without kickoff", async () => {
 
         const stage = state.stage;
         const participant = state.accountAddresses[2];
@@ -119,24 +114,18 @@ suite('participate', (state) => {
     });
 
     
-    test("should reject participation before and after participation phase", async () => {
+    test("should reject participation after participation phase", async () => {
 
         await seed.stage(state);
 
         const stage = state.stage;
-        const participant = state.accountAddresses[2];
-        const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, participant);
-
-        let method = stage.instances.charity.methods.participate(hashedRandom);
-        await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
-            parity.SomethingThrown
-        );
-
         const now = await sh.timestamp(stage.instances.charity);
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
+
+        const participant = state.accountAddresses[2];
+        const random = sh.random();
+        const hashedRandom = sh.hashedRandom(random, participant);
 
         method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
@@ -146,17 +135,13 @@ suite('participate', (state) => {
 
     });
 
-    test("should fail owner participation", async () => {
+    test("should fail owner participation after seed", async () => {
 
         await seed.stage(state);
         
         const stage = state.stage;
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, stage.owner);
-
-        const now = await sh.timestamp(stage.instances.charity);
-        const startTime = stage.startTime;
-        await cli.progress("waiting for start phase", startTime - now);
 
         const method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
@@ -166,7 +151,7 @@ suite('participate', (state) => {
 
     });
 
-    test("should reject multiple participation from same address", async () => {
+    test("should reject multiple participation from same address after seed", async () => {
 
         await seed.stage(state);
         
@@ -174,10 +159,6 @@ suite('participate', (state) => {
         const participant = state.accountAddresses[2];
         let random = sh.random();
         let hashedRandom = sh.hashedRandom(random, participant);
-
-        const now = await sh.timestamp(stage.instances.charity);
-        const startTime = stage.startTime;
-        await cli.progress("waiting for start phase", startTime - now);
 
         let method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isFulfilled(
@@ -202,18 +183,14 @@ suite('participate', (state) => {
 
     });
 
-    test("reject participation of bad hashed randoms after start", async () => {
+    test("reject participation of bad hashed randoms after seed", async () => {
 
         await seed.stage(state);
         
         const stage = state.stage;
         const participant = state.accountAddresses[2];
-
-        const now = await sh.timestamp(stage.instances.charity);
-        const startTime = stage.startTime;
-        await cli.progress("waiting for start phase", startTime - now);
-
         const hashedRandom = '0x0000000000000000000000000000000000000000000000000000000000000000';
+        
         const method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isRejected(
             parity.sendMethod(method, { from: participant }),

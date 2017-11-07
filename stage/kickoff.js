@@ -10,7 +10,6 @@ module.exports.optionize = (command) => {
         .option("--winnerSplit <number>", "winner split", parseInt)
         .option("--ownerSplit <number>", "owner split", parseInt)
         .option("--valuePerEntry <string>", "value per entry", parseInt)
-        .option("--startTime <time>", "start time", parseDate)
         .option("--revealTime <time>", "reveal time", parseDate)
         .option("--endTime <time>", "end time", parseDate)
         .option("--expireTime <time>", "expire time", parseDate);
@@ -33,12 +32,10 @@ module.exports.stage = async (state) => {
     stage.participantsCount = state.accountAddresses.length - 2;
     // double the parity send delay to get overall transaction duration
     stage.transactionDuration = Math.floor(networks.paritySendDelay / 1000) * 2;
-    // kick phase has max two transactions: kickoff and seed
-    stage.kickDuration = stage.transactionDuration * 2;
-    stage.startTime = stage.startTime ? stage.startTime : now + stage.kickDuration;
-    // start phase has max two transactions per participant
-    stage.startDuration = stage.participantsCount * stage.transactionDuration * 2;
-    stage.revealTime = stage.revealTime ? stage.revealTime : stage.startTime + stage.startDuration;
+    // kick phase has two initial transactions: kickoff and seed
+    // and then two transactions per participant: participate and reveal (after seed)
+    stage.kickDuration = (stage.transactionDuration * 2) + (stage.participantsCount * stage.transactionDuration * 2);
+    stage.revealTime = stage.revealTime ? stage.revealTime : now + stage.kickDuration;
     // reveal phase has max one transactions per participant
     stage.revealDuration = stage.participantsCount * stage.transactionDuration;
     stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + stage.revealDuration;
@@ -52,7 +49,6 @@ module.exports.stage = async (state) => {
         stage.winnerSplit,
         stage.ownerSplit,
         stage.valuePerEntry,
-        stage.startTime,
         stage.revealTime,
         stage.endTime,
         stage.expireTime

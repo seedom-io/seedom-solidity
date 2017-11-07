@@ -260,7 +260,7 @@ suite('cancel', (state) => {
 
     };
 
-    test("should cancel (from participant) after end expiration", async () => {
+    test("should cancel (from participant) after expiration", async () => {
         
         // first reveal
         await reveal.stage(state);
@@ -269,7 +269,7 @@ suite('cancel', (state) => {
 
     });
 
-    test("should cancel (by owner) and refund end expiration", async () => {
+    test("should cancel (by owner) and refund after expiration", async () => {
         
         // first reveal
         await reveal.stage(state);
@@ -278,7 +278,7 @@ suite('cancel', (state) => {
 
     });
 
-    test("should cancel (by charity) and refund end expiration", async () => {
+    test("should cancel (by charity) and refund after expiration", async () => {
         
         // first reveal
         await reveal.stage(state);

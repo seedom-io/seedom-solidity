@@ -9,7 +9,6 @@ contract Charity {
         uint256 ownerSplit,
         uint256 valuePerEntry,
         uint256 kickTime,
-        uint256 startTime,
         uint256 revealTime,
         uint256 endTime,
         uint256 expireTime
@@ -27,7 +26,6 @@ contract Charity {
         uint256 newEntries,
         uint256 totalEntries
     );
-
 
     event Revelation(
         address indexed revealer,
@@ -75,7 +73,6 @@ contract Charity {
         uint256 ownerSplit;
         uint256 valuePerEntry;
         uint256 kickTime;
-        uint256 startTime;
         uint256 revealTime;
         uint256 endTime;
         uint256 expireTime;
@@ -102,9 +99,9 @@ contract Charity {
         _;
     }
 
-    modifier openParticipation() {
-        require(charityHashedRandom != 0x0); // safety check
-        require(winner == address(0)); // safety check
+    modifier playTime() {
+        require(charityHashedRandom != 0x0); // ensure charity seed
+        require(winner == address(0)); // ensure no winner
         require(!cancelled); // we can't participate in a cancelled charity
         _;
     }
@@ -139,7 +136,6 @@ contract Charity {
         uint256 _ownerSplit,
         uint256 _valuePerEntry,
         uint256 _kickTime,
-        uint256 _startTime,
         uint256 _revealTime,
         uint256 _endTime,
         uint256 _expireTime
@@ -150,7 +146,6 @@ contract Charity {
         _ownerSplit = kick.ownerSplit;
         _valuePerEntry = kick.valuePerEntry;
         _kickTime = kick.kickTime;
-        _startTime = kick.startTime;
         _revealTime = kick.revealTime;
         _endTime = kick.endTime;
         _expireTime = kick.expireTime;
@@ -182,8 +177,8 @@ contract Charity {
     /**
      * Constructs a new charity. Here we set the charity ethereum wallet address,
      * the percentage cuts for the charity, winner, and owner, the wei of each
-     * entry, and the start, reveal, and end times. A new charity can only be
-     * started if a winner is chosen from the last charity or the last charity
+     * entry, and the reveal, end, and expire times. A new charity can only be
+     * kicked off if a winner is chosen from the last charity or the last charity
      * was cancelled.
      */
     function kickoff(
@@ -192,7 +187,6 @@ contract Charity {
         uint256 _winnerSplit,
         uint256 _ownerSplit,
         uint256 _valuePerEntry,
-        uint256 _startTime,
         uint256 _revealTime,
         uint256 _endTime,
         uint256 _expireTime) public onlyOwner
@@ -202,8 +196,7 @@ contract Charity {
         require(_winnerSplit != 0);
         require(_ownerSplit != 0);
         require(_valuePerEntry != 0);
-        require(_startTime >= now);
-        require(_revealTime > _startTime);
+        require(_revealTime > now);
         require(_endTime > _revealTime);
         require(_expireTime > _endTime);
         // we can only start a new charity if a winner has been chosen or the last
@@ -217,7 +210,6 @@ contract Charity {
             _ownerSplit,
             _valuePerEntry,
             now,
-            _startTime,
             _revealTime,
             _endTime,
             _expireTime
@@ -233,7 +225,6 @@ contract Charity {
             _ownerSplit,
             _valuePerEntry,
             kick.kickTime,
-            _startTime,
             _revealTime,
             _endTime,
             _expireTime
@@ -269,8 +260,8 @@ contract Charity {
     }
 
     function seed(bytes32 _hashedRandom) public onlyCharity {
-        require(now >= kick.kickTime); // ensure we are after construct
-        require(now < kick.startTime); // but before the start
+        require(now >= kick.kickTime); // ensure we are after constkickruct
+        require(now < kick.revealTime); // but before the reveal
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't participate in a cancelled charity
         require(charityHashedRandom == 0x0); // safety check
@@ -290,10 +281,9 @@ contract Charity {
      * contribution as this will be required during the random revealation phase
      * to confirm your entries. After participation, send wei to the callback
      * function to receive entries and thereby increase your chances of winning.
-     * Participation is only permitted between the start and reaveal times.
+     * Participation is only permitted between seed and reaveal.
      */
-    function participate(bytes32 _hashedRandom) public openParticipation neverOwner payable {
-        require(now >= kick.startTime); // ensure we are after the start
+    function participate(bytes32 _hashedRandom) public playTime neverOwner payable {
         require(now < kick.revealTime); // but before the reveal
         require(_hashedRandom != 0x0); // hashed random cannot be zero
 
@@ -317,6 +307,11 @@ contract Charity {
     
     }
 
+    /**
+     * Internal function called by participate and the fallback function
+     * for submitting entries initially during participation or several
+     * times after participation through this fallback function.
+     */
     function fund(Participant storage _participant) internal {
 
         // calculate the number of entries from the wei sent
@@ -342,8 +337,7 @@ contract Charity {
      * Fallback function that accepts wei for entries. This will always
      * fail if participate() is not called once first with a hashed random.
      */
-    function () public openParticipation neverOwner payable {
-        require(now >= kick.startTime); // ensure we are after the start
+    function () public playTime neverOwner payable {
         require(now < kick.revealTime); // but before the reveal
         require(msg.value > 0); // some money needs to be sent
 
@@ -363,7 +357,7 @@ contract Charity {
      * of these revealed random numbers will be used to deterministically
      * generate a global random number, which will determine the winner.
      */
-    function reveal(uint256 _random) public openParticipation neverOwner {
+    function reveal(uint256 _random) public playTime neverOwner {
         require(now >= kick.revealTime); // ensure we are after the reveal
         require(now < kick.endTime); // but before the end
         require(_random != 0);
@@ -393,7 +387,7 @@ contract Charity {
      * Anyone can perform this operation to ensure that winnings can
      * always be distributed without requiring the owner.
      */
-    function end(uint256 _charityRandom) public openParticipation onlyCharity {
+    function end(uint256 _charityRandom) public playTime onlyCharity {
         require(now >= kick.endTime); // a charity can only be ended after the reveal period is over
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
 
@@ -525,7 +519,7 @@ contract Charity {
 
     /**
      * Calculate refund amounts to the charity, winner, and owner
-     * given the percentage splits specified at charity start.
+     * given the percentage splits specified at kickoff.
      */
     function calculateRewards() internal view returns (
         uint256 _charityReward,

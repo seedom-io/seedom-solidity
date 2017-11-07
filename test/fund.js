@@ -50,9 +50,6 @@ suite('fund', (state) => {
         await seed.stage(state);
 
         const stage = state.stage;
-        const now = await sh.timestamp(stage.instances.charity);
-        const startTime = stage.startTime;
-        await cli.progress("waiting for start phase", startTime - now);    
         
         const participant = state.accountAddresses[2];
         // call fallback function
