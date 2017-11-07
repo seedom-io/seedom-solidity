@@ -12,7 +12,8 @@ module.exports.optionize = (command) => {
         .option("--valuePerEntry <string>", "value per entry", parseInt)
         .option("--startTime <time>", "start time", parseDate)
         .option("--revealTime <time>", "reveal time", parseDate)
-        .option("--endTime <time>", "end time", parseDate);
+        .option("--endTime <time>", "end time", parseDate)
+        .option("--expireTime <time>", "expire time", parseDate);
 }
 
 module.exports.stage = async (state) => {
@@ -41,6 +42,9 @@ module.exports.stage = async (state) => {
     // reveal phase has max one transactions per participant
     stage.revealDuration = stage.participantsCount * stage.transactionDuration;
     stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + stage.revealDuration;
+    // end phase has only one possible transaction: cancel
+    stage.endDuration = stage.transactionDuration;
+    stage.expireTime = stage.expireTime ? stage.expireTime : stage.endTime + stage.endDuration;
     
     const method = stage.instances.charity.methods.kickoff(
         stage.charity,
@@ -50,7 +54,8 @@ module.exports.stage = async (state) => {
         stage.valuePerEntry,
         stage.startTime,
         stage.revealTime,
-        stage.endTime
+        stage.endTime,
+        stage.expireTime
     );
 
     stage.kickoffReceipt = await parity.sendMethod(method, { from: stage.owner });

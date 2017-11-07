@@ -11,7 +11,8 @@ contract Charity {
         uint256 kickTime,
         uint256 startTime,
         uint256 revealTime,
-        uint256 endTime
+        uint256 endTime,
+        uint256 expireTime
     );
 
     event Participation(
@@ -77,6 +78,7 @@ contract Charity {
         uint256 startTime;
         uint256 revealTime;
         uint256 endTime;
+        uint256 expireTime;
     }
 
     struct Participant {
@@ -97,11 +99,6 @@ contract Charity {
 
     modifier onlyCharity() {
         require(msg.sender == kick.charity);
-        _;
-    }
-
-    modifier onlyOwnerOrCharity() {
-        require((msg.sender == owner) || (msg.sender == kick.charity));
         _;
     }
 
@@ -144,7 +141,8 @@ contract Charity {
         uint256 _kickTime,
         uint256 _startTime,
         uint256 _revealTime,
-        uint256 _endTime
+        uint256 _endTime,
+        uint256 _expireTime
     ) {
         _charity = kick.charity;
         _charitySplit = kick.charitySplit;
@@ -155,6 +153,7 @@ contract Charity {
         _startTime = kick.startTime;
         _revealTime = kick.revealTime;
         _endTime = kick.endTime;
+        _expireTime = kick.expireTime;
     }
 
     function totalParticipants() public view returns (uint256) {
@@ -195,7 +194,8 @@ contract Charity {
         uint256 _valuePerEntry,
         uint256 _startTime,
         uint256 _revealTime,
-        uint256 _endTime) public onlyOwner
+        uint256 _endTime,
+        uint256 _expireTime) public onlyOwner
     {
         require(_charity != 0x0);
         require(_charitySplit != 0);
@@ -205,6 +205,7 @@ contract Charity {
         require(_startTime >= now);
         require(_revealTime > _startTime);
         require(_endTime > _revealTime);
+        require(_expireTime > _endTime);
         // we can only start a new charity if a winner has been chosen or the last
         // charity was cancelled
         require(winner != address(0) || cancelled);
@@ -218,7 +219,8 @@ contract Charity {
             now,
             _startTime,
             _revealTime,
-            _endTime
+            _endTime,
+            _expireTime
         );
 
         // clear out any pre-existing state
@@ -233,7 +235,8 @@ contract Charity {
             kick.kickTime,
             _startTime,
             _revealTime,
-            _endTime
+            _endTime,
+            _expireTime
         );
 
     }
@@ -542,9 +545,14 @@ contract Charity {
      * all received wei back to the original participants. This procedure
      * must exist in case of catostropic failure to return wei.
      */
-    function cancel() public onlyOwnerOrCharity {
+    function cancel() public {
         require(winner == address(0)); // if someone won, we've already sent the money out
         require(!cancelled); // we can't cancel more than once
+        // this can only be executed before a winner is chosen by the owner or charity
+        // it can be executed by anyone after an expiration period after the end
+        if ((msg.sender != owner) && (msg.sender != kick.charity)) {
+            require(now >= kick.expireTime);
+        }
 
         // immediately set us to cancelled
         cancelled = true;
