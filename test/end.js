@@ -29,9 +29,8 @@ suite('end', (state) => {
 
         // currently all participant funds are distributed equally along splits
         // perhaps we should send forfeitures (participant didn't reveal) to the charity only?
-        // 500 added in to winner for refunds for partial tickets
         const charityBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.charitySplit / 100;
-        const winnerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.winnerSplit / 100 + 500;
+        const winnerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.winnerSplit / 100;
         const ownerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.ownerSplit / 100;
 
         assert.equal(stage.charityBalance, charityBalance, "charity balance incorrect");

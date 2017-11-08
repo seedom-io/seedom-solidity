@@ -178,7 +178,7 @@ suite('cancel', (state) => {
         // verify all participants refunded
         for (let participant of stage.participants) {
             const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
-            assert.equal(actualBalance, 10500, "refund balance should be correct");
+            assert.equal(actualBalance, 10000, "refund balance should be correct");
         }
 
         actualCancelled = await stage.instances.charity.methods.cancelled().call({ from: account });

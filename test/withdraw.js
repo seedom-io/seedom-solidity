@@ -6,25 +6,10 @@ const participate = require('../stage/participate');
 const fund = require('../stage/fund');
 const end = require('../stage/end');
 const withdraw = require('../stage/withdraw');
-const BigNumber = require('bignumber.js');
 
 suite('withdraw', (state) => {
 
     const maxTransactionGasUsed = 500000;
-
-    const getBalance = async (address) => {
-        const latestBlock = await state.web3.eth.getBlock('latest');
-        const latestBlockNumber = latestBlock.number;
-        const balance = await state.web3.eth.getBalance(address, latestBlockNumber);
-        cli.info("%s has a balance of %s (block %d)", address, balance, latestBlockNumber);
-        return new BigNumber(balance);
-    };
-
-    const calculateTransactionCost = (gasUsed, gasPrice) => {
-        const transactionCost = gasUsed * gasPrice;
-        cli.info("gas used %d; gas price %d; transaction cost %d", gasUsed, gasPrice, transactionCost);
-        return new BigNumber(transactionCost);
-    };
 
     test("should withdraw no funds after participation with no funding", async () => {
 
@@ -58,7 +43,7 @@ suite('withdraw', (state) => {
         const initialBalances = {};
         // get all initial balances
         for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await getBalance(accountAddress);
+            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
         // first end
@@ -66,19 +51,16 @@ suite('withdraw', (state) => {
 
         const stage = state.stage;
 
-        // get latest gas price
-        const gasPrice = await state.web3.eth.getGasPrice();
-
         // kickoff
         const kickoffGasUsed = stage.kickoffReceipt.gasUsed;
         assert.isBelow(kickoffGasUsed, maxTransactionGasUsed);
-        const kickoffTransactionCost = calculateTransactionCost(kickoffGasUsed, gasPrice);
+        const kickoffTransactionCost = await sh.getTransactionCost(kickoffGasUsed, state.web3);
         initialBalances[stage.owner] = initialBalances[stage.owner].minus(kickoffTransactionCost);
 
         // seed
         const seedGasUsed = stage.seedReceipt.gasUsed;
         assert.isBelow(seedGasUsed, maxTransactionGasUsed);
-        const seedTransactionCost = calculateTransactionCost(seedGasUsed, gasPrice);
+        const seedTransactionCost = await sh.getTransactionCost(seedGasUsed, state.web3);
         initialBalances[stage.charity] = initialBalances[stage.charity].minus(seedTransactionCost);
 
         // participate
@@ -87,7 +69,7 @@ suite('withdraw', (state) => {
             const participationReceipt = stage.participationReceipts[i];
             const participationGasUsed = participationReceipt.gasUsed;
             assert.isBelow(participationGasUsed, maxTransactionGasUsed);
-            const participationTransactionCost = calculateTransactionCost(participationGasUsed, gasPrice);
+            const participationTransactionCost = await sh.getTransactionCost(participationGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(participationTransactionCost);
         }
 
@@ -97,8 +79,8 @@ suite('withdraw', (state) => {
             const fundReceipt = stage.fundReceipts[i];
             const fundGasUsed = fundReceipt.gasUsed;
             assert.isBelow(fundGasUsed, maxTransactionGasUsed);
-            const fundTransactionCost = calculateTransactionCost(fundGasUsed, gasPrice);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(fundTransactionCost.plus(10500));
+            const fundTransactionCost = await sh.getTransactionCost(fundGasUsed, state.web3);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(fundTransactionCost.plus(10000));
         }
 
         // reveal
@@ -107,19 +89,19 @@ suite('withdraw', (state) => {
             const revealReceipt = stage.revealReceipts[i];
             const revealGasUsed = revealReceipt.gasUsed;
             assert.isBelow(revealGasUsed, maxTransactionGasUsed);
-            const revealTransactionCost = calculateTransactionCost(revealGasUsed, gasPrice);
+            const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(revealTransactionCost);
         }
 
         // end
         const endGasUsed = stage.endReceipt.gasUsed;
         assert.isBelow(endGasUsed, maxTransactionGasUsed);
-        const endTransactionCost = calculateTransactionCost(endGasUsed, gasPrice);
+        const endTransactionCost = await sh.getTransactionCost(endGasUsed, state.web3);
         initialBalances[stage.charity] = initialBalances[stage.charity].minus(endTransactionCost);
         
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
-            const finalBalance = await getBalance(accountAddress);
+            const finalBalance = await sh.getBalance(accountAddress, state.web3);
             assert.equal(finalBalance.toString(), initialBalances[accountAddress].toString(), "pre-withdraw balance not expected for " + accountAddress);
         }
 
@@ -133,7 +115,7 @@ suite('withdraw', (state) => {
         const initialBalances = {};
         // get all initial balances
         for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await getBalance(accountAddress);
+            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
         const stage = state.stage;
@@ -144,31 +126,28 @@ suite('withdraw', (state) => {
         const winnerWithdrawReceipt = await parity.sendMethod(method, { from: stage.winner });
         const ownerWithdrawReceipt = await parity.sendMethod(method, { from: stage.owner });
 
-        // get latest gas price
-        const gasPrice = await state.web3.eth.getGasPrice();
-
         // verify owner balance
         const ownerWithdrawGasUsed = ownerWithdrawReceipt.gasUsed;
         assert.isBelow(ownerWithdrawGasUsed, maxTransactionGasUsed);
-        const ownerWithdrawTransactionCost = calculateTransactionCost(ownerWithdrawGasUsed, gasPrice);
+        const ownerWithdrawTransactionCost = await sh.getTransactionCost(ownerWithdrawGasUsed, state.web3);
         initialBalances[stage.owner] = initialBalances[stage.owner].minus(ownerWithdrawTransactionCost).plus(stage.ownerBalance);
 
         // verify charity balance
         const charityWithdrawGasUsed = charityWithdrawReceipt.gasUsed;
         assert.isBelow(charityWithdrawGasUsed, maxTransactionGasUsed);
-        const charityWithdrawTransactionCost = calculateTransactionCost(charityWithdrawGasUsed, gasPrice);
+        const charityWithdrawTransactionCost = await sh.getTransactionCost(charityWithdrawGasUsed, state.web3);
         initialBalances[stage.charity] = initialBalances[stage.charity].minus(charityWithdrawTransactionCost).plus(stage.charityBalance);
 
         // verify winner balance
         const winnerWithdrawGasUsed = winnerWithdrawReceipt.gasUsed;
         assert.isBelow(winnerWithdrawGasUsed, maxTransactionGasUsed);
-        const winnerWithdrawTransactionCost = calculateTransactionCost(winnerWithdrawGasUsed, gasPrice);
+        const winnerWithdrawTransactionCost = await sh.getTransactionCost(winnerWithdrawGasUsed, state.web3);
         const winner = stage.winner.toLowerCase();
         initialBalances[winner] = initialBalances[winner].minus(winnerWithdrawTransactionCost).plus(stage.winnerBalance);
 
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
-            const finalBalance = await getBalance(accountAddress);
+            const finalBalance = await sh.getBalance(accountAddress, state.web3);
             assert.equal(finalBalance.toString(), initialBalances[accountAddress].toString(), "withdraw balance not expected for " + accountAddress);
         }
 
@@ -179,20 +158,17 @@ suite('withdraw', (state) => {
         const initialBalances = {};
         // get all initial balances
         for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await getBalance(accountAddress);
+            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
         const stage = state.stage;
-
-        // get latest gas price
-        const gasPrice = await state.web3.eth.getGasPrice();
 
         // now cancel
         const method = stage.instances.charity.methods.cancel();
         const cancelReceipt = await parity.sendMethod(method, { from: account });
         const cancelGasUsed = cancelReceipt.gasUsed;
         assert.isBelow(cancelGasUsed, maxTransactionGasUsed);
-        const cancelTransactionCost = calculateTransactionCost(cancelGasUsed, gasPrice);
+        const cancelTransactionCost = await sh.getTransactionCost(cancelGasUsed, state.web3);
         initialBalances[account] = initialBalances[account].minus(cancelTransactionCost);
 
         // withdraw all participants
@@ -201,13 +177,13 @@ suite('withdraw', (state) => {
             const receipt = await parity.sendMethod(method, { from: participant.address });
             const gasUsed = receipt.gasUsed;
             assert.isBelow(gasUsed, maxTransactionGasUsed);
-            const transactionCost = calculateTransactionCost(gasUsed, gasPrice);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(transactionCost).plus(10500); 
+            const transactionCost = await sh.getTransactionCost(gasUsed, state.web3);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(transactionCost).plus(10000); 
         }
 
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
-            const finalBalance = await getBalance(accountAddress);
+            const finalBalance = await sh.getBalance(accountAddress, state.web3);
             assert.equal(finalBalance.toString(), initialBalances[accountAddress].toString(), "withdraw balance not expected for " + accountAddress);
         }
 

@@ -287,18 +287,17 @@ contract Charity {
         require(now < kick.revealTime); // but before the reveal
         require(_hashedRandom != 0x0); // hashed random cannot be zero
 
-        address _sender = msg.sender;
         // find existing participant
-        Participant storage _participant = participantsMapping[_sender];
+        Participant storage _participant = participantsMapping[msg.sender];
         require(_participant.entries == 0); // safety check
         require(_participant.hashedRandom == 0x0); // make sure they have not participated
         require(_participant.random == 0); // safety check
         // save hashed random, add to tracked
         _participant.hashedRandom = _hashedRandom;
-        participants.push(_sender);
+        participants.push(msg.sender);
 
         // send out participation update
-        Participation(_sender, _hashedRandom);
+        Participation(msg.sender, _hashedRandom);
 
         // did we also receive wei? if so, fund
         if (msg.value > 0) {
@@ -323,9 +322,9 @@ contract Charity {
         }
 
         uint256 _refund = msg.value % kick.valuePerEntry;
-        // refund any excess wei (partial entry)
+        // refund any excess wei immediately (partial entry)
         if (_refund > 0) {
-            balancesMapping[msg.sender] += _refund;
+            msg.sender.transfer(_refund);
         }
 
         // send fund event
@@ -363,18 +362,17 @@ contract Charity {
         require(_random != 0);
 
         // find the original participant
-        address _sender = msg.sender;
-        Participant storage _participant = participantsMapping[_sender];
+        Participant storage _participant = participantsMapping[msg.sender];
         require(_participant.entries > 0); // make sure they entered
-        require(_participant.hashedRandom == keccak256(_random, _sender)); // verify random against hashed random
+        require(_participant.hashedRandom == keccak256(_random, msg.sender)); // verify random against hashed random
         require(_participant.random == 0); // make sure no random set already
 
         // set random, track revealer, update stats
         _participant.random = _random;
-        revealers.push(_sender);
+        revealers.push(msg.sender);
         totalRevealed += _participant.entries;
         // send out revelation update
-        Revelation(_sender, _participant.entries, totalRevealed, revealers.length);
+        Revelation(msg.sender, _participant.entries, totalRevealed, revealers.length);
 
     }
 
@@ -567,20 +565,17 @@ contract Charity {
 
     /**
      * This is the only method for getting funds out of the contract. All
-     * winnings and refunds are transferred in this way.
+     * winnings and refunds (due to cancellations) are transferred in this way.
      */
     function withdraw() public {
-
-        address _sender = msg.sender;
         // determine where to find the refund amount
-        uint256 _balance = balancesMapping[_sender];
+        uint256 _balance = balancesMapping[msg.sender];
         // fail if no balance
         require(_balance > 0);
         // execute the refund if we have one
-        _sender.transfer(_balance);
+        msg.sender.transfer(_balance);
         // send withdrawal event
-        Withdrawal(_sender, _balance);
-
+        Withdrawal(msg.sender, _balance);
     }
 
 }

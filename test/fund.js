@@ -11,13 +11,20 @@ suite('fund', (state) => {
 
     test("should allow funding and refund after participation", async () => {
 
+        const initialBalances = {};
+        // get all initial balances
+        for (let accountAddress of state.accountAddresses) {
+            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        }
+
         await fund.stage(state);
 
         const stage = state.stage;
 
         // validate every participant
-        for (let participant of stage.participants) {
+        for (let i = 0; i < stage.participantsCount; i++) {
 
+            const participant = stage.participants[i];
             const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
@@ -28,7 +35,19 @@ suite('fund', (state) => {
             assert.equal(actualRandom, 0, "random should be zero");
     
             const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
-            assert.equal(actualBalance, 500, "refund balance should be correct");
+            assert.equal(actualBalance, 0, "balance should be zero");
+
+            const participationReceipt = stage.participationReceipts[i];
+            const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
+            const participationBalance = initialBalances[participant.address].minus(participationTransactionCost);
+
+            const fundReceipt = stage.fundReceipts[i];
+            const fundTransactionCost = await sh.getTransactionCost(fundReceipt.gasUsed, state.web3);
+            // participant should be refunded 500 (partial entry) in transaction for a net loss of 10000
+            const fundBalance = participationBalance.minus(fundTransactionCost).minus(10000);
+
+            const finalBalance = await sh.getBalance(participant.address, state.web3);
+            assert.equal(finalBalance.toString(), fundBalance.toString(), "balance not expected for " + participant.address);
 
         }
 
