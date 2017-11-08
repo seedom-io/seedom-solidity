@@ -295,10 +295,8 @@ contract Charity {
         // save hashed random, add to tracked
         _participant.hashedRandom = _hashedRandom;
         participants.push(msg.sender);
-
         // send out participation update
         Participation(msg.sender, _hashedRandom);
-
         // did we also receive wei? if so, fund
         if (msg.value > 0) {
             fund(_participant);
@@ -321,14 +319,15 @@ contract Charity {
             totalEntries += _newEntries;
         }
 
+        // calculate partial entry refund
         uint256 _refund = msg.value % kick.valuePerEntry;
+        // send fund event
+        Fund(msg.sender, msg.value, _refund, _newEntries, totalEntries);
         // refund any excess wei immediately (partial entry)
+        // keep this at end to prevent re-entrancy!
         if (_refund > 0) {
             msg.sender.transfer(_refund);
         }
-
-        // send fund event
-        Fund(msg.sender, msg.value, _refund, _newEntries, totalEntries);
 
     }
 
@@ -366,7 +365,6 @@ contract Charity {
         require(_participant.entries > 0); // make sure they entered
         require(_participant.hashedRandom == keccak256(_random, msg.sender)); // verify random against hashed random
         require(_participant.random == 0); // make sure no random set already
-
         // set random, track revealer, update stats
         _participant.random = _random;
         revealers.push(msg.sender);
@@ -407,7 +405,6 @@ contract Charity {
         balancesMapping[kick.charity] += _charityReward;
         balancesMapping[winner] += _winnerReward;
         balancesMapping[owner] += _ownerReward;
-
         // send out win event
         Win(winner, _charityReward, _winnerReward, _ownerReward);
 
@@ -437,7 +434,6 @@ contract Charity {
             require(_participant.entries > 0); // safety check
             require(_participant.hashedRandom != 0x0); // safety check
             require(_participant.random != 0); // safety check
-
             // set lower cumulative bound
             _cumulatives[revealerIndex] = _cumulative;
             _cumulative += _participant.entries;
@@ -499,6 +495,7 @@ contract Charity {
                 _nextRevealerCumulative
             );
 
+            // binary search
             if (_winningEntryIndex >= _midRevealerCumulative) {
                 if (_winningEntryIndex < _nextRevealerCumulative) {
                     // we are in range, winner found!
@@ -572,10 +569,13 @@ contract Charity {
         uint256 _balance = balancesMapping[msg.sender];
         // fail if no balance
         require(_balance > 0);
-        // execute the refund if we have one
-        msg.sender.transfer(_balance);
+        // set balance to zero
+        balancesMapping[msg.sender] = 0;
         // send withdrawal event
         Withdrawal(msg.sender, _balance);
+        // execute the refund if we have one
+        // keep this at end to prevent re-entrancy!
+        msg.sender.transfer(_balance);
     }
 
 }
