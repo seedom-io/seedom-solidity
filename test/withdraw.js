@@ -18,20 +18,20 @@ suite('withdraw', (state) => {
 
         const stage = state.stage;
 
-        const method = stage.instances.charity.methods.withdraw();
+        const withdrawMethod = stage.instances.charity.methods.withdraw();
         await assert.isRejected(
-            parity.sendMethod(method, { from: stage.owner }),
+            parity.sendMethod(withdrawMethod, { from: stage.owner }),
             parity.SomethingThrown
         );
 
         await assert.isRejected(
-            parity.sendMethod(method, { from: stage.charity }),
+            parity.sendMethod(withdrawMethod, { from: stage.charity }),
             parity.SomethingThrown
         );
 
         for (let participant of stage.participants) {
             await assert.isRejected(
-                parity.sendMethod(method, { from: participant.address }),
+                parity.sendMethod(withdrawMethod, { from: participant.address }),
                 parity.SomethingThrown
             );
         }
@@ -164,8 +164,8 @@ suite('withdraw', (state) => {
         const stage = state.stage;
 
         // now cancel
-        const method = stage.instances.charity.methods.cancel();
-        const cancelReceipt = await parity.sendMethod(method, { from: account });
+        const cancelMethod = stage.instances.charity.methods.cancel();
+        const cancelReceipt = await parity.sendMethod(cancelMethod, { from: account });
         const cancelGasUsed = cancelReceipt.gasUsed;
         assert.isBelow(cancelGasUsed, maxTransactionGasUsed);
         const cancelTransactionCost = await sh.getTransactionCost(cancelGasUsed, state.web3);
@@ -173,12 +173,12 @@ suite('withdraw', (state) => {
 
         // withdraw all participants
         for (let participant of stage.participants) {
-            const method = stage.instances.charity.methods.withdraw();
-            const receipt = await parity.sendMethod(method, { from: participant.address });
-            const gasUsed = receipt.gasUsed;
-            assert.isBelow(gasUsed, maxTransactionGasUsed);
-            const transactionCost = await sh.getTransactionCost(gasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(transactionCost).plus(10000); 
+            const withdrawMethod = stage.instances.charity.methods.withdraw();
+            const withdrawReceipt = await parity.sendMethod(withdrawMethod, { from: participant.address });
+            const withdrawGasUsed = withdrawReceipt.gasUsed;
+            assert.isBelow(withdrawGasUsed, maxTransactionGasUsed);
+            const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(10000); 
         }
 
         // verify all balances are expected
@@ -204,6 +204,70 @@ suite('withdraw', (state) => {
         await fund.stage(state);
         const stage = state.stage;
         await testCancelWithdrawFunds(stage.charity);
+
+    });
+
+    test("should reject multiple withdraw attempts after cancel", async () => {
+        
+        // first fund
+        await fund.stage(state);
+
+        const stage = state.stage;
+
+        // now cancel
+        const cancelMethod = stage.instances.charity.methods.cancel();
+        await parity.sendMethod(cancelMethod, { from: stage.owner });
+
+        // withdraw a single participant
+        const participant = stage.participants[0];
+        const withdrawMethod = stage.instances.charity.methods.withdraw();
+
+        // initial withdraw
+        await assert.isFulfilled(
+            parity.sendMethod(withdrawMethod, { from: participant.address })
+        );
+
+        // attempt second withdraw
+        await assert.isRejected(
+            parity.sendMethod(withdrawMethod, { from: participant.address }),
+            parity.SomethingThrown
+        );
+
+    });
+
+    test("should reject multiple withdraw attempts after end", async () => {
+        
+        // first fund
+        await end.stage(state);
+
+        const stage = state.stage;
+
+        const withdrawMethod = stage.instances.charity.methods.withdraw();
+
+        // initial withdraws
+        await assert.isFulfilled(
+            parity.sendMethod(withdrawMethod, { from: stage.charity })
+        );
+        await assert.isFulfilled(
+            parity.sendMethod(withdrawMethod, { from: stage.winner })
+        );
+        await assert.isFulfilled(
+            parity.sendMethod(withdrawMethod, { from: stage.owner })
+        );
+
+        // attempt second withdraws
+        await assert.isRejected(
+            parity.sendMethod(withdrawMethod, { from: stage.charity }),
+            parity.SomethingThrown
+        );
+        await assert.isRejected(
+            parity.sendMethod(withdrawMethod, { from: stage.winner }),
+            parity.SomethingThrown
+        );
+        await assert.isRejected(
+            parity.sendMethod(withdrawMethod, { from: stage.owner }),
+            parity.SomethingThrown
+        );
 
     });
 

@@ -9,10 +9,19 @@ const wtfnode = require('wtfnode');
 // print out anything hanging after ctrl-c
 wtfnode.init();
 
+// don't judge an app by it's logo
 cli.logo('chronicle');
 
+// end with new line
 process.on('exit', () => {
     cli.nl();
+});
+
+// always trace warnings
+process.on('warning', (warning) => {
+    console.log(warning.name);
+    console.log(warning.message);
+    console.log(warning.stack);
 });
 
 const main = async (name, state) => {
