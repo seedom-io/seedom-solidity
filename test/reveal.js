@@ -49,14 +49,10 @@ suite('reveal', (state) => {
         await seed.stage(state);
 
         const stage = state.stage;
-        let now = await sh.timestamp(stage.instances.charity);
-        const startTime = stage.startTime;
-        await cli.progress("waiting for start phase", startTime - now);
-
         const participant = state.accountAddresses[2];
-
         const random = '0';
         const hashedRandom = sh.hashedRandom(random, participant);
+        
         let method = stage.instances.charity.methods.participate(hashedRandom);
         await assert.isFulfilled(
             parity.sendMethod(method, { from: participant, value: 10000 })
