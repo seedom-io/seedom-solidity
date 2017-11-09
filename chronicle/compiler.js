@@ -11,7 +11,7 @@ module.exports.main = async (state) => {
 
     // now compile
     cli.section("compiler");
-    
+
     // get all contracts
     state.contractNames = await getContractNames();
     if (h.objLength(state.contractNames) == 0) {
@@ -46,7 +46,7 @@ const getContractNames = async () => {
         const relativeContractFile = path.relative(h.contractDir, contractFile);
         const contractName = getContractName(relativeContractFile);
         contractNames.push(contractName);
-        
+
     }
 
     return contractNames;
@@ -58,7 +58,7 @@ const getUpdatedContractNames = async (contractNames, force) => {
     if (force) {
         return contractNames;
     }
-    
+
     const updatedContractNames = [];
 
     for (let contractName of contractNames) {
@@ -88,7 +88,7 @@ const compile = async (contractNames) => {
     await exportFiles(output.contracts);
     // print out any solc warnings/errors
     if ('errors' in output) {
-        for (let line of errors) {
+        for (let line of output.errors) {
             cli.info(line);
         }
     }
@@ -134,7 +134,7 @@ const exportFiles = async (contracts) => {
         let abiFile = h.getAbiFile(contractName);
         let bytecodeFile = h.getBytecodeFile(contractName);
         let hashFile = h.getHashFile(contractName);
-        
+
         let contract = contracts[key];
         let interface = contract.interface;
         let bytecode = '0x' + contract.bytecode;
@@ -144,7 +144,7 @@ const exportFiles = async (contracts) => {
         await h.writeFile(abiFile, interface);
         await h.writeFile(bytecodeFile, bytecode);
         await h.writeFile(hashFile, hash);
-        
+
     }
 
 }
