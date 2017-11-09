@@ -281,7 +281,7 @@ contract Charity {
      * contribution as this will be required during the random revealation phase
      * to confirm your entries. After participation, send wei to the callback
      * function to receive entries and thereby increase your chances of winning.
-     * Participation is only permitted between seed and reaveal.
+     * Participation is only permitted between seed and reveal.
      */
     function participate(bytes32 _hashedRandom) public playTime neverOwner payable {
         require(now < kick.revealTime); // but before the reveal
