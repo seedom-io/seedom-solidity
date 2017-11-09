@@ -204,7 +204,6 @@ const getParityState = async () => {
     state.accountAddresses = state.parity.accountAddresses;
 
     cli.section("deployer");
-    cli.success("retrieved state information from parity");
 
     return state;
 

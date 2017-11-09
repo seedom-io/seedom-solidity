@@ -1,5 +1,3 @@
-# TPT Charity
-
 ## Dependencies
 - NodeJS v8.6.0+
 - Parity v1.8.2 (https://parity.io)
