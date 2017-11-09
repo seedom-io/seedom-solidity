@@ -10,13 +10,20 @@ suite('participate', (state) => {
 
     test("should accept participants after seed", async () => {
 
+        const initialBalances = {};
+        // get all initial balances
+        for (let accountAddress of state.accountAddresses) {
+            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        }
+
         await participate.stage(state);
 
         const stage = state.stage;
 
         // validate every participant
-        for (let participant of stage.participants) {
+        for (let i = 0; i < stage.participantsCount; i++) {
 
+            const participant = stage.participants[i];
             const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
@@ -28,6 +35,12 @@ suite('participate', (state) => {
 
             const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
+
+            const participationReceipt = stage.participationReceipts[i];
+            const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
+            const participationBalance = initialBalances[participant.address].minus(participationTransactionCost);
+            const finalBalance = await sh.getBalance(participant.address, state.web3);
+            assert.equal(finalBalance.toString(), participationBalance.toString(), "balance not expected for " + participant.address);
 
         }
 
@@ -45,6 +58,12 @@ suite('participate', (state) => {
 
     test("should accept and refund participants after seed", async () => {
 
+        const initialBalances = {};
+        // get all initial balances
+        for (let accountAddress of state.accountAddresses) {
+            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        }
+
         const stage = state.stage;
         // fund at refund generating amount
         stage.participationFunds = 10500;
@@ -52,8 +71,9 @@ suite('participate', (state) => {
         await participate.stage(state);
 
         // validate every participant
-        for (let participant of stage.participants) {
+        for (let i = 0; i < stage.participantsCount; i++) {
 
+            const participant = stage.participants[i];
             const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
@@ -64,7 +84,14 @@ suite('participate', (state) => {
             assert.equal(actualRandom, 0, "random should be zero");
 
             const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
-            assert.equal(actualBalance, 500, "refund balance should be correct");
+            assert.equal(actualBalance, 0, "balance should be zero");
+
+            const participationReceipt = stage.participationReceipts[i];
+            const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
+            // participant should be refunded 500 (partial entry) in transaction for a net loss of 10000
+            const participationBalance = initialBalances[participant.address].minus(participationTransactionCost).minus(10000);
+            const finalBalance = await sh.getBalance(participant.address, state.web3);
+            assert.equal(finalBalance.toString(), participationBalance.toString(), "balance not expected for " + participant.address);
 
         }
 
