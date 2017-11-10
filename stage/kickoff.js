@@ -21,7 +21,7 @@ module.exports.stage = async (state) => {
     await instantiate.stage(state);
     
     const stage = state.stage;
-    const now = await h.timestamp(stage.instances.charity);
+    const now = await h.timestamp(stage.instances.seedom);
 
     stage.charity = stage.charity ? stage.charity : state.accountAddresses[1];
     stage.charitySplit = stage.charitySplit ? stage.charitySplit : 49;
@@ -32,10 +32,10 @@ module.exports.stage = async (state) => {
     stage.participantsCount = state.accountAddresses.length - 2;
     // double the parity send delay to get overall transaction duration
     stage.transactionDuration = Math.floor(networks.paritySendDelay / 1000) * 2;
-    // kick phase has two initial transactions: kickoff and seed
+    // kickoff phase has two initial transactions: kickoff and seed
     // and then two transactions per participant: participate and reveal (after seed)
-    stage.kickDuration = (stage.transactionDuration * 2) + (stage.participantsCount * stage.transactionDuration * 2);
-    stage.revealTime = stage.revealTime ? stage.revealTime : now + stage.kickDuration;
+    stage.kickoffDuration = (stage.transactionDuration * 2) + (stage.participantsCount * stage.transactionDuration * 2);
+    stage.revealTime = stage.revealTime ? stage.revealTime : now + stage.kickoffDuration;
     // reveal phase has max one transactions per participant
     stage.revealDuration = stage.participantsCount * stage.transactionDuration;
     stage.endTime = stage.endTime ? stage.endTime : stage.revealTime + stage.revealDuration;
@@ -43,7 +43,7 @@ module.exports.stage = async (state) => {
     stage.endDuration = stage.transactionDuration;
     stage.expireTime = stage.expireTime ? stage.expireTime : stage.endTime + stage.endDuration;
     
-    const method = stage.instances.charity.methods.kickoff(
+    const method = stage.instances.seedom.methods.kickoff(
         stage.charity,
         stage.charitySplit,
         stage.winnerSplit,

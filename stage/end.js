@@ -14,20 +14,20 @@ module.exports.stage = async (state) => {
     await reveal.stage(state);
     
     const stage = state.stage;
-    const now = await h.timestamp(stage.instances.charity);
+    const now = await h.timestamp(stage.instances.seedom);
     const endTime = stage.endTime;
     await cli.progress("waiting for end phase", endTime - now);
 
-    // only the charity can end everything
-    const method = stage.instances.charity.methods.end(stage.charityRandom);
+    // only the charity can end the fundraiser
+    const method = stage.instances.seedom.methods.end(stage.charityRandom);
     stage.endReceipt = await parity.sendMethod(method, { from: stage.charity });
 
     // set the winner
-    stage.winner = await stage.instances.charity.methods.winner().call({ from: stage.owner });
+    stage.winner = await stage.instances.seedom.methods.winner().call({ from: stage.owner });
     // set balances
-    stage.charityBalance = await stage.instances.charity.methods.balance(stage.charity).call({ from: stage.owner });
-    stage.winnerBalance = await stage.instances.charity.methods.balance(stage.winner).call({ from: stage.owner });
-    stage.ownerBalance = await stage.instances.charity.methods.balance(stage.owner).call({ from: stage.owner });
+    stage.charityBalance = await stage.instances.seedom.methods.balance(stage.charity).call({ from: stage.owner });
+    stage.winnerBalance = await stage.instances.seedom.methods.balance(stage.winner).call({ from: stage.owner });
+    stage.ownerBalance = await stage.instances.seedom.methods.balance(stage.owner).call({ from: stage.owner });
 
     return state;
 

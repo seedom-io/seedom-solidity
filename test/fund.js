@@ -25,7 +25,7 @@ suite('fund', (state) => {
         for (let i = 0; i < stage.participantsCount; i++) {
 
             const participant = stage.participants[i];
-            const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.instances.seedom.methods.participant(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -34,7 +34,7 @@ suite('fund', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
     
-            const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.instances.seedom.methods.balance(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
@@ -51,10 +51,10 @@ suite('fund', (state) => {
 
         }
 
-        const actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: stage.owner });
+        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: stage.owner });
+        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: stage.owner });
+        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: stage.owner });
+        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: stage.owner });
 
         const totalEntries = stage.participantsCount * 10;
         assert.equal(actualTotalEntries, totalEntries, "total entries should be correct");
@@ -73,21 +73,21 @@ suite('fund', (state) => {
         const participant = state.accountAddresses[2];
         // call fallback function
         await assert.isRejected(
-            parity.sendFallback(state.web3, stage.instances.charity, { from: participant, value: 10500 }),
+            parity.sendFallback(state.web3, stage.instances.seedom, { from: participant, value: 10500 }),
             parity.SomethingThrown
         );
 
-        const actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: participant });
-        const actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: participant });
-        const actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: participant });
-        const actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: participant });
+        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: participant });
+        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: participant });
+        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: participant });
+        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: participant });
 
         assert.equal(actualTotalEntries, 0, "total entries should be zero");
         assert.equal(actualTotalRevealed, 0, "total revealed not zero");
         assert.equal(actualTotalParticipants, 0, "total participants should be zero");
         assert.equal(actualTotalRevealers, 0, "total revealers not zero");
 
-        const actualParticipant = await stage.instances.charity.methods.participant(participant).call({ from: participant });
+        const actualParticipant = await stage.instances.seedom.methods.participant(participant).call({ from: participant });
         const actualEntries = actualParticipant[0];
         const actualHashedRandom = actualParticipant[1];
         const actualRandom = actualParticipant[2];
@@ -96,7 +96,7 @@ suite('fund', (state) => {
         assert.equal(actualHashedRandom, 0, "hashed random should be zero");
         assert.equal(actualRandom, 0, "random should be zero");
 
-        const actualBalance = await stage.instances.charity.methods.balance(participant).call({ from: participant });
+        const actualBalance = await stage.instances.seedom.methods.balance(participant).call({ from: participant });
         assert.equal(actualBalance, 0, "refund balance should be zero");
 
     });
@@ -109,21 +109,21 @@ suite('fund', (state) => {
         const participant = stage.participants[0];
         // call fallback function
         await assert.isRejected(
-            parity.sendFallback(state.web3, stage.instances.charity, { from: participant.address, value: 0 }),
+            parity.sendFallback(state.web3, stage.instances.seedom, { from: participant.address, value: 0 }),
             parity.SomethingThrown
         );
 
-        const actualTotalEntries = await stage.instances.charity.methods.totalEntries().call({ from: participant.address });
-        const actualTotalRevealed = await stage.instances.charity.methods.totalRevealed().call({ from: participant.address });
-        const actualTotalParticipants = await stage.instances.charity.methods.totalParticipants().call({ from: participant.address });
-        const actualTotalRevealers = await stage.instances.charity.methods.totalRevealers().call({ from: participant.address });
+        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: participant.address });
+        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: participant.address });
+        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: participant.address });
+        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: participant.address });
 
         assert.equal(actualTotalEntries, 0, "total entries should be zero");
         assert.equal(actualTotalRevealed, 0, "total revealed not zero");
         assert.equal(actualTotalParticipants, stage.participantsCount, "total participants incorrect");
         assert.equal(actualTotalRevealers, 0, "total revealers not zero");
 
-        const actualParticipant = await stage.instances.charity.methods.participant(participant.address).call({ from: participant.address });
+        const actualParticipant = await stage.instances.seedom.methods.participant(participant.address).call({ from: participant.address });
         const actualEntries = actualParticipant[0];
         const actualHashedRandom = actualParticipant[1];
         const actualRandom = actualParticipant[2];
@@ -132,7 +132,7 @@ suite('fund', (state) => {
         assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
         assert.equal(actualRandom, 0, "random should be zero");
 
-        const actualBalance = await stage.instances.charity.methods.balance(participant.address).call({ from: participant.address });
+        const actualBalance = await stage.instances.seedom.methods.balance(participant.address).call({ from: participant.address });
         assert.equal(actualBalance, 0, "refund balance should be zero");
 
     });
