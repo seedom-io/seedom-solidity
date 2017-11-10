@@ -17,3 +17,6 @@ deployment/test.json
 
 # parity
 parity/*
+
+# build
+build/*
