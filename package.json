@@ -1,5 +1,5 @@
 {
-    "name": "charity-solidity",
+    "name": "seedom-solidity",
     "version": "1.0.0",
     "description": "prosperity bomb",
     "main": "truffle.js",
@@ -35,14 +35,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/TeamPalmTree/charity-solidity.git"
+        "url": "git+https://github.com/seedom/seedom-solidity.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/TeamPalmTree/charity-solidity/issues"
+        "url": "https://github.com/seedom/seedom-solidity/issues"
     },
-    "homepage": "https://github.com/TeamPalmTree/charity-solidity#readme",
+    "homepage": "https://github.com/seedom/seedom-solidity#readme",
     "bin": {
         "chronicle": "chronicle/chronicle.js"
     }

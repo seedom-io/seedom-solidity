@@ -18,7 +18,7 @@ module.exports.stage = async (state) => {
     stage.charityRandom = stage.charityRandom ? stage.charityRandom : h.random();
     stage.charityHashedRandom = h.hashedRandom(stage.charityRandom, stage.charity);
 
-    const method = stage.instances.charity.methods.seed(stage.charityHashedRandom);
+    const method = stage.instances.seedom.methods.seed(stage.charityHashedRandom);
     stage.seedReceipt = await parity.sendMethod(method, { from: stage.charity });
 
     return state;

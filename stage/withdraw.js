@@ -15,7 +15,7 @@ module.exports.stage = async (state) => {
     
     const stage = state.stage;
     
-    const method = stage.instances.charity.methods.withdraw();
+    const method = stage.instances.seedom.methods.withdraw();
 
     stage.charityWithdrawReceipt = await parity.sendMethod(method, { from: stage.charity });
     stage.winnerWithdrawReceipt = await parity.sendMethod(method, { from: stage.winner });

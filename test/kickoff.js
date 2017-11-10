@@ -12,19 +12,19 @@ suite('kickoff', (state) => {
         await kickoff.stage(state);
 
         const stage = state.stage;
-        const now = await sh.timestamp(stage.instances.charity);
-        const actualKickoff = await stage.instances.charity.methods.currentKick().call({ from: stage.owner });
-        const actualKickTimeDifference = actualKickoff._kickTime - now;
+        const now = await sh.timestamp(stage.instances.seedom);
+        const actualFundraiser = await stage.instances.seedom.methods.currentFundraiser().call({ from: stage.owner });
+        const actualFundraiserTimeDifference = actualFundraiser._kickoffTime - now;
 
-        assert.equalIgnoreCase(actualKickoff._charity, stage.charity, "charity does not match");
-        assert.equal(actualKickoff._charitySplit, stage.charitySplit, "charity split does not match");
-        assert.equal(actualKickoff._winnerSplit, stage.winnerSplit, "winner split does not match");
-        assert.equal(actualKickoff._ownerSplit, stage.ownerSplit, "validOwner split does not match");
-        assert.equal(actualKickoff._valuePerEntry, stage.valuePerEntry, "wei per entry does not match");
-        assert.isAtMost(actualKickTimeDifference, 2, "kick time delta too high");
-        assert.equal(actualKickoff._revealTime, stage.revealTime, "reveal time does not match");
-        assert.equal(actualKickoff._endTime, stage.endTime, "end time does not match");
-        assert.equal(actualKickoff._expireTime, stage.expireTime, "expire time does not match");
+        assert.equalIgnoreCase(actualFundraiser._charity, stage.charity, "charity does not match");
+        assert.equal(actualFundraiser._charitySplit, stage.charitySplit, "charity split does not match");
+        assert.equal(actualFundraiser._winnerSplit, stage.winnerSplit, "winner split does not match");
+        assert.equal(actualFundraiser._ownerSplit, stage.ownerSplit, "validOwner split does not match");
+        assert.equal(actualFundraiser._valuePerEntry, stage.valuePerEntry, "wei per entry does not match");
+        assert.isAtMost(actualFundraiserTimeDifference, 2, "kick time delta too high");
+        assert.equal(actualFundraiser._revealTime, stage.revealTime, "reveal time does not match");
+        assert.equal(actualFundraiser._endTime, stage.endTime, "end time does not match");
+        assert.equal(actualFundraiser._expireTime, stage.expireTime, "expire time does not match");
 
     });
 
@@ -33,7 +33,7 @@ suite('kickoff', (state) => {
         await instantiate.stage(state);
 
         const stage = state.stage;
-        const now = await sh.timestamp(stage.instances.charity);
+        const now = await sh.timestamp(stage.instances.seedom);
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
         const revealTime = now + phaseDuration;
@@ -53,7 +53,7 @@ suite('kickoff', (state) => {
         
         for (let testArgs of testData) {
             cli.info(testArgs);
-            const method = stage.instances.charity.methods.kickoff.apply(null, testArgs);
+            const method = stage.instances.seedom.methods.kickoff.apply(null, testArgs);
             await assert.isRejected(
                 parity.sendMethod(method, { from: stage.owner }),
                 parity.SomethingThrown,
@@ -69,7 +69,7 @@ suite('kickoff', (state) => {
         await instantiate.stage(state);
 
         const stage = state.stage;
-        const now = await sh.timestamp(stage.instances.charity);
+        const now = await sh.timestamp(stage.instances.seedom);
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
         const revealTime = now + phaseDuration;
@@ -96,7 +96,7 @@ suite('kickoff', (state) => {
 
         for (let testArgs of testData) {
             cli.info(testArgs);
-            const method = stage.instances.charity.methods.kickoff.apply(null, testArgs);
+            const method = stage.instances.seedom.methods.kickoff.apply(null, testArgs);
             await assert.isRejected(
                 parity.sendMethod(method, { from: stage.owner }),
                 parity.SomethingThrown,

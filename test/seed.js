@@ -12,19 +12,19 @@ suite('seed', (state) => {
 
         const stage = state.stage;
 
-        const actualKickoff = await stage.instances.charity.methods.currentKick().call({ from: stage.owner });
+        const actualFundraiser = await stage.instances.seedom.methods.currentFundraiser().call({ from: stage.owner });
 
-        assert.equalIgnoreCase(actualKickoff._charity, stage.charity, "charity does not match");
+        assert.equalIgnoreCase(actualFundraiser._charity, stage.charity, "charity does not match");
 
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
 
-        const method = stage.instances.charity.methods.seed(charityHashedRandom);
+        const method = stage.instances.seedom.methods.seed(charityHashedRandom);
         await assert.isFulfilled(
             parity.sendMethod(method, { from: stage.charity })
         );
 
-        const actualCharityHashedRandom = await stage.instances.charity.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
+        const actualCharityHashedRandom = await stage.instances.seedom.methods.charityHashedRandom().call({ from: state.accountAddresses[2] });
 
         assert.equal(actualCharityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
 
@@ -38,7 +38,7 @@ suite('seed', (state) => {
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
 
-        const method = stage.instances.charity.methods.seed(charityHashedRandom);
+        const method = stage.instances.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
             parity.sendMethod(method, { from: stage.owner }),
             parity.SomethingThrown
@@ -55,7 +55,7 @@ suite('seed', (state) => {
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
         const participant = state.accountAddresses[2];
 
-        const method = stage.instances.charity.methods.seed(charityHashedRandom);
+        const method = stage.instances.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
             parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown

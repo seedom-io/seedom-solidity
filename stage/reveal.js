@@ -18,7 +18,7 @@ module.exports.stage = async (state) => {
 
     stage.revealersCount = stage.revealersCount ? stage.revealersCount : stage.participantsCount;
 
-    const now = await h.timestamp(stage.instances.charity);
+    const now = await h.timestamp(stage.instances.seedom);
     const revealTime = stage.revealTime;
     await cli.progress("waiting for reveal phase", revealTime - now);
 
@@ -28,7 +28,7 @@ module.exports.stage = async (state) => {
     // reveal original participants with their randoms
     for (let i = 0; i < stage.revealersCount; i++) {
         let participant = stage.participants[i];
-        const method = stage.instances.charity.methods.reveal(participant.random);
+        const method = stage.instances.seedom.methods.reveal(participant.random);
         const receipt = await parity.sendMethod(method, { from: participant.address });
         cli.info("revealed participant %s", participant.address);
         stage.revealReceipts.push(receipt);

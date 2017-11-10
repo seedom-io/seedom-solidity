@@ -20,7 +20,7 @@ module.exports.stage = async (state) => {
     stage.fundReceipts = [];
 
     for (let participant of stage.participants) {
-        const receipt = await parity.sendFallback(state.web3, stage.instances.charity, { from: participant.address, value: stage.fundFunds  });
+        const receipt = await parity.sendFallback(state.web3, stage.instances.seedom, { from: participant.address, value: stage.fundFunds  });
         cli.info("funded participant %s with %d wei", participant.address, stage.fundFunds);
         stage.fundReceipts.push(receipt);
     }

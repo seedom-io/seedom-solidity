@@ -20,14 +20,14 @@ module.exports.stage = async (state) => {
     stage.participationReceipts = [];
     stage.participants = [];
     
-    // start after charity
+    // start after charity seed
     for (let i = 0; i < stage.participantsCount; i++) {
 
         const address = state.accountAddresses[i + 2];
         const random = h.random();
         const hashedRandom = h.hashedRandom(random, address);
 
-        const method = stage.instances.charity.methods.participate(hashedRandom);
+        const method = stage.instances.seedom.methods.participate(hashedRandom);
         const receipt = await parity.sendMethod(method, { from: address, value: stage.participationFunds });
 
         cli.info("staged participant %s with %d wei", address, stage.participationFunds);
