@@ -51,6 +51,7 @@ contract Seedom {
 
     event Win(
         address indexed winner,
+        uint256 random,
         uint256 charityReward,
         uint256 winnerReward,
         uint256 ownerReward
@@ -396,12 +397,13 @@ contract Seedom {
 
         uint256[] memory _cumulatives = new uint256[](revealers.length);
         // calculate social random & index from this random
-        uint256 _winningRandom = calculateWinningRandom(_charityRandom, _cumulatives);
-        uint256 _winningEntryIndex = _winningRandom % totalRevealed;
+        uint256 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
+        uint256 _entryIndex = _crowdsourcedRandom % totalRevealed;
         // send out winning input
-        WinningInput(_winningRandom, _winningEntryIndex);
-        // find winner
-        winner = findWinnerAddress(_winningEntryIndex, _cumulatives);
+        WinningInput(_crowdsourcedRandom, _entryIndex);
+        // find winner & coresponding participant
+        winner = findWinnerAddress(_entryIndex, _cumulatives);
+        Participant memory _participant = participantsMapping[winner];
 
         uint256 _ownerReward;
         uint256 _charityReward;
@@ -413,7 +415,7 @@ contract Seedom {
         balancesMapping[winner] += _winnerReward;
         balancesMapping[owner] += _ownerReward;
         // send out win event
-        Win(winner, _charityReward, _winnerReward, _ownerReward);
+        Win(winner, _participant.random, _charityReward, _winnerReward, _ownerReward);
 
     }
 
@@ -423,13 +425,13 @@ contract Seedom {
      * also set up a discrete cumulative density function (CDF) using the
      * number of entries for each participant as the random selection weight.
      */
-    function calculateWinningRandom(
+    function crowdsourceRandom(
         uint256 _charityRandom,
         uint256[] memory _cumulatives) internal view returns (uint256)
     {
 
         uint256 _cumulative = 0;
-        uint256 _winningRandom = 0;
+        uint256 _crowdsourcedRandom = 0;
         address _revealerAddress;
         Participant memory _participant;
         // generate winning random from all revealed randoms
@@ -445,12 +447,12 @@ contract Seedom {
             _cumulatives[revealerIndex] = _cumulative;
             _cumulative += _participant.entries;
             // xor all randoms together
-            _winningRandom = _winningRandom ^ _participant.random;
+            _crowdsourcedRandom = _crowdsourcedRandom ^ _participant.random;
 
         }
 
         // the charity's initial random has the ultimate randomization effect
-        return _winningRandom ^ _charityRandom;
+        return _crowdsourcedRandom ^ _charityRandom;
 
     }
 
@@ -466,7 +468,7 @@ contract Seedom {
      * < next revealer cumulative entries
      */
     function findWinnerAddress(
-        uint256 _winningEntryIndex,
+        uint256 _entryIndex,
         uint256[] memory _cumulatives) internal returns (address)
     {
         uint256 _leftIndex = 0;
@@ -503,8 +505,8 @@ contract Seedom {
             );
 
             // binary search
-            if (_winningEntryIndex >= _midRevealerCumulative) {
-                if (_winningEntryIndex < _nextRevealerCumulative) {
+            if (_entryIndex >= _midRevealerCumulative) {
+                if (_entryIndex < _nextRevealerCumulative) {
                     // we are in range, winner found!
                     return _midRevealerAddress;
                 }
