@@ -1,0 +1,14 @@
+{
+    "seedom": [
+        {
+            "deployed": 1512161397,
+            "address": "0x37a41C4ba88D03dDb0E9D810867928ccCC836239",
+            "hash": "0x1d31d371ae4531dd4a90b6014fbc6df628a0d7eccb704f92c1eb14f46e34b4db"
+        },
+        {
+            "deployed": 1512161001,
+            "address": "0xeECE15b3AE4c505969A86F8E2fEa9a09c2F204b6",
+            "hash": "0x1d31d371ae4531dd4a90b6014fbc6df628a0d7eccb704f92c1eb14f46e34b4db"
+        }
+    ]
+}

@@ -67,7 +67,15 @@ const testWeb3 = async (web3) => {
 }
 
 module.exports.destroyWeb3 = (web3) => {
-    web3.currentProvider.connection.destroy();
+
+    if ('destroy' in web3.currentProvider.connection) {
+        // ipc destroy
+        web3.currentProvider.connection.destroy();
+    } else {
+        // websocket close
+        web3.currentProvider.connection.close();
+    }
+    
 }
 
 module.exports.get = (networkName, networkConfig) => {
