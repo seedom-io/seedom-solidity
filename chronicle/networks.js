@@ -10,7 +10,7 @@ module.exports.paritySendDelay = 1000;
 module.exports.getWeb3 = async (network) => {
 
     const web3 = createWeb3(network);
-    const name = network.url ? network.url : 'test';
+    const name = network.ws ? network.ws : 'test';
     if (await testWeb3(web3)) {
         cli.success("connected to %s network", name);
         return web3;
@@ -25,12 +25,12 @@ const createWeb3 = (network) => {
 
     let provider;
 
-    if (!('url' in network)) {
+    if (!('ws' in network)) {
         // assume local test; create web3 ipc provider (parity)
         provider = createParityProvider();
     } else {
         // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
-        provider = new Web3.providers.WebsocketProvider(network.url);
+        provider = new Web3.providers.WebsocketProvider('ws:\\\\' + network.ws);
     }
 
     return new Web3(provider);

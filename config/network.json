@@ -6,11 +6,11 @@
         "balance": "100000000000000000000000000",
         "accounts": 8
     },
-    "main": {
-        "url": "localhost:8545",
+    "kovan": {
+        "ws": "159.203.108.107:8546",
         "verify": true,
         "requires": "test",
-        "gas": "1500000",
-        "gasPrice": "30000000000000"
+        "gas": "400000",
+        "gasPrice": "10000000000"
     }
 }

@@ -2,7 +2,6 @@ const util = require('util');
 const Web3 = require('web3');
 const path = require('path');
 const fs = require('mz/fs');
-const readline = require('mz/readline');
 const h = require('./helper');
 const compiler = require('./compiler');
 const cli = require('./cli');
@@ -39,7 +38,7 @@ module.exports.main = async (state) => {
 
     const contractNames = state.force
         ? Object.keys(state.contractConfig)
-        : await getLegacyContractNames(state.contractHashes, state.networkDeployment);
+        : await getLegacyContractNames(contractHashes, state.networkDeployment);
     
     // do deploy if we need to
     if (h.objLength(contractNames) == 0) {
@@ -145,8 +144,8 @@ const deploy = async (
 
     // ask user for verification (optional)
     if (state.network.verify) {
-        cli.important("'%s' network requires verification", networkName);
-        if (!(await verify(networkName))) {
+        const question = "verification required!";
+        if (!(await cli.question(question, iAmCompletelySure))) {
             cli.success("deployment aborted");
             return null;
         }
@@ -218,26 +217,19 @@ const getNetworkState = async (networkName) => {
     state.network = networks.get(networkName, networkConfig);
 
     // get web3 instance
-    state.web3 = await networks.getWeb3(networkParams);
-    if (!web3) {
+    state.web3 = await networks.getWeb3(state.network);
+    if (!state.web3) {
         return null;
     }
 
-    state.accountAddresses = await web3.eth.getAccounts();
-    if (accounts.length == 0) {
+    state.accountAddresses = await state.web3.eth.getAccounts();
+    if (state.accountAddresses.length == 0) {
         cli.error("'%s' network contains no accounts", networkName);
         return null;
     }
 
     return state;
 
-}
-
-const verify = async () => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await rl.question("type " + iAmCompletelySure + " if you are sure: ");
-    rl.close();
-    return (answer === iAmCompletelySure);
 }
 
 module.exports.again = async (deploymentPlans, web3) => {

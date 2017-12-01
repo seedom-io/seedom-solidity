@@ -20,3 +20,6 @@ parity/*
 
 # build
 build/*
+
+# vscode
+.vscode/*
