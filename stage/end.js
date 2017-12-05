@@ -18,7 +18,7 @@ module.exports.stage = async (state) => {
     const endTime = stage.endTime;
     await cli.progress("waiting for end phase", endTime - now);
 
-    // only the charity can end the fundraiser
+    // only the charity can end the ether-raiser
     const method = stage.instances.seedom.methods.end(stage.charityRandom);
     stage.endReceipt = await parity.sendMethod(method, { from: stage.charity });
 

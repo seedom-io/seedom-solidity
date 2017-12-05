@@ -3,7 +3,7 @@ const cli = require('../chronicle/cli');
 const sh = require('../stage/helper');
 const parity = require('../chronicle/parity');
 const participate = require('../stage/participate');
-const fund = require('../stage/fund');
+const raise = require('../stage/raise');
 const end = require('../stage/end');
 const withdraw = require('../stage/withdraw');
 
@@ -11,7 +11,7 @@ suite('withdraw', (state) => {
 
     const maxTransactionGasUsed = 500000;
 
-    test("should withdraw no funds after participation with no funding", async () => {
+    test("should withdraw no ether after participation with no raising", async () => {
 
         // first participate
         await participate.stage(state);
@@ -73,14 +73,14 @@ suite('withdraw', (state) => {
             initialBalances[participant.address] = initialBalances[participant.address].minus(participationTransactionCost);
         }
 
-        // fund
+        // raise
         for (let i = 0; i < stage.participantsCount; i++) {
             const participant = stage.participants[i];
-            const fundReceipt = stage.fundReceipts[i];
-            const fundGasUsed = fundReceipt.gasUsed;
-            assert.isBelow(fundGasUsed, maxTransactionGasUsed);
-            const fundTransactionCost = await sh.getTransactionCost(fundGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(fundTransactionCost.plus(10000));
+            const raiseReceipt = stage.raiseReceipts[i];
+            const raiseGasUsed = raiseReceipt.gasUsed;
+            assert.isBelow(raiseGasUsed, maxTransactionGasUsed);
+            const raiseTransactionCost = await sh.getTransactionCost(raiseGasUsed, state.web3);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(raiseTransactionCost.plus(10000));
         }
 
         // reveal
@@ -189,19 +189,19 @@ suite('withdraw', (state) => {
 
     };
 
-    test("should withdraw cancelled (by owner) participation funds", async () => {
+    test("should withdraw cancelled (by owner) participation ether", async () => {
 
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         const stage = state.stage;
         await testCancelWithdrawFunds(stage.owner);
 
     });
 
-    test("should withdraw cancelled (by charity) participation funds", async () => {
+    test("should withdraw cancelled (by charity) participation ether", async () => {
         
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         const stage = state.stage;
         await testCancelWithdrawFunds(stage.charity);
 
@@ -209,8 +209,8 @@ suite('withdraw', (state) => {
 
     test("should reject multiple withdraw attempts after cancel", async () => {
         
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
 
         const stage = state.stage;
 
@@ -237,7 +237,7 @@ suite('withdraw', (state) => {
 
     test("should reject multiple withdraw attempts after end", async () => {
         
-        // first fund
+        // first raise
         await end.stage(state);
 
         const stage = state.stage;

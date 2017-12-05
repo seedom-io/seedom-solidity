@@ -13,18 +13,18 @@ suite('kickoff', (state) => {
 
         const stage = state.stage;
         const now = await sh.timestamp(stage.instances.seedom);
-        const actualFundraiser = await stage.instances.seedom.methods.currentFundraiser().call({ from: stage.owner });
-        const actualFundraiserTimeDifference = actualFundraiser._kickoffTime - now;
+        const actualRaiser = await stage.instances.seedom.methods.currentRaiser().call({ from: stage.owner });
+        const actualRaiserTimeDifference = actualRaiser._kickoffTime - now;
 
-        assert.equalIgnoreCase(actualFundraiser._charity, stage.charity, "charity does not match");
-        assert.equal(actualFundraiser._charitySplit, stage.charitySplit, "charity split does not match");
-        assert.equal(actualFundraiser._winnerSplit, stage.winnerSplit, "winner split does not match");
-        assert.equal(actualFundraiser._ownerSplit, stage.ownerSplit, "validOwner split does not match");
-        assert.equal(actualFundraiser._valuePerEntry, stage.valuePerEntry, "wei per entry does not match");
-        assert.isAtMost(actualFundraiserTimeDifference, 2, "kick time delta too high");
-        assert.equal(actualFundraiser._revealTime, stage.revealTime, "reveal time does not match");
-        assert.equal(actualFundraiser._endTime, stage.endTime, "end time does not match");
-        assert.equal(actualFundraiser._expireTime, stage.expireTime, "expire time does not match");
+        assert.equalIgnoreCase(actualRaiser._charity, stage.charity, "charity does not match");
+        assert.equal(actualRaiser._charitySplit, stage.charitySplit, "charity split does not match");
+        assert.equal(actualRaiser._winnerSplit, stage.winnerSplit, "winner split does not match");
+        assert.equal(actualRaiser._ownerSplit, stage.ownerSplit, "validOwner split does not match");
+        assert.equal(actualRaiser._valuePerEntry, stage.valuePerEntry, "wei per entry does not match");
+        assert.isAtMost(actualRaiserTimeDifference, 2, "kick time delta too high");
+        assert.equal(actualRaiser._revealTime, stage.revealTime, "reveal time does not match");
+        assert.equal(actualRaiser._endTime, stage.endTime, "end time does not match");
+        assert.equal(actualRaiser._expireTime, stage.expireTime, "expire time does not match");
 
     });
 

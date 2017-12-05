@@ -27,7 +27,7 @@ suite('end', (state) => {
 
         assert.isOk(foundWinner, "one of the participants that revealed should have won");
 
-        // currently all participant funds are distributed equally along splits
+        // currently all participant ether is distributed equally along splits
         const charityBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.charitySplit / 100;
         const winnerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.winnerSplit / 100;
         const ownerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.ownerSplit / 100;

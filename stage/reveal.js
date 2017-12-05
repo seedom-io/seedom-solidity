@@ -1,18 +1,18 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
 const parity = require('../chronicle/parity');
-const fund = require('./fund');
+const raise = require('./raise');
 const cli = require('../chronicle/cli');
 
 module.exports.optionize = (command) => {
-    return fund.optionize(command)
+    return raise.optionize(command)
         .option("--revealersCount <number>", "number of participants to reveal", parseInt);
 }
 
 module.exports.stage = async (state) => {
 
-    // first fund
-    await fund.stage(state);
+    // first raise
+    await raise.stage(state);
 
     const stage = state.stage;
 

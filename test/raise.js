@@ -5,11 +5,11 @@ const parity = require('../chronicle/parity');
 const kickoff = require('../stage/kickoff');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
-const fund = require('../stage/fund');
+const raise = require('../stage/raise');
 
-suite('fund', (state) => {
+suite('raise', (state) => {
 
-    test("should allow funding and refund after participation", async () => {
+    test("should allow raising and refund after participation", async () => {
 
         const initialBalances = {};
         // get all initial balances
@@ -17,7 +17,7 @@ suite('fund', (state) => {
             initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
-        await fund.stage(state);
+        await raise.stage(state);
 
         const stage = state.stage;
 
@@ -41,13 +41,13 @@ suite('fund', (state) => {
             const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
             const participationBalance = initialBalances[participant.address].minus(participationTransactionCost);
 
-            const fundReceipt = stage.fundReceipts[i];
-            const fundTransactionCost = await sh.getTransactionCost(fundReceipt.gasUsed, state.web3);
+            const raiseReceipt = stage.raiseReceipts[i];
+            const raiseTransactionCost = await sh.getTransactionCost(raiseReceipt.gasUsed, state.web3);
             // participant should be refunded 500 (partial entry) in transaction for a net loss of 10000
-            const fundBalance = participationBalance.minus(fundTransactionCost).minus(10000);
+            const raiseBalance = participationBalance.minus(raiseTransactionCost).minus(10000);
 
             const finalBalance = await sh.getBalance(participant.address, state.web3);
-            assert.equal(finalBalance.toString(), fundBalance.toString(), "balance not expected for " + participant.address);
+            assert.equal(finalBalance.toString(), raiseBalance.toString(), "balance not expected for " + participant.address);
 
         }
 
@@ -64,7 +64,7 @@ suite('fund', (state) => {
 
     });
 
-    test("should reject funding without participation", async () => {
+    test("should reject raising without participation", async () => {
 
         await seed.stage(state);
 
@@ -101,7 +101,7 @@ suite('fund', (state) => {
 
     });
 
-    test("should reject funding with no value after participation", async () => {
+    test("should reject raising with no value after participation", async () => {
 
         await participate.stage(state);
         

@@ -6,7 +6,7 @@ const instantiate = require('../stage/instantiate');
 const kickoff = require('../stage/kickoff');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
-const fund = require('../stage/fund');
+const raise = require('../stage/raise');
 const reveal = require('../stage/reveal');
 const end = require('../stage/end');
 
@@ -163,7 +163,7 @@ suite('cancel', (state) => {
 
     });
 
-    const testCancelRefundsAfterFunding = async (account) => {
+    const testCancelRefundsAfterRaising = async (account) => {
 
         const stage = state.stage;
         // make sure we aren't already cancelled
@@ -186,21 +186,21 @@ suite('cancel', (state) => {
 
     };
 
-    test("should cancel (by owner) and refund after funding", async () => {
+    test("should cancel (by owner) and refund after raising", async () => {
 
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterFunding(stage.owner);
+        await testCancelRefundsAfterRaising(stage.owner);
 
     });
 
-    test("should cancel (by charity) and refund after funding", async () => {
+    test("should cancel (by charity) and refund after raising", async () => {
         
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterFunding(stage.charity);
+        await testCancelRefundsAfterRaising(stage.charity);
 
     });
 
@@ -209,7 +209,7 @@ suite('cancel', (state) => {
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterFunding(stage.owner);
+        await testCancelRefundsAfterRaising(stage.owner);
 
     });
 
@@ -218,7 +218,7 @@ suite('cancel', (state) => {
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterFunding(stage.charity);
+        await testCancelRefundsAfterRaising(stage.charity);
 
     });
 
@@ -256,7 +256,7 @@ suite('cancel', (state) => {
         const expireTime = stage.expireTime;
         await cli.progress("waiting for expiration time", expireTime - now);
 
-        await testCancelRefundsAfterFunding(account);
+        await testCancelRefundsAfterRaising(account);
 
     };
 

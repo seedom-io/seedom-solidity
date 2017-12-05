@@ -6,7 +6,7 @@ const cli = require('../chronicle/cli');
 
 module.exports.optionize = (command) => {
     return seed.optionize(command)
-        .option("--participationFunds <number>", "initial participant funds", parseInt);
+        .option("--participationEther <number>", "initial participant ether contributed", parseInt);
 }
 
 module.exports.stage = async (state) => {
@@ -16,7 +16,7 @@ module.exports.stage = async (state) => {
 
     const stage = state.stage;
 
-    stage.participationFunds = stage.participationFunds ? stage.participationFunds : 0;
+    stage.participationEther = stage.participationEther ? stage.participationEther : 0;
     stage.participationReceipts = [];
     stage.participants = [];
     
@@ -28,9 +28,9 @@ module.exports.stage = async (state) => {
         const hashedRandom = h.hashedRandom(random, address);
 
         const method = stage.instances.seedom.methods.participate(hashedRandom);
-        const receipt = await parity.sendMethod(method, { from: address, value: stage.participationFunds });
+        const receipt = await parity.sendMethod(method, { from: address, value: stage.participationEther });
 
-        cli.info("staged participant %s with %d wei", address, stage.participationFunds);
+        cli.info("staged participant %s with %d wei", address, stage.participationEther);
 
         stage.participationReceipts.push(receipt);
 

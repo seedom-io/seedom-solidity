@@ -6,7 +6,7 @@ const cli = require('../chronicle/cli');
 
 module.exports.optionize = (command) => {
     return participate.optionize(command)
-        .option("--fundFunds <number>", "additional funds to each participant", parseInt);
+        .option("--raiseEther <number>", "additional ether raised by each participant", parseInt);
 }
 
 module.exports.stage = async (state) => {
@@ -16,13 +16,13 @@ module.exports.stage = async (state) => {
     
     const stage = state.stage;
 
-    stage.fundFunds = stage.fundFunds ? stage.fundFunds : 10500;
-    stage.fundReceipts = [];
+    stage.raiseEther = stage.raiseEther ? stage.raiseEther : 10500;
+    stage.raiseReceipts = [];
 
     for (let participant of stage.participants) {
-        const receipt = await parity.sendFallback(state.web3, stage.instances.seedom, { from: participant.address, value: stage.fundFunds  });
-        cli.info("funded participant %s with %d wei", participant.address, stage.fundFunds);
-        stage.fundReceipts.push(receipt);
+        const receipt = await parity.sendFallback(state.web3, stage.instances.seedom, { from: participant.address, value: stage.raiseEther  });
+        cli.info("raised %d wei from participant %s", stage.raiseEther, participant.address);
+        stage.raiseReceipts.push(receipt);
     }
 
     return state;

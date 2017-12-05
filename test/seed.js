@@ -12,9 +12,9 @@ suite('seed', (state) => {
 
         const stage = state.stage;
 
-        const actualFundraiser = await stage.instances.seedom.methods.currentFundraiser().call({ from: stage.owner });
+        const actualRaiser = await stage.instances.seedom.methods.currentRaiser().call({ from: stage.owner });
 
-        assert.equalIgnoreCase(actualFundraiser._charity, stage.charity, "charity does not match");
+        assert.equalIgnoreCase(actualRaiser._charity, stage.charity, "charity does not match");
 
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);

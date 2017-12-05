@@ -65,8 +65,8 @@ suite('participate', (state) => {
         }
 
         const stage = state.stage;
-        // fund at refund generating amount
-        stage.participationFunds = 10500;
+        // raise at refund generating amount
+        stage.participationEther = 10500;
 
         await participate.stage(state);
 

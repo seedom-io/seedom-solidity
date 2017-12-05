@@ -5,7 +5,7 @@ const parity = require('../chronicle/parity');
 const kickoff = require('../stage/kickoff');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
-const fund = require('../stage/fund');
+const raise = require('../stage/raise');
 const reveal = require('../stage/reveal');
 
 suite('reveal', (state) => {
@@ -72,8 +72,8 @@ suite('reveal', (state) => {
 
     test("should reject multiple revelations from same address", async () => {
         
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         
         const stage = state.stage;
         const participant = stage.participants[0];
@@ -94,7 +94,7 @@ suite('reveal', (state) => {
 
     });
 
-    test("should reject revelations without funding", async () => {
+    test("should reject revelations without raising", async () => {
         
         // first participate
         await participate.stage(state);
@@ -115,8 +115,8 @@ suite('reveal', (state) => {
 
     test("should reject incorrect randoms", async () => {
         
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         
         const stage = state.stage;
         const participant = stage.participants[0];
@@ -134,8 +134,8 @@ suite('reveal', (state) => {
 
     test("should reject revelations before and after revelation period", async () => {
 
-        // first fund
-        await fund.stage(state);
+        // first raise
+        await raise.stage(state);
         
         const stage = state.stage;
         const participant = stage.participants[0];
