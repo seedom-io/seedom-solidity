@@ -175,13 +175,9 @@ contract Seedom {
         return balancesMapping[_address];
     }
 
-    /**
-     * Kicks off a new raiser. Here we set the charity ethereum wallet
-     * address, the percentage cuts for the charity, winner, and owner, the wei
-     * of each entry, and the reveal, end, and expire times. A new raiser
-     * can only be kicked off if a winner is chosen from the current raiser
-     * or the current raiser is cancelled.
-     */
+    // Kicks off a new raiser. Here we set the charity's ethereum wallet address, the percentage
+    // splits, the wei of each entry, and several event times. A new raiser can only be kicked off
+    // if a winner is chosen or the last raiser is cancelled.
     function kickoff(
         address _charity,
         uint256 _charitySplit,
@@ -199,9 +195,7 @@ contract Seedom {
         require(_valuePerEntry != 0);
         require(_revealTime >= now); // time for the charity to seed and others to participate
         require(_endTime > _revealTime); // time for participants to reveal their randoms
-        require(_expireTime > _endTime); // time for charity to end everything (or community after expire)
-        // we can only start a new raiser if a winner has been 
-        // chosen or the last raiser was cancelled
+        require(_expireTime > _endTime); // time for charity to end the raiser
         require(winner != address(0) || cancelled);
 
         // clear out any pre-existing state
@@ -234,9 +228,7 @@ contract Seedom {
 
     }
 
-    /**
-     * Clears blockchain storage elements to prepare for a new raiser.
-     */
+    // Clears state elements to prepare for a new raiser.
     function clear() internal {
 
         // clear out charity hashed random
@@ -261,36 +253,25 @@ contract Seedom {
 
     }
 
-    /**
-    * Used by the charity to officially begin the raiser. The charity
-    * supplies the first hashed random, which is revealed by the charity
-    * in end() to alter the community revealed pool of randoms.
-    */
+    // Used by the charity to officially begin their raiser. The charity supplies the first hashed
+    // random, which is kept secret and revealed by the charity in end().
     function seed(bytes32 _hashedRandom) public onlyCharity {
-        require(now >= raiser.kickoffTime); // ensure we are in kick phase
+        require(now >= raiser.kickoffTime); // ensure we have kicked off
         require(now < raiser.revealTime); // but before the reveal
         require(winner == address(0)); // safety check
         require(!cancelled); // we can't participate in a cancelled charity
         require(charityHashedRandom == 0x0); // safety check
         require(_hashedRandom != 0x0); // hashed random cannot be zero
 
-        // set the charity's hashed random; this is the final revealed
-        // random number used to generate the winning random globally
         charityHashedRandom = _hashedRandom;
 
     }
 
-    /**
-     * Participate in the current raiser by contributing randomness to the
-     * global selection of a winner. Send a hashed random number N using the
-     * following formula: sha3(N, address). This being the SHA3 hash of the
-     * random number prepended to the sender's address. Do not forget your
-     * random number contribution as this will be required during the random
-     * revealation phase to confirm your entries. After participation, send wei
-     * to the callback function to receive entries and thereby increase your
-     * chances of winning. Participation is only permitted between seed and
-     * reveal.
-     */
+    // Participate in the current raiser by contributing randomness to the global selection of a
+    // winner. Send a hashed random value N using the following formula: sha3(N, address). Do not
+    // forget your random value as this will be required during the random revealation phase to
+    // confirm your entries. After participation, send wei to the callback function to receive
+    // additional entries. Participation is only permitted between seed() and the reveal time.
     function participate(bytes32 _hashedRandom) public raiserOngoing neverOwner payable {
         require(now < raiser.revealTime); // but before the reveal
         require(_hashedRandom != 0x0); // hashed random cannot be zero
@@ -312,11 +293,7 @@ contract Seedom {
     
     }
 
-    /**
-     * Internal function called by participate and the fallback function
-     * for submitting entries initially during participation or several
-     * times after participation through this fallback function.
-     */
+    // Called by participate() and the fallback function for obtaining additional entries.
     function raise(Participant storage _participant) internal {
 
         // calculate the number of entries from the wei sent
@@ -339,10 +316,8 @@ contract Seedom {
 
     }
 
-    /**
-     * Fallback function that accepts wei for entries. This will always
-     * fail if participate() is not called once first with a hashed random.
-     */
+    // Fallback function that accepts wei for additional entries. This will always fail if
+    // participate() is not called once with a hashed random.
     function () public raiserOngoing neverOwner payable {
         require(now < raiser.revealTime); // but before the reveal
         require(msg.value > 0); // some money needs to be sent
@@ -355,14 +330,9 @@ contract Seedom {
 
     }
 
-    /**
-     * Reveal your hashed random to the world. This contract will verify that
-     * the random number submitted during the participation phase matches
-     * this number, confirming all of your entries at once. This procedure
-     * can only be completed once. After the revelation period ends, all
-     * of these revealed random numbers will be used to deterministically
-     * generate a global random number, which will determine the winner.
-     */
+    // Reveal your hashed random to the world. The random is hashed and verified to match the
+    // hashed random provided during the participation phase. All entries are confirmed with a
+    // single call to reveal() and can only be completed once.
     function reveal(uint256 _random) public raiserOngoing neverOwner {
         require(now >= raiser.revealTime); // ensure we are in reveal phase
         require(now < raiser.endTime); // but before the end
@@ -382,21 +352,16 @@ contract Seedom {
 
     }
 
-    /**
-     * End this charity, choose a winner and disseminate wei according to
-     * the split percentages. All of the revealed random numbers will be
-     * used to deterministically generate a global random number. A binary
-     * search is performed with this random number to find the actual
-     * winner with the weight of their entries used in random selection.
-     * Anyone can perform this operation to ensure that winnings can
-     * always be distributed without requiring the owner.
-     */
+    // Ends this raiser, chooses a winning supporter, and disseminates wei according to the split
+    // percentages provided during kickoff. All of the revealed randoms and the charity's final
+    // revealed random will be used to deterministically generate a universal random value. This
+    // method can only be performed by the charity after the end time.
     function end(uint256 _charityRandom) public raiserOngoing onlyCharity {
-        require(now >= raiser.endTime); // a charity can only be ended after the reveal period is over
+        require(now >= raiser.endTime); // end can occur only after ent time
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
 
         uint256[] memory _cumulatives = new uint256[](revealers.length);
-        // calculate social random & index from this random
+        // calculate crowdsourced random & entry index from this random
         uint256 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
         uint256 _entryIndex = _crowdsourcedRandom % totalRevealed;
         // send out winning input
@@ -419,12 +384,10 @@ contract Seedom {
 
     }
 
-    /**
-     * Using all of the revealed random numbers, deterministically generate
-     * a global winning random by XORing them together. This procedure will
-     * also set up a discrete cumulative density function (CDF) using the
-     * number of entries for each participant as the random selection weight.
-     */
+    // Using all of the revealed random values, including the charity's final random,
+    // deterministically generate a universal random by XORing them together. This procedure
+    // will also set up a discrete cumulative density function (CDF) using the number of entries
+    // for each participant.
     function crowdsourceRandom(
         uint256 _charityRandom,
         uint256[] memory _cumulatives) internal view returns (uint256)
@@ -434,7 +397,7 @@ contract Seedom {
         uint256 _crowdsourcedRandom = 0;
         address _revealerAddress;
         Participant memory _participant;
-        // generate winning random from all revealed randoms
+        // generate random from all revealed randoms
         for (uint256 revealerIndex = 0; revealerIndex < revealers.length; revealerIndex++) {
 
             _revealerAddress = revealers[revealerIndex];
@@ -456,17 +419,11 @@ contract Seedom {
 
     }
 
-    /**
-     * Finds the winning revealer address amongst the participants who
-     * revealed their random number to us. The winner index is a random
-     * number that was chosen between 0 and the sum of the weights
-     * (total entries). A binary search is then performed amongst the
-     * revealers to find a revealer that falls in an interval of the
-     * following:
-     * revealer cumulative entries
-     * <= winner index
-     * < next revealer cumulative entries
-     */
+    // Finds the winning supporter revealer address amongst the participants who revealed their
+    // random number to the contract. The winner index is a crowdsourced random number that is
+    // chosen between 0 and the sum of the weights (total entries). A binary search is then
+    // performed amongst the revealers to find a revealer that falls in the following interval:
+    // (revealer cumulative entries <= winner index < next revealer cumulative entries)
     function findWinnerAddress(
         uint256 _entryIndex,
         uint256[] memory _cumulatives) internal returns (address)
@@ -521,10 +478,8 @@ contract Seedom {
 
     }
 
-    /**
-     * Calculate refund amounts to the charity, winner, and owner
-     * given the percentage splits specified at kickoff.
-     */
+    // Calculate reward wei to the charity, winner, and owner given the percentage splits specified
+    // at kickoff.
     function calculateRewards() internal view returns (
         uint256 _charityReward,
         uint256 _winnerReward,
@@ -538,16 +493,14 @@ contract Seedom {
         _ownerReward = _totalValue * raiser.ownerSplit / 100;
     }
 
-    /**
-     * Cancels a raiser early, before a winner is chosen, and distribute
-     * all received wei back to the original participants. This procedure
-     * must exist in case of catostropic failure to return wei.
-     */
+    // Cancels a raiser early, before a winning supporter is chosen, allocating wei back to the
+    // original holders through a mapping of balances, which must be withdrawn from. It can only be
+    // executed by the owner or charity before a winning supporter is chosen. After the expire
+    // time, if the owner or charity has not cancelled and a winning supporter has not been chosen,
+    // this function becomes open to everyone as a final safeguard.
     function cancel() public {
         require(winner == address(0)); // if someone won, we've already sent the money out
         require(!cancelled); // we can't cancel more than once
-        // this can only be executed before a winner is chosen by the owner or charity
-        // it can be executed by anyone after an expiration period after the end
         if ((msg.sender != owner) && (msg.sender != raiser.charity)) {
             require(now >= raiser.expireTime);
         }
@@ -569,10 +522,8 @@ contract Seedom {
 
     }
 
-    /**
-     * This is the only method for getting ether out of the contract. All
-     * winnings and refunds (due to cancellation) are transferred in this way.
-     */
+    // This is the only method for getting wei out of the contract. All rewards and refunds
+    // (due to cancellation) are withdrawn in this way.
     function withdraw() public {
         // determine where to find the refund amount
         uint256 _balance = balancesMapping[msg.sender];
