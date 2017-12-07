@@ -1,10 +1,16 @@
 {
     "name": "seedom-solidity",
     "version": "1.0.0",
-    "description": "timely & relevant charity ether-raiser with supporter rewards",
-    "main": "truffle.js",
-    "directories": {
-        "test": "test"
+    "description": "Seedom Solidity Contract",
+    "author": "Team Palm Tree",
+    "license": "GPL",
+    "homepage": "https://seedom.io",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/seedom-io/seedom-solidity.git"
+    },
+    "bugs": {
+        "url": "https://github.com/seedom-io/seedom-solidity/issues"
     },
     "devDependencies": {
         "bignumber.js": "^4.1.0",
@@ -33,16 +39,6 @@
         "wtfnode": "^0.5.5",
         "zeppelin-solidity": "^1.3.0"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/seedom/seedom-solidity.git"
-    },
-    "author": "",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/seedom/seedom-solidity/issues"
-    },
-    "homepage": "https://github.com/seedom/seedom-solidity#readme",
     "bin": {
         "chronicle": "chronicle/chronicle.js"
     }
