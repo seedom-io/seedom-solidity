@@ -40,10 +40,8 @@ module.exports.main = async (state) => {
         return state;
     }
 
-    // start with fresh stage
-    state.stage = {
-        instances: instances
-    };
+    // set stage instances
+    state.stage.instances = instances;
 
     cli.info("staging %s", state.stageName);
 
@@ -173,15 +171,16 @@ const command = (program, stageModules) => {
             const state = {
                 networkName: network,
                 stageName: stageName,
-                stageModule: stageModule
+                stageModule: stageModule,
+                stage: {}
             };
 
-            // copy options directly to state
+            // copy options directly to stage
             for (let option of commander.options) {
                 const optionName = option.name();
                 const optionValue = commander[optionName];
                 if (optionValue) {
-                    state[optionName] = optionValue;
+                    state.stage[optionName] = optionValue;
                 }
             }
 
