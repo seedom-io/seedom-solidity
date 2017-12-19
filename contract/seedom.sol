@@ -359,16 +359,83 @@ contract Seedom {
     function end(uint256 _charityRandom) public raiserOngoing onlyCharity {
         require(now >= raiser.endTime); // end can occur only after ent time
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
+        
+        uint256 _random = 0;
+        uint256 _smallCount = 0;
+        uint256 _largeCount = 0;
+        uint256[] memory _probabilities = new uint256[](revealers.length);
+        uint256[] memory _small = new uint256[](revealers.length);
+        uint256[] memory _large = new uint256[](revealers.length);
+        uint256[] memory _prob = new uint256[](revealers.length);
+        uint256[] memory _alias = new uint256[](revealers.length);
+        // begin the creation of the crowd-sourced universal random, scale the probability of each
+        // revealer, and divide up revealers into small and large arrays
+        for (uint256 revealerIndex = 0; revealerIndex < revealers.length; revealerIndex++) {
 
-        uint256[] memory _cumulatives = new uint256[](revealers.length);
-        // calculate crowdsourced random & entry index from this random
-        uint256 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
-        uint256 _entryIndex = _crowdsourcedRandom % totalRevealed;
-        // send out winning input
-        WinningInput(_crowdsourcedRandom, _entryIndex);
-        // find winner & coresponding participant
-        winner = findWinnerAddress(_entryIndex, _cumulatives);
-        Participant memory _participant = participantsMapping[winner];
+            address _revealerAddress = revealers[revealerIndex];
+            // get the participant for this revealer
+            Participant memory _participant = participantsMapping[_revealerAddress];
+            require(_participant.entries > 0); // safety check
+            require(_participant.hashedRandom != 0x0); // safety check
+            require(_participant.random != 0); // safety check
+
+            // xor all randoms together
+            _random = _random ^ _participant.random;
+
+            // scale the probability for each revealer
+            uint256 _probability = _participant.entries * totalRevealed * revealers.length;
+            // save scaled probability for later
+            _probabilities[revealerIndex] = _probability;
+            // put revealers into large and small arrays
+            if (_probability < totalRevealed) {
+                _small[_smallCount] = revealerIndex;
+                _smallCount++;
+            } else {
+                _large[_largeCount] = revealerIndex;
+                _largeCount++;
+            }
+
+        }
+
+        // finalize universal random with charity random
+        _random = _random ^ _charityRandom;
+
+        uint256 _smallIndex = 0;
+        uint256 _largeIndex = 0;
+        uint256 _largeRevealerIndex;
+        // work while small is not empty
+        while (_smallIndex < _smallCount) {
+
+            // pull an element from small and large arrays
+            uint256 _smallRevealerIndex = _small[_smallIndex];
+            _largeRevealerIndex = _large[_largeIndex];
+
+            // add values to the prob and alias arrays
+            _prob[_smallRevealerIndex] = _probabilities[_smallRevealerIndex];
+            _alias[_smallRevealerIndex] = _largeRevealerIndex;
+
+            uint256 _largeProbability = _probabilities[_smallRevealerIndex] + _probabilities[_largeRevealerIndex] - totalRevealed;
+            if (_largeProbability < totalRevealed) {
+                _small[_smallCount] = _largeRevealerIndex;
+                _smallCount++;
+            } else {
+                _large[_largeCount] = _largeRevealerIndex;
+                _largeCount++;
+            }
+
+            // move to next indexes
+            _smallIndex++;
+            _largeIndex++;
+
+        }
+
+        // work while large is not empty
+        while (_largeIndex < _largeCount) {
+            _largeRevealerIndex = _large[_largeIndex];
+            _prob[_largeRevealerIndex] = totalRevealed;
+            // move to next index
+            _largeIndex++;
+        }
 
         uint256 _ownerReward;
         uint256 _charityReward;
@@ -381,100 +448,6 @@ contract Seedom {
         balancesMapping[owner] += _ownerReward;
         // send out win event
         Win(winner, _participant.random, _charityReward, _winnerReward, _ownerReward);
-
-    }
-
-    // Using all of the revealed random values, including the charity's final random,
-    // deterministically generate a universal random by XORing them together. This procedure
-    // will also set up a discrete cumulative density function (CDF) using the number of entries
-    // for each participant.
-    function crowdsourceRandom(
-        uint256 _charityRandom,
-        uint256[] memory _cumulatives) internal view returns (uint256)
-    {
-
-        uint256 _cumulative = 0;
-        uint256 _crowdsourcedRandom = 0;
-        address _revealerAddress;
-        Participant memory _participant;
-        // generate random from all revealed randoms
-        for (uint256 revealerIndex = 0; revealerIndex < revealers.length; revealerIndex++) {
-
-            _revealerAddress = revealers[revealerIndex];
-            // get the participant for this revealer
-            _participant = participantsMapping[_revealerAddress];
-            require(_participant.entries > 0); // safety check
-            require(_participant.hashedRandom != 0x0); // safety check
-            require(_participant.random != 0); // safety check
-            // set lower cumulative bound
-            _cumulatives[revealerIndex] = _cumulative;
-            _cumulative += _participant.entries;
-            // xor all randoms together
-            _crowdsourcedRandom = _crowdsourcedRandom ^ _participant.random;
-
-        }
-
-        // the charity's initial random has the ultimate randomization effect
-        return _crowdsourcedRandom ^ _charityRandom;
-
-    }
-
-    // Finds the winning supporter revealer address amongst the participants who revealed their
-    // random number to the contract. The winner index is a crowdsourced random number that is
-    // chosen between 0 and the sum of the weights (total entries). A binary search is then
-    // performed amongst the revealers to find a revealer that falls in the following interval:
-    // (revealer cumulative entries <= winner index < next revealer cumulative entries)
-    function findWinnerAddress(
-        uint256 _entryIndex,
-        uint256[] memory _cumulatives) internal returns (address)
-    {
-        uint256 _leftIndex = 0;
-        uint256 _rightIndex = revealers.length - 1;
-        uint256 _midIndex;
-        uint256 _nextIndex;
-        address _midRevealerAddress;
-        uint256 _midRevealerCumulative;
-        uint256 _nextRevealerCumulative;
-        // loop until revealer found
-        while (true) {
-
-            // the winner is the last revealer! (edge case)
-            if (_leftIndex == _rightIndex) {
-                return revealers[_leftIndex];
-            }
-
-            // calculate the mid index  for binary search, find the mid revealer, get next sequential index
-            _midIndex = _leftIndex + ((_rightIndex - _leftIndex) / 2);
-            _midRevealerAddress = revealers[_midIndex];
-            _nextIndex = _midIndex + 1;
-            // find the mid and very next revealer cumulatives
-            _midRevealerCumulative = _cumulatives[_midIndex];
-            _nextRevealerCumulative = _cumulatives[_nextIndex];
-            // send out search progress
-            WinnerSearch(
-                _leftIndex,
-                _rightIndex,
-                _midIndex,
-                _midRevealerAddress,
-                _midRevealerCumulative,
-                _nextIndex,
-                _nextRevealerCumulative
-            );
-
-            // binary search
-            if (_entryIndex >= _midRevealerCumulative) {
-                if (_entryIndex < _nextRevealerCumulative) {
-                    // we are in range, winner found!
-                    return _midRevealerAddress;
-                }
-                // winner is greater, move right
-                _leftIndex = _nextIndex;
-            } else {
-                // winner is less, move left
-                _rightIndex = _midIndex;
-            }
-
-        }
 
     }
 
