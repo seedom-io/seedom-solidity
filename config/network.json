@@ -1,7 +1,7 @@
 {
     "test": {
-        "gas": "1500000",
-        "gasPrice": "30000000000000",
+        "gas": "2000000",
+        "gasPrice": "20000000000",
         "password": "password",
         "balance": "100000000000000000000000000",
         "accounts": 8
