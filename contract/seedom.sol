@@ -26,38 +26,18 @@ contract Seedom {
 
     event Raise(
         address _participant,
-        uint256 _value,
-        uint256 _refund,
-        uint256 _newEntries,
         uint256 _entries,
-        uint256 _totalEntries
+        uint256 _refund
     );
 
     event Revelation(
-        address _revealer,
-        uint256 _newRevealedEntries,
-        uint256 _totalRevealed,
-        uint256 _totalRevealers
-    );
-
-    event WinInput(
-        uint256 _winningRandom,
-        uint256 _winningEntryIndex
-    );
-
-    event WinSearch(
-        uint256 _leftIndex,
-        uint256 _rightIndex,
-        uint256 _midIndex,
-        address _midRevealerAddress,
-        uint256 _midRevealerCumulative,
-        uint256 _nextIndex,
-        uint256 _nextRevealerCumulative
+        address _participant,
+        bytes32 _random
     );
 
     event Win(
-        address _winner,
-        uint256 _random,
+        address _participant,
+        bytes32 _random,
         uint256 _charityReward,
         uint256 _winnerReward,
         uint256 _ownerReward
@@ -88,7 +68,7 @@ contract Seedom {
     struct Participant {
         uint256 _entries;
         bytes32 _hashedRandom;
-        uint256 _random;
+        bytes32 _random;
     }
 
     modifier onlyOwner() {
@@ -169,7 +149,7 @@ contract Seedom {
     function participant(address _address) public view returns (
         uint256 _entries,
         bytes32 _hashedRandom,
-        uint256 _random)
+        bytes32 _random)
     {
         Participant memory _participant = participantsMapping[_address];
         _entries = _participant._entries;
@@ -341,14 +321,14 @@ contract Seedom {
         // forward to raise
         (_newEntries, _refund) = raise(_participant);
         // send raise event
-        Raise(msg.sender, msg.value, _refund, _newEntries, _participant._entries, totalEntries);
+        Raise(msg.sender, _newEntries, _refund);
 
     }
 
     // Reveal your hashed random to the world. The random is hashed and verified to match the
     // hashed random provided during the participation phase. All entries are confirmed with a
     // single call to reveal() and can only be completed once.
-    function reveal(uint256 _random) public raiserOngoing neverOwner {
+    function reveal(bytes32 _random) public raiserOngoing neverOwner {
         require(now >= raiser._revealTime); // ensure we are in reveal phase
         require(now < raiser._endTime); // but before the end
         require(_random != 0);
@@ -363,7 +343,7 @@ contract Seedom {
         revealers.push(msg.sender);
         totalRevealed += _participant._entries;
         // send out revelation update
-        Revelation(msg.sender, _participant._entries, totalRevealed, revealers.length);
+        Revelation(msg.sender, _random);
 
     }
 
@@ -371,18 +351,16 @@ contract Seedom {
     // percentages provided during kickoff. All of the revealed randoms and the charity's final
     // revealed random will be used to deterministically generate a universal random value. This
     // method can only be performed by the charity after the end time.
-    function end(uint256 _charityRandom) public raiserOngoing onlyCharity {
+    function end(bytes32 _charityRandom) public raiserOngoing onlyCharity {
         require(now >= raiser._endTime); // end can occur only after ent time
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
 
         uint256[] memory _cumulatives = new uint256[](revealers.length);
         // calculate crowdsourced random & entry index from this random
-        uint256 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
-        uint256 _entryIndex = _crowdsourcedRandom % totalRevealed;
-        // send out winning input
-        WinInput(_crowdsourcedRandom, _entryIndex);
+        bytes32 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
+        uint256 _entryIndex = uint256(_crowdsourcedRandom) % totalRevealed;
         // find winner & coresponding participant
-        winner = findWinnerAddress(_entryIndex, _cumulatives);
+        winner = findWinner(_entryIndex, _cumulatives);
         Participant memory _participant = participantsMapping[winner];
 
         uint256 _ownerReward;
@@ -404,12 +382,12 @@ contract Seedom {
     // will also set up a discrete cumulative density function (CDF) using the number of entries
     // for each participant.
     function crowdsourceRandom(
-        uint256 _charityRandom,
-        uint256[] memory _cumulatives) internal view returns (uint256)
+        bytes32 _charityRandom,
+        uint256[] memory _cumulatives) internal view returns (bytes32)
     {
 
         uint256 _cumulative = 0;
-        uint256 _crowdsourcedRandom = 0;
+        bytes32 _crowdsourcedRandom = 0;
         address _revealerAddress;
         Participant memory _participant;
         // generate random from all revealed randoms
@@ -439,9 +417,9 @@ contract Seedom {
     // chosen between 0 and the sum of the weights (total entries). A binary search is then
     // performed amongst the revealers to find a revealer that falls in the following interval:
     // (revealer cumulative entries <= winner index < next revealer cumulative entries)
-    function findWinnerAddress(
+    function findWinner(
         uint256 _entryIndex,
-        uint256[] memory _cumulatives) internal returns (address)
+        uint256[] memory _cumulatives) internal view returns (address)
     {
         uint256 _leftIndex = 0;
         uint256 _rightIndex = revealers.length - 1;
@@ -465,16 +443,6 @@ contract Seedom {
             // find the mid and very next revealer cumulatives
             _midRevealerCumulative = _cumulatives[_midIndex];
             _nextRevealerCumulative = _cumulatives[_nextIndex];
-            // send out search progress
-            WinSearch(
-                _leftIndex,
-                _rightIndex,
-                _midIndex,
-                _midRevealerAddress,
-                _midRevealerCumulative,
-                _nextIndex,
-                _nextRevealerCumulative
-            );
 
             // binary search
             if (_entryIndex >= _midRevealerCumulative) {
