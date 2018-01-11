@@ -14,6 +14,10 @@ contract Seedom {
         uint256 _expireTime
     );
 
+    event Seed(
+        bytes32 _hashedRandom
+    );
+
     event Participation(
         address _participant,
         bytes32 _hashedRandom
@@ -264,6 +268,8 @@ contract Seedom {
         require(_hashedRandom != 0x0); // hashed random cannot be zero
 
         charityHashedRandom = _hashedRandom;
+        // broadcast seed
+        Seed(_hashedRandom);
 
     }
 
