@@ -20,6 +20,7 @@ contract Seedom {
 
     event Participation(
         address _participant,
+        uint256 _entries,
         bytes32 _hashedRandom
     );
 
@@ -28,6 +29,7 @@ contract Seedom {
         uint256 _value,
         uint256 _refund,
         uint256 _newEntries,
+        uint256 _entries,
         uint256 _totalEntries
     );
 
@@ -290,20 +292,24 @@ contract Seedom {
         // save hashed random, add to tracked
         _participant._hashedRandom = _hashedRandom;
         participants.push(msg.sender);
-        // send out participation update
-        Participation(msg.sender, _hashedRandom);
         // did we also receive wei? if so, raise
         if (msg.value > 0) {
             raise(_participant);
         }
+
+        // send out participation update
+        Participation(msg.sender, _participant._entries, _hashedRandom);
     
     }
 
     // Called by participate() and the fallback function for obtaining additional entries.
-    function raise(Participant storage _participant) internal {
+    function raise(Participant storage _participant) internal returns (
+        uint256 _newEntries,
+        uint256 _refund
+    ) {
 
         // calculate the number of entries from the wei sent
-        uint256 _newEntries = msg.value / raiser._valuePerEntry;
+        _newEntries = msg.value / raiser._valuePerEntry;
         // if we have any, update participant and total
         if (_newEntries > 0) {
             _participant._entries += _newEntries;
@@ -311,9 +317,7 @@ contract Seedom {
         }
 
         // calculate partial entry refund
-        uint256 _refund = msg.value % raiser._valuePerEntry;
-        // send raise event
-        Raise(msg.sender, msg.value, _refund, _newEntries, totalEntries);
+        _refund = msg.value % raiser._valuePerEntry;
         // refund any excess wei immediately (partial entry)
         // keep this at end to prevent re-entrancy!
         if (_refund > 0) {
@@ -331,8 +335,13 @@ contract Seedom {
         // find existing participant
         Participant storage _participant = participantsMapping[msg.sender];
         require(_participant._hashedRandom != 0x0); // make sure they participated
+
+        uint256 _newEntries;
+        uint256 _refund;
         // forward to raise
-        raise(_participant);
+        (_newEntries, _refund) = raise(_participant);
+        // send raise event
+        Raise(msg.sender, msg.value, _refund, _newEntries, _participant._entries, totalEntries);
 
     }
 
