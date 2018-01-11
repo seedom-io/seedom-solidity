@@ -62,7 +62,7 @@ suite('reveal', (state) => {
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
-        method = stage.instances.seedom.methods.reveal(0);
+        method = stage.instances.seedom.methods.reveal('0x00000000000000000000000000000000000000000000000000000000000000');
         await assert.isRejected(
             parity.sendMethod(method, { from: participant }),
             parity.SomethingThrown
@@ -124,7 +124,8 @@ suite('reveal', (state) => {
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
-        const method = stage.instances.seedom.methods.reveal(participant.random + 1);
+        const incorrectRandom = sh.random();
+        const method = stage.instances.seedom.methods.reveal(incorrectRandom);
         await assert.isRejected(
             parity.sendMethod(method, { from: participant.address }),
             parity.SomethingThrown
