@@ -195,7 +195,7 @@ contract Seedom {
         require(_charity != 0x0);
         require(_charitySplit != 0);
         require(_winnerSplit != 0);
-        require(_ownerSplit != 0);
+        require(_charitySplit + _winnerSplit + _ownerSplit == 1000);
         require(_valuePerEntry != 0);
         require(_revealTime >= now); // time for the charity to seed and others to participate
         require(_endTime > _revealTime); // time for participants to reveal their randoms
@@ -494,9 +494,9 @@ contract Seedom {
         // calculate total wei received
         uint256 _totalValue = totalEntries * raiser._valuePerEntry;
         // divide it up amongst all entities (non-revealed winnings are forfeited)
-        _charityReward = _totalValue * raiser._charitySplit / 100;
-        _winnerReward = _totalValue * raiser._winnerSplit / 100;
-        _ownerReward = _totalValue * raiser._ownerSplit / 100;
+        _charityReward = _totalValue * raiser._charitySplit / 1000;
+        _winnerReward = _totalValue * raiser._winnerSplit / 1000;
+        _ownerReward = _totalValue * raiser._ownerSplit / 1000;
     }
 
     // Cancels a raiser early, before a winning supporter is chosen, allocating wei back to the

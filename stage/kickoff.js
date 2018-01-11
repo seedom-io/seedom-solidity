@@ -24,9 +24,9 @@ module.exports.stage = async (state) => {
     const now = await h.timestamp(stage.instances.seedom);
 
     stage.charity = stage.charity ? stage.charity : state.accountAddresses[1];
-    stage.charitySplit = stage.charitySplit ? stage.charitySplit : 49;
-    stage.winnerSplit = stage.winnerSplit ? stage.winnerSplit : 49;
-    stage.ownerSplit = stage.ownerSplit ? stage.ownerSplit : 2;
+    stage.charitySplit = stage.charitySplit ? stage.charitySplit : 600;
+    stage.winnerSplit = stage.winnerSplit ? stage.winnerSplit : 350;
+    stage.ownerSplit = stage.ownerSplit ? stage.ownerSplit : 50;
     stage.valuePerEntry = stage.valuePerEntry ? stage.valuePerEntry : 1000;
 
     stage.participantsCount = state.accountAddresses.length - 2;

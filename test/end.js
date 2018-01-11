@@ -28,9 +28,9 @@ suite('end', (state) => {
         assert.isOk(foundWinner, "one of the participants that revealed should have won");
 
         // currently all participant ether is distributed equally along splits
-        const charityBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.charitySplit / 100;
-        const winnerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.winnerSplit / 100;
-        const ownerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.ownerSplit / 100;
+        const charityBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.charitySplit / 1000;
+        const winnerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.winnerSplit / 1000;
+        const ownerBalance = 10 * stage.participantsCount * stage.valuePerEntry * stage.ownerSplit / 1000;
 
         assert.equal(stage.charityBalance, charityBalance, "charity balance incorrect");
         assert.equal(stage.winnerBalance, winnerBalance, "winner balance incorrect");

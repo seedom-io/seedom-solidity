@@ -28,7 +28,51 @@ suite('kickoff', (state) => {
 
     });
 
-    test("should fail to kickoff with invalid data", async () => {
+    test("should kickoff properly with no owner split", async () => {
+
+        await instantiate.stage(state);
+
+        const stage = state.stage;
+        const now = await sh.timestamp(stage.instances.seedom);
+        const charity = state.accountAddresses[1];
+        const phaseDuration = 5000;
+        const revealTime = now + phaseDuration;
+        const endTime = revealTime + phaseDuration;
+        const expireTime = endTime + phaseDuration;
+        const valuePerEntry = 1000;
+        const charitySplit = 500;
+        const winnerSplit = 500;
+        const ownerSplit = 0;
+
+        const method = stage.instances.seedom.methods.kickoff(
+            charity,
+            charitySplit,
+            winnerSplit,
+            ownerSplit,
+            valuePerEntry,
+            revealTime,
+            endTime,
+            expireTime
+        );
+    
+        await parity.sendMethod(method, { from: stage.owner });
+
+        const actualRaiser = await stage.instances.seedom.methods.currentRaiser().call({ from: stage.owner });
+        const actualRaiserTimeDifference = actualRaiser._kickoffTime - now;
+
+        assert.equalIgnoreCase(actualRaiser._charity, charity, "charity does not match");
+        assert.equal(actualRaiser._charitySplit, charitySplit, "charity split does not match");
+        assert.equal(actualRaiser._winnerSplit, winnerSplit, "winner split does not match");
+        assert.equal(actualRaiser._ownerSplit, ownerSplit, "validOwner split does not match");
+        assert.equal(actualRaiser._valuePerEntry, valuePerEntry, "wei per entry does not match");
+        assert.isAtMost(actualRaiserTimeDifference, 2, "kick time delta too high");
+        assert.equal(actualRaiser._revealTime, revealTime, "reveal time does not match");
+        assert.equal(actualRaiser._endTime, endTime, "end time does not match");
+        assert.equal(actualRaiser._expireTime, expireTime, "expire time does not match");
+
+    });
+
+    test("should fail to kickoff with zeroed data", async () => {
 
         await instantiate.stage(state);
 
@@ -41,14 +85,45 @@ suite('kickoff', (state) => {
         const expireTime = endTime + phaseDuration;
         
         const testData = [
-            [0, 49, 49, 2, 1000, revealTime, endTime, expireTime],
-            [charity, 0, 49, 2, 1000, revealTime, endTime, expireTime],
-            [charity, 49, 0, 2, 1000, revealTime, endTime, expireTime],
-            [charity, 49, 49, 0, 1000, revealTime, endTime, expireTime],
-            [charity, 49, 49, 2, 0, revealTime, endTime, expireTime],
-            [charity, 49, 49, 2, 1000, 0, endTime, expireTime],
-            [charity, 49, 49, 2, 1000, revealTime, 0, expireTime],
-            [charity, 49, 49, 2, 1000, revealTime, endTime, 0]
+            [0, 600, 350, 50, 1000, revealTime, endTime, expireTime],
+            [charity, 0, 350, 50, 1000, revealTime, endTime, expireTime],
+            [charity, 600, 0, 50, 1000, revealTime, endTime, expireTime],
+            [charity, 600, 350, 50, 0, revealTime, endTime, expireTime],
+            [charity, 600, 350, 50, 1000, 0, endTime, expireTime],
+            [charity, 600, 350, 50, 1000, revealTime, 0, expireTime],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, 0]
+        ];
+        
+        for (let testArgs of testData) {
+            cli.info(testArgs);
+            const method = stage.instances.seedom.methods.kickoff.apply(null, testArgs);
+            await assert.isRejected(
+                parity.sendMethod(method, { from: stage.owner }),
+                parity.SomethingThrown,
+                null,
+                testArgs
+            );
+        }
+
+    });
+
+    test("should fail to kickoff with splits that don't add to 1000", async () => {
+
+        await instantiate.stage(state);
+
+        const stage = state.stage;
+        const now = await sh.timestamp(stage.instances.seedom);
+        const charity = state.accountAddresses[1];
+        const phaseDuration = 5000;
+        const revealTime = now + phaseDuration;
+        const endTime = revealTime + phaseDuration;
+        const expireTime = endTime + phaseDuration;
+        
+        const testData = [
+            [charity, 20, 30, 50, 1000, revealTime, endTime, expireTime],
+            [charity, 200, 350, 500, 1000, revealTime, endTime, expireTime],
+            [charity, 601, 200, 200, 1000, revealTime, endTime, expireTime],
+            [charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime]
         ];
         
         for (let testArgs of testData) {
@@ -81,17 +156,17 @@ suite('kickoff', (state) => {
 
         const testData = [
             // old dates
-            [charity, 49, 49, 2, 1000, oldRevealTime, endTime, expireTime],
-            [charity, 49, 49, 2, 1000, revealTime, oldEndTime, expireTime],
-            [charity, 49, 49, 2, 1000, revealTime, endTime, oldExpireTime],
+            [charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime],
+            [charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime],
             // equal dates
-            [charity, 49, 49, 2, 1000, revealTime, revealTime, expireTime],
-            [charity, 49, 49, 2, 1000, revealTime, endTime, endTime],
-            [charity, 49, 49, 2, 1000, revealTime, endTime, revealTime],
+            [charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, endTime],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, revealTime],
             // out of order dates
-            [charity, 49, 49, 2, 1000, endTime, revealTime, expireTime],
-            [charity, 49, 49, 2, 1000, revealTime, expireTime, endTime],
-            [charity, 49, 49, 2, 1000, endTime, expireTime, revealTime]
+            [charity, 600, 350, 50, 1000, endTime, revealTime, expireTime],
+            [charity, 600, 350, 50, 1000, revealTime, expireTime, endTime],
+            [charity, 600, 350, 50, 1000, endTime, expireTime, revealTime]
         ];
 
         for (let testArgs of testData) {
