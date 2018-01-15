@@ -108,6 +108,24 @@ suite('participate', (state) => {
 
     });
 
+    test("reject participation if over max participants", async () => {
+
+        await participate.stage(state);
+        
+        const stage = state.stage;
+        // get last participant that is never used otherwise
+        const participant = state.accountAddresses[8];
+        const random = sh.random();
+        const hashedRandom = sh.hashedRandom(random, participant);
+        
+        const method = stage.instances.seedom.methods.participate(hashedRandom);
+        await assert.isRejected(
+            parity.sendMethod(method, { from: participant }),
+            parity.SomethingThrown
+        );
+
+    });
+
     test("should fail participation without seed", async () => {
 
         await kickoff.stage(state);
