@@ -25,10 +25,11 @@ suite('kickoff', (state) => {
         assert.equal(actualRaiser._revealTime, stage.revealTime, "reveal time does not match");
         assert.equal(actualRaiser._endTime, stage.endTime, "end time does not match");
         assert.equal(actualRaiser._expireTime, stage.expireTime, "expire time does not match");
+        assert.equal(actualRaiser._maxParticipants, stage.maxParticipants, "max participants does not match");
 
     });
 
-    test("should kickoff properly with no owner split", async () => {
+    test("should kickoff properly with no owner split and no max participants", async () => {
 
         await instantiate.stage(state);
 
@@ -43,6 +44,7 @@ suite('kickoff', (state) => {
         const charitySplit = 500;
         const winnerSplit = 500;
         const ownerSplit = 0;
+        const maxParticipants = 0;
 
         const method = stage.instances.seedom.methods.kickoff(
             charity,
@@ -52,7 +54,8 @@ suite('kickoff', (state) => {
             valuePerEntry,
             revealTime,
             endTime,
-            expireTime
+            expireTime,
+            maxParticipants
         );
     
         await parity.sendMethod(method, { from: stage.owner });
@@ -69,6 +72,7 @@ suite('kickoff', (state) => {
         assert.equal(actualRaiser._revealTime, revealTime, "reveal time does not match");
         assert.equal(actualRaiser._endTime, endTime, "end time does not match");
         assert.equal(actualRaiser._expireTime, expireTime, "expire time does not match");
+        assert.equal(actualRaiser._maxParticipants, maxParticipants, "max participants does not match");
 
     });
 
@@ -85,13 +89,13 @@ suite('kickoff', (state) => {
         const expireTime = endTime + phaseDuration;
         
         const testData = [
-            [0, 600, 350, 50, 1000, revealTime, endTime, expireTime],
-            [charity, 0, 350, 50, 1000, revealTime, endTime, expireTime],
-            [charity, 600, 0, 50, 1000, revealTime, endTime, expireTime],
-            [charity, 600, 350, 50, 0, revealTime, endTime, expireTime],
-            [charity, 600, 350, 50, 1000, 0, endTime, expireTime],
-            [charity, 600, 350, 50, 1000, revealTime, 0, expireTime],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, 0]
+            [0, 600, 350, 50, 1000, revealTime, endTime, expireTime, 5],
+            [charity, 0, 350, 50, 1000, revealTime, endTime, expireTime, 5],
+            [charity, 600, 0, 50, 1000, revealTime, endTime, expireTime, 5],
+            [charity, 600, 350, 50, 0, revealTime, endTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, 0, endTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, 0, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, 0, 5]
         ];
         
         for (let testArgs of testData) {
@@ -120,10 +124,10 @@ suite('kickoff', (state) => {
         const expireTime = endTime + phaseDuration;
         
         const testData = [
-            [charity, 20, 30, 50, 1000, revealTime, endTime, expireTime],
-            [charity, 200, 350, 500, 1000, revealTime, endTime, expireTime],
-            [charity, 601, 200, 200, 1000, revealTime, endTime, expireTime],
-            [charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime]
+            [charity, 20, 30, 50, 1000, revealTime, endTime, expireTime, 5],
+            [charity, 200, 350, 500, 1000, revealTime, endTime, expireTime, 5],
+            [charity, 601, 200, 200, 1000, revealTime, endTime, expireTime, 5],
+            [charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime, 5]
         ];
         
         for (let testArgs of testData) {
@@ -156,17 +160,17 @@ suite('kickoff', (state) => {
 
         const testData = [
             // old dates
-            [charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime],
-            [charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime],
+            [charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime, 5],
             // equal dates
-            [charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, endTime],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, revealTime],
+            [charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, endTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, revealTime, 5],
             // out of order dates
-            [charity, 600, 350, 50, 1000, endTime, revealTime, expireTime],
-            [charity, 600, 350, 50, 1000, revealTime, expireTime, endTime],
-            [charity, 600, 350, 50, 1000, endTime, expireTime, revealTime]
+            [charity, 600, 350, 50, 1000, endTime, revealTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, expireTime, endTime, 5],
+            [charity, 600, 350, 50, 1000, endTime, expireTime, revealTime, 5]
         ];
 
         for (let testArgs of testData) {

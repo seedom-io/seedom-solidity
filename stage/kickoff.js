@@ -12,7 +12,8 @@ module.exports.optionize = (command) => {
         .option("--valuePerEntry <string>", "value per entry", parseInt)
         .option("--revealTime <time>", "reveal time", parseDate)
         .option("--endTime <time>", "end time", parseDate)
-        .option("--expireTime <time>", "expire time", parseDate);
+        .option("--expireTime <time>", "expire time", parseDate)
+        .option("--maxParticipants <number>", "max participants", parseInt);
 }
 
 module.exports.stage = async (state) => {
@@ -29,7 +30,7 @@ module.exports.stage = async (state) => {
     stage.ownerSplit = stage.ownerSplit ? stage.ownerSplit : 50;
     stage.valuePerEntry = stage.valuePerEntry ? stage.valuePerEntry : 1000;
 
-    stage.participantsCount = state.accountAddresses.length - 2;
+    stage.participantsCount = state.accountAddresses.length - 3;
     // double the parity send delay to get overall transaction duration
     stage.transactionDuration = Math.floor(networks.paritySendDelay / 1000) * 2;
     // kickoff phase has two initial transactions: kickoff and seed
@@ -43,6 +44,8 @@ module.exports.stage = async (state) => {
     stage.endDuration = stage.transactionDuration;
     stage.expireTime = stage.expireTime ? stage.expireTime : stage.endTime + stage.endDuration;
     
+    stage.maxParticipants = stage.maxParticipants ? stage.maxParticipants : stage.participantsCount;
+    
     const method = stage.instances.seedom.methods.kickoff(
         stage.charity,
         stage.charitySplit,
@@ -51,7 +54,8 @@ module.exports.stage = async (state) => {
         stage.valuePerEntry,
         stage.revealTime,
         stage.endTime,
-        stage.expireTime
+        stage.expireTime,
+        stage.maxParticipants
     );
 
     stage.kickoffReceipt = await parity.sendMethod(method, { from: stage.owner });

@@ -11,7 +11,8 @@ contract Seedom {
         uint256 _kickoffTime,
         uint256 _revealTime,
         uint256 _endTime,
-        uint256 _expireTime
+        uint256 _expireTime,
+        uint256 _maxParticipants
     );
 
     event Seed(
@@ -63,6 +64,7 @@ contract Seedom {
         uint256 _revealTime;
         uint256 _endTime;
         uint256 _expireTime;
+        uint256 _maxParticipants;
     }
 
     struct Participant {
@@ -125,7 +127,8 @@ contract Seedom {
         uint256 _kickoffTime,
         uint256 _revealTime,
         uint256 _endTime,
-        uint256 _expireTime
+        uint256 _expireTime,
+        uint256 _maxParticipants
     ) {
         _charity = raiser._charity;
         _charitySplit = raiser._charitySplit;
@@ -136,6 +139,7 @@ contract Seedom {
         _revealTime = raiser._revealTime;
         _endTime = raiser._endTime;
         _expireTime = raiser._expireTime;
+        _maxParticipants = raiser._maxParticipants;
     }
 
     function totalParticipants() public view returns (uint256) {
@@ -172,7 +176,8 @@ contract Seedom {
         uint256 _valuePerEntry,
         uint256 _revealTime,
         uint256 _endTime,
-        uint256 _expireTime) public onlyOwner
+        uint256 _expireTime,
+        uint256 _maxParticipants) public onlyOwner
     {
         require(_charity != 0x0);
         require(_charitySplit != 0);
@@ -196,7 +201,8 @@ contract Seedom {
             now,
             _revealTime,
             _endTime,
-            _expireTime
+            _expireTime,
+            _maxParticipants
         );
 
         // send out event
@@ -209,7 +215,8 @@ contract Seedom {
             raiser._kickoffTime,
             _revealTime,
             _endTime,
-            _expireTime
+            _expireTime,
+            _maxParticipants
         );
 
     }
@@ -263,6 +270,8 @@ contract Seedom {
     function participate(bytes32 _hashedRandom) public raiserOngoing neverOwner payable {
         require(now < raiser._revealTime); // but before the reveal
         require(_hashedRandom != 0x0); // hashed random cannot be zero
+        // check for no limit or under limit
+        require((raiser._maxParticipants == 0) || (participants.length < raiser._maxParticipants));
 
         // find existing participant
         Participant storage _participant = participantsMapping[msg.sender];
