@@ -37,7 +37,10 @@ contract Seedom {
 
     event Win(
         address _participant,
-        bytes32 _random
+        bytes32 _random,
+        uint256 _charityReward,
+        uint256 _winnerReward,
+        uint256 _ownerReward
     );
 
     event Cancellation(
@@ -370,7 +373,13 @@ contract Seedom {
         balancesMapping[winner] += _winnerReward;
         balancesMapping[owner] += _ownerReward;
         // send out win event
-        Win(winner, _participant._random);
+        Win(
+            winner,
+            _participant._random,
+            _charityReward,
+            _winnerReward,
+            _ownerReward
+        );
 
     }
 
