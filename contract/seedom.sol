@@ -46,10 +46,7 @@ contract Seedom {
 
     event Cancellation();
 
-    event Withdrawal(
-        address _wallet,
-        uint256 _balance
-    );
+    event Withdrawal(address _participant);
 
     struct Raiser {
         address _charity;
@@ -528,7 +525,7 @@ contract Seedom {
         // set balance to zero
         balancesMapping[msg.sender] = 0;
         // send withdrawal event
-        Withdrawal(msg.sender, _balance);
+        Withdrawal(msg.sender);
         // execute the refund if we have one
         // keep this at end to prevent re-entrancy!
         msg.sender.transfer(_balance);
