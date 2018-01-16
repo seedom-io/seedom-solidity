@@ -44,10 +44,7 @@ contract Seedom {
         uint256 _ownerReward
     );
 
-    event Cancellation(
-        address _participant,
-        uint256 _refund
-    );
+    event Cancellation();
 
     event Withdrawal(
         address _wallet,
@@ -514,9 +511,10 @@ contract Seedom {
             _participantAddress = participants[participantsIndex];
             _participant = participantsMapping[_participantAddress];
             balancesMapping[_participantAddress] += _participant._entries * raiser._valuePerEntry;
-            // send out cancellation event
-            Cancellation(_participantAddress, balancesMapping[_participantAddress]);
         }
+
+        // send out cancellation event
+        Cancellation();
 
     }
 
