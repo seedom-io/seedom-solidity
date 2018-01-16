@@ -46,7 +46,9 @@ contract Seedom {
 
     event Cancellation();
 
-    event Withdrawal(address _participant);
+    event Withdrawal(
+        address _participant
+    );
 
     struct Raiser {
         address _charity;
