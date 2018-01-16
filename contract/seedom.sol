@@ -33,7 +33,8 @@ contract Seedom {
 
     event Revelation(
         address _participant,
-        bytes32 _random
+        bytes32 _random,
+        uint256 _entries
     );
 
     event Win(
@@ -348,7 +349,7 @@ contract Seedom {
         revealers.push(msg.sender);
         totalRevealed += _participant._entries;
         // send out revelation update
-        Revelation(msg.sender, _random);
+        Revelation(msg.sender, _random, _participant._entries);
 
     }
 
