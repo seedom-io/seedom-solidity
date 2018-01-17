@@ -15,9 +15,10 @@ suite('cancel', (state) => {
     const testCancelRejectedWithoutKickoff = async (account) => {
 
         const stage = state.stage;
+        
         // cancel should still be true initially
-        let actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isOk(actualCancelled);
+        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isOk(actualState._cancelled);
 
         const method = stage.instances.seedom.methods.cancel();
         await assert.isRejected(
@@ -25,8 +26,8 @@ suite('cancel', (state) => {
             parity.SomethingThrown
         );
 
-        actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isOk(actualCancelled);
+        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isOk(actualState._cancelled);
 
     };
 
@@ -37,8 +38,8 @@ suite('cancel', (state) => {
 
         const stage = state.stage;
         // cancel should still be true initially
-        const actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: stage.owner });
-        assert.isOk(actualCancelled);
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        assert.isOk(actualState._cancelled);
 
         await testCancelRejectedWithoutKickoff(stage.owner);
 
@@ -52,8 +53,8 @@ suite('cancel', (state) => {
         const stage = state.stage;
         const charity = state.accountAddresses[1];
         // cancel should still be true initially
-        const actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: charity });
-        assert.isOk(actualCancelled);
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        assert.isOk(actualState._cancelled);
 
         await testCancelRejectedWithoutKickoff(charity);
 
@@ -67,8 +68,8 @@ suite('cancel', (state) => {
         const stage = state.stage;
         const participant = state.accountAddresses[2];
         // cancel should still be true initially
-        const actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: participant });
-        assert.isOk(actualCancelled);
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        assert.isOk(actualState._cancelled);
 
         await testCancelRejectedWithoutKickoff(participant);
 
@@ -78,16 +79,16 @@ suite('cancel', (state) => {
         
         const stage = state.stage;
         // after kickoff, cancel should never be true
-        let actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isNotOk(actualCancelled);
+        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isNotOk(actualState._cancelled);
 
         const method = stage.instances.seedom.methods.cancel();
         await assert.isFulfilled(
             parity.sendMethod(method, { from: account })
         );
 
-        actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isOk(actualCancelled);
+        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isOk(actualState._cancelled);
 
     };
 
@@ -113,8 +114,8 @@ suite('cancel', (state) => {
         
         const stage = state.stage;
         // after kickoff, cancel should never be true
-        let actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isNotOk(actualCancelled);
+        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isNotOk(actualState._cancelled);
 
         const method = stage.instances.seedom.methods.cancel();
         await assert.isRejected(
@@ -122,8 +123,8 @@ suite('cancel', (state) => {
             parity.SomethingThrown
         );
 
-        actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isNotOk(actualCancelled);
+        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isNotOk(actualState._cancelled);
 
     };
 
@@ -167,8 +168,8 @@ suite('cancel', (state) => {
 
         const stage = state.stage;
         // make sure we aren't already cancelled
-        let actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isNotOk(actualCancelled);
+        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isNotOk(actualState._cancelled);
 
         const method = stage.instances.seedom.methods.cancel();
         await assert.isFulfilled(
@@ -177,12 +178,12 @@ suite('cancel', (state) => {
 
         // verify all participants refunded
         for (let participant of stage.participants) {
-            const actualBalance = await stage.instances.seedom.methods.balance(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 10000, "refund balance should be correct");
         }
 
-        actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: account });
-        assert.isOk(actualCancelled);
+        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        assert.isOk(actualState._cancelled);
 
     };
 

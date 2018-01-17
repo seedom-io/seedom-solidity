@@ -93,16 +93,17 @@ contract Seedom {
     }
 
     address public owner;
-    Raiser raiser;
-    address public winner;
-    bool public cancelled;
-    bytes32 public charityHashedRandom;
-    uint256 public totalEntries;
-    uint256 public totalRevealed;
-    address[] public participants;
-    address[] public revealers;
-    mapping(address => Participant) participantsMapping;
-    mapping(address => uint256) balancesMapping;
+    Raiser public raiser;
+    mapping(address => Participant) public participantsMapping;
+    mapping(address => uint256) public balancesMapping;
+
+    address[] participants;
+    address[] revealers;
+    bytes32 charityHashedRandom;
+    address winner;
+    bool cancelled;
+    uint256 totalEntries;
+    uint256 totalRevealed;
 
     function Seedom() public {
         // set owner
@@ -115,51 +116,24 @@ contract Seedom {
         return now;
     }
 
-    function currentRaiser() public view returns (
-        address _charity,
-        uint256 _charitySplit,
-        uint256 _winnerSplit,
-        uint256 _ownerSplit,
-        uint256 _valuePerEntry,
-        uint256 _kickoffTime,
-        uint256 _revealTime,
-        uint256 _endTime,
-        uint256 _expireTime,
-        uint256 _maxParticipants
+    function state() public view returns (
+        bytes32 _charityHashedRandom,
+        address _winner,
+        bytes32 _winnerRandom,
+        bool _cancelled,
+        uint256 _totalParticipants,
+        uint256 _totalEntries,
+        uint256 _totalRevealers,
+        uint256 _totalRevealed
     ) {
-        _charity = raiser._charity;
-        _charitySplit = raiser._charitySplit;
-        _winnerSplit = raiser._winnerSplit;
-        _ownerSplit = raiser._ownerSplit;
-        _valuePerEntry = raiser._valuePerEntry;
-        _kickoffTime = raiser._kickoffTime;
-        _revealTime = raiser._revealTime;
-        _endTime = raiser._endTime;
-        _expireTime = raiser._expireTime;
-        _maxParticipants = raiser._maxParticipants;
-    }
-
-    function totalParticipants() public view returns (uint256) {
-        return participants.length;
-    }
-
-    function totalRevealers() public view returns (uint256) {
-        return revealers.length;
-    }
-
-    function participant(address _address) public view returns (
-        uint256 _entries,
-        bytes32 _hashedRandom,
-        bytes32 _random)
-    {
-        Participant memory _participant = participantsMapping[_address];
-        _entries = _participant._entries;
-        _hashedRandom = _participant._hashedRandom;
-        _random = _participant._random;
-    }
-
-    function balance(address _address) public view returns (uint256) {
-        return balancesMapping[_address];
+        _charityHashedRandom = charityHashedRandom;
+        _winner = winner;
+        _winnerRandom = participantsMapping[winner]._random;
+        _cancelled = cancelled;
+        _totalParticipants = participants.length;
+        _totalEntries = totalEntries;
+        _totalRevealers = revealers.length;
+        _totalRevealed = totalRevealed;
     }
 
     // Kicks off a new raiser. Here we set the charity's ethereum wallet address, the percentage

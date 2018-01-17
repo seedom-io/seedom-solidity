@@ -22,12 +22,13 @@ module.exports.stage = async (state) => {
     const method = stage.instances.seedom.methods.end(stage.charityRandom);
     stage.endReceipt = await parity.sendMethod(method, { from: stage.charity });
 
+    const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
     // set the winner
-    stage.winner = await stage.instances.seedom.methods.winner().call({ from: stage.owner });
+    stage.winner = actualState._winner;
     // set balances
-    stage.charityBalance = await stage.instances.seedom.methods.balance(stage.charity).call({ from: stage.owner });
-    stage.winnerBalance = await stage.instances.seedom.methods.balance(stage.winner).call({ from: stage.owner });
-    stage.ownerBalance = await stage.instances.seedom.methods.balance(stage.owner).call({ from: stage.owner });
+    stage.charityBalance = await stage.instances.seedom.methods.balancesMapping(stage.charity).call({ from: stage.owner });
+    stage.winnerBalance = await stage.instances.seedom.methods.balancesMapping(stage.winner).call({ from: stage.owner });
+    stage.ownerBalance = await stage.instances.seedom.methods.balancesMapping(stage.owner).call({ from: stage.owner });
 
     return state;
 

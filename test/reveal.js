@@ -19,7 +19,7 @@ suite('reveal', (state) => {
 
         for (let participant of stage.participants) {
 
-            const actualParticipant = await stage.instances.seedom.methods.participant(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = state.web3.utils.toHex(actualParticipant[2]);
@@ -30,16 +30,12 @@ suite('reveal', (state) => {
 
         }
 
-        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: stage.owner });
-
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
         const totalEntries = stage.participantsCount * 10;
-        assert.equal(actualTotalEntries, totalEntries, "total entries should be correct");
-        assert.equal(actualTotalRevealed, totalEntries, "total revealed not correct");
-        assert.equal(actualTotalParticipants, stage.participantsCount, "total participants incorrect");
-        assert.equal(actualTotalRevealers, stage.participantsCount, "total revealers incorrect");
+        assert.equal(actualState._totalEntries, totalEntries, "total entries should be correct");
+        assert.equal(actualState._totalRevealed, totalEntries, "total revealed not correct");
+        assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
+        assert.equal(actualState._totalRevealers, stage.participantsCount, "total revealers incorrect");
 
     });
 

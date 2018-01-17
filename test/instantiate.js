@@ -9,26 +9,35 @@ suite('instantiate', (state) => {
         assert.equalIgnoreCase(actualOwner, stage.owner, "owner wasn't us");
     });
 
-    test("should have zeroed out properties", async () => {
+    test("should have proper initial raiser and state", async () => {
 
         await instantiate.stage(state);
 
         const stage = state.stage;
 
-        const actualWinner = await stage.instances.seedom.methods.winner().call({ from: stage.owner });
-        const actualCancelled = await stage.instances.seedom.methods.cancelled().call({ from: stage.owner });
-        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: stage.owner });
+        const actualRaiser = await stage.instances.seedom.methods.raiser().call({ from: stage.owner });
 
-        assert.equal(actualWinner, 0, "winner zero");
-        assert.isOk(actualCancelled, "initially cancelled");
-        assert.equal(actualTotalEntries, 0, "total entries zero");
-        assert.equal(actualTotalRevealed, 0, "total revealed zero");
-        assert.equal(actualTotalParticipants, 0, "total participants zero");
-        assert.equal(actualTotalRevealers, 0, "total revealers zero");
+        assert.equal(actualRaiser._charity, 0, "charity zero");
+        assert.equal(actualRaiser._charitySplit, 0, "charity split zero");
+        assert.equal(actualRaiser._winnerSplit, 0, "winner split zero");
+        assert.equal(actualRaiser._ownerSplit, 0, "owner split zero");
+        assert.equal(actualRaiser._valuePerEntry, 0, "value per entry zero");
+        assert.equal(actualRaiser._kickoffTime, 0, "kickoff time zero");
+        assert.equal(actualRaiser._revealTime, 0, "reveal time zero");
+        assert.equal(actualRaiser._endTime, 0, "end time zero");
+        assert.equal(actualRaiser._expireTime, 0, "expire time zero");
+        assert.equal(actualRaiser._maxParticipants, 0, "max participants zero");
 
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+
+        assert.equal(actualState._charityHashedRandom, 0, "charity hashed random zero");
+        assert.equal(actualState._winner, 0, "winner zero");
+        assert.equal(actualState._winnerRandom, 0, "winner random zero");
+        assert.isOk(actualState._cancelled, "initially cancelled");
+        assert.equal(actualState._totalParticipants, 0, "total participants zero");
+        assert.equal(actualState._totalEntries, 0, "total entries zero");
+        assert.equal(actualState._totalRevealers, 0, "total revealers zero");
+        assert.equal(actualState._totalRevealed, 0, "total revealed zero");
     });
 
 });

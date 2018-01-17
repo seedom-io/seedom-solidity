@@ -24,7 +24,7 @@ suite('participate', (state) => {
         for (let i = 0; i < stage.participantsCount; i++) {
 
             const participant = stage.participants[i];
-            const actualParticipant = await stage.instances.seedom.methods.participant(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -33,7 +33,7 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await stage.instances.seedom.methods.balance(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
@@ -44,15 +44,11 @@ suite('participate', (state) => {
 
         }
 
-        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: stage.owner });
-
-        assert.equal(actualTotalEntries, 0, "total entries should be zero");
-        assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, stage.participantsCount, "total participants incorrect");
-        assert.equal(actualTotalRevealers, 0, "total revealers not zero");
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        assert.equal(actualState._totalEntries, 0, "total entries should be zero");
+        assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
+        assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
+        assert.equal(actualState._totalRevealers, 0, "total revealers not zero");
 
     });
 
@@ -74,7 +70,7 @@ suite('participate', (state) => {
         for (let i = 0; i < stage.participantsCount; i++) {
 
             const participant = stage.participants[i];
-            const actualParticipant = await stage.instances.seedom.methods.participant(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -83,7 +79,7 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await stage.instances.seedom.methods.balance(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
@@ -95,16 +91,12 @@ suite('participate', (state) => {
 
         }
 
-        const actualTotalEntries = await stage.instances.seedom.methods.totalEntries().call({ from: stage.owner });
-        const actualTotalRevealed = await stage.instances.seedom.methods.totalRevealed().call({ from: stage.owner });
-        const actualTotalParticipants = await stage.instances.seedom.methods.totalParticipants().call({ from: stage.owner });
-        const actualTotalRevealers = await stage.instances.seedom.methods.totalRevealers().call({ from: stage.owner });
-
+        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
         const entries = stage.participantsCount * 10;
-        assert.equal(actualTotalEntries, entries, "total entries should be zero");
-        assert.equal(actualTotalRevealed, 0, "total revealed not zero");
-        assert.equal(actualTotalParticipants, stage.participantsCount, "total participants incorrect");
-        assert.equal(actualTotalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState._totalEntries, entries, "total entries should be zero");
+        assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
+        assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
+        assert.equal(actualState._totalRevealers, 0, "total revealers not zero");
 
     });
 
