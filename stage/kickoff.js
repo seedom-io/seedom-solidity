@@ -9,7 +9,7 @@ module.exports.optionize = (command) => {
         .option("--charitySplit <number>", "charity split", parseInt)
         .option("--winnerSplit <number>", "winner split", parseInt)
         .option("--ownerSplit <number>", "owner split", parseInt)
-        .option("--valuePerEntry <string>", "value per entry", parseInt)
+        .option("--valuePerEntry <number>", "value per entry", parseInt)
         .option("--revealTime <time>", "reveal time", parseDate)
         .option("--endTime <time>", "end time", parseDate)
         .option("--expireTime <time>", "expire time", parseDate)
