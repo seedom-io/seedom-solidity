@@ -38,7 +38,7 @@ module.exports.main = async (state) => {
 
     // load network configs and parameters
     const networkConfig = await h.loadJsonFile(h.networkConfigFile);
-    state.network = networks.get(h.testNetworkName, networkConfig);
+    state.network = networks.get(h.localNetworkName, networkConfig);
     const prepared = await getInitialized();
     
     // if dirs are prepped and we aren't forced, run parity
@@ -376,7 +376,7 @@ const verifySend = (call) => {
         
         .on('confirmation', (num, receipt) => {
 
-            if (!receipt.status) {
+            if (!receipt.status || receipt.status === "0x0") {
                 reject(this.SomethingThrown);
                 return;
             }

@@ -1,16 +1,16 @@
 {
-    "test": {
+    "localhost": {
         "gas": "2000000",
         "gasPrice": "20000000000",
         "password": "password",
         "balance": "100000000000000000000000000",
         "accounts": 9
     },
-    "kovan": {
-        "ws": "159.203.108.107:8546",
+    "ropsten": {
+        "ws": "165.227.179.253:8546",
         "verify": true,
-        "requires": "test",
-        "gas": "2000000",
-        "gasPrice": "20000000000"
+        "requires": "localhost",
+        "gas": "200000",
+        "gasPrice": "400000000"
     }
 }

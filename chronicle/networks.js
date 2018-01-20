@@ -10,7 +10,7 @@ module.exports.paritySendDelay = 1000;
 module.exports.getWeb3 = async (network) => {
 
     const web3 = createWeb3(network);
-    const name = network.ws ? network.ws : 'test';
+    const name = network.ws ? network.ws : h.localNetworkName;
     if (await testWeb3(web3)) {
         cli.success("connected to %s network", name);
         return web3;

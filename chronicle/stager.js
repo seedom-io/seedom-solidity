@@ -13,8 +13,8 @@ module.exports.main = async (state) => {
 
     // if no network specified, default to test
     if (!state.networkName) {
-        cli.info("'%s' network chosen as no network specified", h.testNetworkName);
-        state.networkName = h.testNetworkName
+        cli.info("'%s' network chosen as no network specified", h.localNetworkName);
+        state.networkName = h.localNetworkName
     }
 
     // first deploy
@@ -59,7 +59,7 @@ module.exports.main = async (state) => {
 
 const getDeployer = async (networkName) => {
 
-    if (networkName == h.testNetworkName) {
+    if (networkName == h.localNetworkName) {
         // do a first deploy (test network, yes force, no forget)
         return await deployer.main({
             force: true,

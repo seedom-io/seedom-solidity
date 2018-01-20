@@ -25,10 +25,10 @@ module.exports.main = async (state) => {
     // now deploy
     cli.section("deployer");
     
-    // if no network specified, default to test
+    // if no network specified, default to localhost
     if (!state.networkName) {
-        cli.info("'%s' network chosen as no network specified", h.testNetworkName);
-        state.networkName = h.testNetworkName
+        cli.info("'%s' network chosen as no network specified", h.localNetworkName);
+        state.networkName = h.localNetworkName
     }
 
     state.contractConfig = await h.loadJsonFile(h.contractConfigFile);
@@ -132,7 +132,7 @@ const deploy = async (
 
     let state;
     // get base state
-    if (networkName == h.testNetworkName) {
+    if (networkName == h.localNetworkName) {
         state = await getParityState();
     } else {
         state = await getNetworkState(networkName);

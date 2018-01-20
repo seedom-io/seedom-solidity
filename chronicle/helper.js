@@ -48,7 +48,7 @@ module.exports.networkConfigFile = path.join(this.configDir, 'network.' + this.j
 module.exports.contractConfigFile = path.join(this.configDir, 'contract.' + this.jsonExt);
 module.exports.parityConfigFile = path.join(this.configDir, 'parity.' + this.jsonExt);
 
-module.exports.testNetworkName = 'test';
+module.exports.localNetworkName = 'localhost';
 
 module.exports.printKeys = (obj) => {
     for (let key in obj) {
