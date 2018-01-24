@@ -46,6 +46,7 @@ contract Seedom {
         uint256 _revealTime;
         uint256 _endTime;
         uint256 _expireTime;
+        uint256 _destructTime;
         uint256 _maxParticipants;
     }
 
@@ -122,6 +123,7 @@ contract Seedom {
             _revealTime,
             _endTime,
             _expireTime,
+            _destructTime,
             _maxParticipants
         );
     }
@@ -165,11 +167,11 @@ contract Seedom {
         Seed(_hashedRandom);
     }
 
-    // Participate in the current raiser by contributing randomness to the global selection of a
-    // winner. Send a hashed random value N using the following formula: sha3(N, address). Do not
-    // forget your random value as this will be required during the random revealation phase to
-    // confirm your entries. After participation, send wei to the callback function to receive
-    // additional entries. Participation is only permitted between seed() and the reveal time.
+    // Participate in this raiser by contributing randomness to the global selection of a winner.
+    // Send a hashed random value N using the following formula: sha3(N, address). Do not forget
+    // your random value as this will be required during the random revealation phase to confirm
+    // your entries. After participation, send wei to the callback function to receive additional
+    // entries. Participation is only permitted between seed() and the reveal time.
     function participate(bytes32 _hashedRandom) public raiserOngoing neverOwner payable {
         require(now < raiser._revealTime); // but before the reveal
         require(_hashedRandom != 0x0); // hashed random cannot be zero
@@ -193,7 +195,7 @@ contract Seedom {
         Participation(msg.sender, _participant._entries, _hashedRandom);
     }
 
-    // Called by participate() and the fallback function for obtaining additional entries.
+    // Called by participate() and the fallback function for procuring additional entries.
     function raise(Participant storage _participant) internal returns (
         uint256 _newEntries,
         uint256 _refund
@@ -234,7 +236,7 @@ contract Seedom {
 
     // Reveal your hashed random to the world. The random is hashed and verified to match the
     // hashed random provided during the participation phase. All entries are confirmed with a
-    // single call to reveal() and can only be completed once.
+    // single call to reveal() and this call can only be completed once.
     function reveal(bytes32 _random) public raiserOngoing neverOwner {
         require(now >= raiser._revealTime); // ensure we are in reveal phase
         require(now < raiser._endTime); // but before the end
@@ -253,10 +255,9 @@ contract Seedom {
         Revelation(msg.sender, _random, _participant._entries);
     }
 
-    // Ends this raiser, chooses a winning supporter, and disseminates wei according to the split
-    // percentages provided during kickoff. All of the revealed randoms and the charity's final
-    // revealed random will be used to deterministically generate a universal random value. This
-    // method can only be performed by the charity after the end time.
+    // Ends this raiser and chooses a winning supporter. All of the revealed randoms and the
+    // charity's final revealed random will be used to deterministically generate a universal
+    // random value. This method can only be performed by the charity after the end time.
     function end(bytes32 _charityRandom) public raiserOngoing onlyCharity {
         require(now >= raiser._endTime); // end can occur only after ent time
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
@@ -350,11 +351,11 @@ contract Seedom {
         }
     }
 
-    // Cancels a raiser early, before a winning supporter is chosen, allocating wei back to the
-    // original holders through a mapping of balances, which must be withdrawn from. It can only be
-    // executed by the owner or charity before a winning supporter is chosen. After the expire
-    // time, if the owner or charity has not cancelled and a winning supporter has not been chosen,
-    // this function becomes open to everyone as a final safeguard.
+    // Cancels a raiser early, before a winning supporter is chosen. All funds can be then be
+    // withdrawn using the withdraw() function. cancel() can only be executed by the owner or
+    // charity before a winning supporter is chosen. After the expire time, if the owner or charity
+    // has not cancelled and a winning supporter has not been chosen, this function becomes open to
+    // everyone as a final safeguard.
     function cancel() public {
         require(winner == address(0)); // if someone won, we've already sent the money out
         require(!cancelled); // we can't cancel more than once
@@ -369,8 +370,8 @@ contract Seedom {
         Cancellation();
     }
 
-    // This is the only method for getting wei out of the contract. All rewards and refunds
-    // (due to cancellation) are withdrawn in this way.
+    // Used to withdraw funds from the contract from either winnings or refunds from a
+    // cancellation.
     function withdraw() public {
 
         uint256 _refund;
@@ -413,4 +414,10 @@ contract Seedom {
         Withdrawal(msg.sender);
     }
 
+    // destroy() will be used to clean up very old contracts from the Ethreum network.
+    function destroy() public onlyOwner {
+        require(now >= raiser._destructTime); // can only be done after a while
+        // destroy this contract and send remaining funds to owner
+        selfdestruct(msg.sender);
+    }
 }
