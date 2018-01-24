@@ -2,19 +2,6 @@ pragma solidity ^0.4.4;
 
 contract Seedom {
 
-    event Kickoff(
-        address _charity,
-        uint256 _charitySplit,
-        uint256 _winnerSplit,
-        uint256 _ownerSplit,
-        uint256 _valuePerEntry,
-        uint256 _kickoffTime,
-        uint256 _revealTime,
-        uint256 _endTime,
-        uint256 _expireTime,
-        uint256 _maxParticipants
-    );
-
     event Seed(
         bytes32 _hashedRandom
     );
@@ -39,10 +26,7 @@ contract Seedom {
 
     event Win(
         address _participant,
-        bytes32 _random,
-        uint256 _charityReward,
-        uint256 _winnerReward,
-        uint256 _ownerReward
+        bytes32 _random
     );
 
     event Cancellation();
@@ -52,6 +36,7 @@ contract Seedom {
     );
 
     struct Raiser {
+        address _owner;
         address _charity;
         uint256 _charitySplit;
         uint256 _winnerSplit;
@@ -71,12 +56,12 @@ contract Seedom {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == raiser._owner);
         _;
     }
 
     modifier neverOwner() {
-        require(msg.sender != owner);
+        require(msg.sender != raiser._owner);
         _;
     }
 
@@ -91,25 +76,54 @@ contract Seedom {
         require(!cancelled); // we can't participate if raiser cancelled
         _;
     }
-
-    address public owner;
+    
     Raiser public raiser;
     mapping(address => Participant) public participantsMapping;
-    mapping(address => uint256) public balancesMapping;
-
     address[] participants;
     address[] revealers;
     bytes32 charityHashedRandom;
     address winner;
-    bool cancelled;
     uint256 totalEntries;
     uint256 totalRevealed;
+    bool cancelled;
 
-    function Seedom() public {
-        // set owner
-        owner = msg.sender;
-        // initiall set us cancelled
-        cancelled = true;
+    function Seedom(
+        address _charity,
+        uint256 _charitySplit,
+        uint256 _winnerSplit,
+        uint256 _ownerSplit,
+        uint256 _valuePerEntry,
+        uint256 _kickoffTime,
+        uint256 _revealTime,
+        uint256 _endTime,
+        uint256 _expireTime,
+        uint256 _destructTime,
+        uint256 _maxParticipants
+    ) public {
+        require(_charity != 0x0);
+        require(_charitySplit != 0);
+        require(_winnerSplit != 0);
+        require(_charitySplit + _winnerSplit + _ownerSplit == 1000);
+        require(_valuePerEntry != 0);
+        require(_revealTime >= now); // time for the charity to seed and others to participate
+        require(_endTime > _revealTime); // time for participants to reveal their randoms
+        require(_expireTime > _endTime); // time for charity to end the raiser
+        require(_destructTime > _expireTime); // when this contract is selfdestructed
+
+        // set the raiser
+        raiser = Raiser(
+            msg.sender,
+            _charity,
+            _charitySplit,
+            _winnerSplit,
+            _ownerSplit,
+            _valuePerEntry,
+            now,
+            _revealTime,
+            _endTime,
+            _expireTime,
+            _maxParticipants
+        );
     }
 
     function timestamp() public view returns (uint256) {
@@ -136,93 +150,12 @@ contract Seedom {
         _totalRevealed = totalRevealed;
     }
 
-    // Kicks off a new raiser. Here we set the charity's ethereum wallet address, the percentage
-    // splits, the wei of each entry, and several event times. A new raiser can only be kicked off
-    // if a winner is chosen or the last raiser is cancelled.
-    function kickoff(
-        address _charity,
-        uint256 _charitySplit,
-        uint256 _winnerSplit,
-        uint256 _ownerSplit,
-        uint256 _valuePerEntry,
-        uint256 _revealTime,
-        uint256 _endTime,
-        uint256 _expireTime,
-        uint256 _maxParticipants) public onlyOwner
-    {
-        require(_charity != 0x0);
-        require(_charitySplit != 0);
-        require(_winnerSplit != 0);
-        require(_charitySplit + _winnerSplit + _ownerSplit == 1000);
-        require(_valuePerEntry != 0);
-        require(_revealTime >= now); // time for the charity to seed and others to participate
-        require(_endTime > _revealTime); // time for participants to reveal their randoms
-        require(_expireTime > _endTime); // time for charity to end the raiser
-        require(winner != address(0) || cancelled);
-
-        // clear out any pre-existing state
-        clear();
-        // store a new raiser on chain
-        raiser = Raiser(
-            _charity,
-            _charitySplit,
-            _winnerSplit,
-            _ownerSplit,
-            _valuePerEntry,
-            now,
-            _revealTime,
-            _endTime,
-            _expireTime,
-            _maxParticipants
-        );
-
-        // send out event
-        Kickoff(
-            _charity,
-            _charitySplit,
-            _winnerSplit,
-            _ownerSplit,
-            _valuePerEntry,
-            raiser._kickoffTime,
-            _revealTime,
-            _endTime,
-            _expireTime,
-            _maxParticipants
-        );
-
-    }
-
-    // Clears state elements to prepare for a new raiser.
-    function clear() internal {
-
-        // clear out charity hashed random
-        charityHashedRandom = 0x0;
-        // set no winner
-        winner = address(0);
-        // set not cancelled
-        cancelled = false;
-        // clear out stats
-        totalEntries = 0;
-        totalRevealed = 0;
-
-        // delete all participants in mapping
-        for (uint256 participantsIndex = 0; participantsIndex < participants.length; participantsIndex++) {
-            delete participantsMapping[participants[participantsIndex]];
-        }
-
-        // delete revealer addresses
-        delete revealers;
-        // delete participant addresses
-        delete participants;
-
-    }
-
     // Used by the charity to officially begin their raiser. The charity supplies the first hashed
     // random, which is kept secret and revealed by the charity in end().
     function seed(bytes32 _hashedRandom) public onlyCharity {
         require(now >= raiser._kickoffTime); // ensure we have kicked off
         require(now < raiser._revealTime); // but before the reveal
-        require(winner == address(0)); // safety check
+        require(winner == address(0)); // no winner
         require(!cancelled); // we can't participate in a cancelled charity
         require(charityHashedRandom == 0x0); // safety check
         require(_hashedRandom != 0x0); // hashed random cannot be zero
@@ -230,7 +163,6 @@ contract Seedom {
         charityHashedRandom = _hashedRandom;
         // broadcast seed
         Seed(_hashedRandom);
-
     }
 
     // Participate in the current raiser by contributing randomness to the global selection of a
@@ -259,7 +191,6 @@ contract Seedom {
 
         // send out participation update
         Participation(msg.sender, _participant._entries, _hashedRandom);
-    
     }
 
     // Called by participate() and the fallback function for obtaining additional entries.
@@ -267,7 +198,6 @@ contract Seedom {
         uint256 _newEntries,
         uint256 _refund
     ) {
-
         // calculate the number of entries from the wei sent
         _newEntries = msg.value / raiser._valuePerEntry;
         // if we have any, update participant and total
@@ -279,11 +209,9 @@ contract Seedom {
         // calculate partial entry refund
         _refund = msg.value % raiser._valuePerEntry;
         // refund any excess wei immediately (partial entry)
-        // keep this at end to prevent re-entrancy!
         if (_refund > 0) {
             msg.sender.transfer(_refund);
         }
-
     }
 
     // Fallback function that accepts wei for additional entries. This will always fail if
@@ -302,7 +230,6 @@ contract Seedom {
         (_newEntries, _refund) = raise(_participant);
         // send raise event
         Raise(msg.sender, _newEntries, _refund);
-
     }
 
     // Reveal your hashed random to the world. The random is hashed and verified to match the
@@ -324,7 +251,6 @@ contract Seedom {
         totalRevealed += _participant._entries;
         // send out revelation update
         Revelation(msg.sender, _random, _participant._entries);
-
     }
 
     // Ends this raiser, chooses a winning supporter, and disseminates wei according to the split
@@ -339,28 +265,11 @@ contract Seedom {
         // calculate crowdsourced random & entry index from this random
         bytes32 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
         uint256 _entryIndex = uint256(_crowdsourcedRandom) % totalRevealed;
-        // find winner & coresponding participant
+        // find and set winner, get the participant
         winner = findWinner(_entryIndex, _cumulatives);
         Participant memory _participant = participantsMapping[winner];
-
-        uint256 _ownerReward;
-        uint256 _charityReward;
-        uint256 _winnerReward;
-        // get owner, winner, and charity refunds
-        (_charityReward, _winnerReward, _ownerReward) = calculateRewards();
-        // add rewards to existing balances
-        balancesMapping[raiser._charity] += _charityReward;
-        balancesMapping[winner] += _winnerReward;
-        balancesMapping[owner] += _ownerReward;
         // send out win event
-        Win(
-            winner,
-            _participant._random,
-            _charityReward,
-            _winnerReward,
-            _ownerReward
-        );
-
+        Win(winner, _participant._random);
     }
 
     // Using all of the revealed random values, including the charity's final random,
@@ -371,7 +280,6 @@ contract Seedom {
         bytes32 _charityRandom,
         uint256[] memory _cumulatives) internal view returns (bytes32)
     {
-
         uint256 _cumulative = 0;
         bytes32 _crowdsourcedRandom = 0;
         address _revealerAddress;
@@ -395,7 +303,6 @@ contract Seedom {
 
         // the charity's initial random has the ultimate randomization effect
         return _crowdsourcedRandom ^ _charityRandom;
-
     }
 
     // Finds the winning supporter revealer address amongst the participants who revealed their
@@ -416,7 +323,6 @@ contract Seedom {
         uint256 _nextRevealerCumulative;
         // loop until revealer found
         while (true) {
-
             // the winner is the last revealer! (edge case)
             if (_leftIndex == _rightIndex) {
                 return revealers[_leftIndex];
@@ -429,7 +335,6 @@ contract Seedom {
             // find the mid and very next revealer cumulatives
             _midRevealerCumulative = _cumulatives[_midIndex];
             _nextRevealerCumulative = _cumulatives[_nextIndex];
-
             // binary search
             if (_entryIndex >= _midRevealerCumulative) {
                 if (_entryIndex < _nextRevealerCumulative) {
@@ -442,24 +347,7 @@ contract Seedom {
                 // winner is less, move left
                 _rightIndex = _midIndex;
             }
-
         }
-
-    }
-
-    // Calculate reward wei to the charity, winner, and owner given the percentage splits specified
-    // at kickoff.
-    function calculateRewards() internal view returns (
-        uint256 _charityReward,
-        uint256 _winnerReward,
-        uint256 _ownerReward)
-    {
-        // calculate total wei received
-        uint256 _totalValue = totalEntries * raiser._valuePerEntry;
-        // divide it up amongst all entities (non-revealed winnings are forfeited)
-        _charityReward = _totalValue * raiser._charitySplit / 1000;
-        _winnerReward = _totalValue * raiser._winnerSplit / 1000;
-        _ownerReward = _totalValue * raiser._ownerSplit / 1000;
     }
 
     // Cancels a raiser early, before a winning supporter is chosen, allocating wei back to the
@@ -470,42 +358,59 @@ contract Seedom {
     function cancel() public {
         require(winner == address(0)); // if someone won, we've already sent the money out
         require(!cancelled); // we can't cancel more than once
-        if ((msg.sender != owner) && (msg.sender != raiser._charity)) {
+        // open cancellation to community if past expire time
+        if ((msg.sender != raiser._owner) && (msg.sender != raiser._charity)) {
             require(now >= raiser._expireTime);
         }
 
         // immediately set us to cancelled
         cancelled = true;
-
-        address _participantAddress;
-        Participant memory _participant;
-        // loop through all participants to refund them
-        for (uint256 participantsIndex = 0; participantsIndex < participants.length; participantsIndex++) {
-            // get the participant & refund
-            _participantAddress = participants[participantsIndex];
-            _participant = participantsMapping[_participantAddress];
-            balancesMapping[_participantAddress] += _participant._entries * raiser._valuePerEntry;
-        }
-
         // send out cancellation event
         Cancellation();
-
     }
 
     // This is the only method for getting wei out of the contract. All rewards and refunds
     // (due to cancellation) are withdrawn in this way.
     function withdraw() public {
-        // determine where to find the refund amount
-        uint256 _balance = balancesMapping[msg.sender];
-        // fail if no balance
-        require(_balance > 0);
-        // set balance to zero
-        balancesMapping[msg.sender] = 0;
+
+        uint256 _refund;
+        // check for winner, cancelled, or invalid
+        if (winner != address(0)) {
+
+            uint256 _split;
+            // determine split based on sender
+            if (msg.sender == raiser._charity) {
+                _split = raiser._charitySplit;
+            } else if (msg.sender == winner) {
+                _split = raiser._winnerSplit;
+            } else if (msg.sender == raiser._owner) {
+                _split = raiser._ownerSplit;
+            } else {
+                revert();
+            }
+
+            // divide it up amongst all entities (non-revealed winnings are forfeited)
+            _refund = totalEntries * raiser._valuePerEntry * _split / 1000;
+            require (_refund > 0); // ensure this results in a refund
+
+        } else if (cancelled) {
+
+            // find participant to refund their entries
+            Participant storage _participant = participantsMapping[msg.sender];
+            require(_participant._entries > 0); // make sure they have entries
+            _refund = _participant._entries * raiser._valuePerEntry;
+            // set entries to zero to prevent multiple refunds
+            _participant._entries = 0;
+
+        } else {
+            // no winner and not cancelled
+            revert();
+        }
+
+        // execute the refund if we have one
+        msg.sender.transfer(_refund);
         // send withdrawal event
         Withdrawal(msg.sender);
-        // execute the refund if we have one
-        // keep this at end to prevent re-entrancy!
-        msg.sender.transfer(_balance);
     }
 
 }
