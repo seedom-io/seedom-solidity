@@ -1,5 +1,6 @@
 const util = require('util');
 const Web3 = require('web3');
+const Web3EthContract = require('web3-eth-contract');
 const path = require('path');
 const fs = require('mz/fs');
 const h = require('./helper');
@@ -14,7 +15,7 @@ const iAmCompletelySure = "I AM COMPLETELY SURE";
 module.exports.main = async (state) => {
 
     // compile first
-    Object.assign(state, await compiler.main({}));
+    await compiler.main(state);
 
     // now stage
     cli.section("stager");
@@ -25,15 +26,16 @@ module.exports.main = async (state) => {
         state.networkName = h.localNetworkName;
     }
 
-    const networkState = (networkName == h.localNetworkName)
-        ? await parity.main({ fresh: false })
-        : await networks.main();
+    const networkResult = (state.networkName == h.localNetworkName)
+        ? await parity.main(state)
+        : await networks.main(state);
 
-    if (!networkState) {
+    if (!networkResult) {
         return false;
     }
 
-    Object.assign(state, networkState);
+    // now stage
+    cli.section("stager");
 
     cli.info("staging %s", state.stageName);
     // stage with state and fresh stage
@@ -51,13 +53,14 @@ module.exports.main = async (state) => {
 
 }
 
-
-const getDeployment = async (deploymentFile) => {
-    try {
-        return await h.readJsonFile(deploymentFile);
-    } catch (error) {
-        return {};
+const printStage = (stage) => {
+    const printableStage = {};
+    for (let name in stage) {
+        if (!(stage[name] instanceof Web3EthContract)) {
+            printableStage[name] = stage[name];
+        }
     }
+    cli.json(printableStage, "final staging data");
 }
 
 module.exports.prepare = async (program) => {

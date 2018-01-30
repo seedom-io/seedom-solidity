@@ -14,7 +14,7 @@ module.exports.stage = async (state) => {
     await reveal.stage(state);
     
     const stage = state.stage;
-    const now = h.timestamp();
+    const now = ch.timestamp();
     const endTime = stage.endTime;
     await cli.progress("waiting for end phase", endTime - now);
 

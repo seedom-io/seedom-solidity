@@ -28,7 +28,7 @@ module.exports.stage = async (state) => {
     stage.participantsCount = state.accountAddresses.length - 3;
     stage.maxParticipants = stage.maxParticipants ? stage.maxParticipants : stage.participantsCount;
 
-    const now = h.timestamp();
+    const now = ch.timestamp();
     // double the parity send delay to get overall transaction duration
     stage.transactionDuration = Math.floor(state.network.sendDelay / 1000) * 2;
     // instantiate phase has two initial transactions: deploy and seed

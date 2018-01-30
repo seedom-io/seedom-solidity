@@ -102,7 +102,7 @@ module.exports.readNetwork = async (networkName) => {
 }
 
 module.exports.writeAbi = async (contractName, abi) => {
-    return this.writeFile(this.getAbiFile(contractName), abi);
+    return this.writeJsonFile(this.getAbiFile(contractName), abi);
 }
 
 module.exports.writeBytecode = async (contractName, bytecode) => {

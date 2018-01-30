@@ -8,7 +8,7 @@ suite('instantiate', (state) => {
         await instantiate.stage(state);
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const actualRaiser = await stage.seedom.methods.raiser().call({ from: stage.owner });
         const actualInstantiateTimeDifference = actualRaiser._instantiateTime - now;
 
@@ -40,7 +40,7 @@ suite('instantiate', (state) => {
     test("should instantiate properly with no owner split and no max participants", async () => {
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
@@ -90,7 +90,7 @@ suite('instantiate', (state) => {
         await instantiate.stage(state);
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
@@ -128,7 +128,7 @@ suite('instantiate', (state) => {
         await instantiate.stage(state);
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
@@ -161,7 +161,7 @@ suite('instantiate', (state) => {
         await instantiate.stage(state);
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;

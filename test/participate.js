@@ -156,7 +156,7 @@ suite('participate', (state) => {
         await seed.stage(state);
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 

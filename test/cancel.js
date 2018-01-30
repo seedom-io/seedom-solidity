@@ -253,7 +253,7 @@ suite('cancel', (state) => {
     const testCancelRefundsAfterExpiration = async (account) => {
 
         const stage = state.stage;
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const expireTime = stage.expireTime;
         await cli.progress("waiting for expiration time", expireTime - now);
 

@@ -11,6 +11,9 @@ const defaults = {
 
 module.exports.main = async (state) => {
 
+    // now stage
+    cli.section("networks");
+
     state.network = h.readNetwork(state.networkName);
     // set web3 instance
     if (!await this.setWeb3(state)) {
@@ -132,7 +135,7 @@ module.exports.callProvider = async (method, args, state) => {
 
 };
 
-module.exports.deploy = (contractName, args, options, state) => {
+module.exports.deploy = async (contractName, args, options, state) => {
 
     // find the compiled contract
     const contract = state.contracts[contractName];
@@ -141,13 +144,13 @@ module.exports.deploy = (contractName, args, options, state) => {
         return null;
     }
 
-    const web3Contract = new web3.eth.Contract(contract.abi);
+    const web3Contract = new state.web3.eth.Contract(contract.abi);
     const web3Transaction = web3Contract.deploy({
         data: contract.bytecode,
         arguments: args
     });
 
-    const web3Instance = this.sendMethod(web3Transaction, options, state);
+    const web3Instance = await this.sendMethod(web3Transaction, options, state);
 
     const contractAddress = web3Instance.options.address;
     // save deployment
@@ -217,7 +220,7 @@ const verifySend = (call) => {
                 }
             }
 
-            accept(receipt);
+            accept(result);
             
         });
 

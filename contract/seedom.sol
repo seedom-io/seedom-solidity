@@ -127,10 +127,6 @@ contract Seedom {
         );
     }
 
-    function timestamp() public view returns (uint256) {
-        return now;
-    }
-
     function state() public view returns (
         bytes32 _charityHashedRandom,
         address _winner,

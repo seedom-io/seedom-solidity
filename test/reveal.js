@@ -54,7 +54,7 @@ suite('reveal', (state) => {
             networks.sendMethod(method, { from: participant, value: 10000 }, state)
         );
 
-        now = sh.timestamp();
+        now = ch.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
@@ -73,7 +73,7 @@ suite('reveal', (state) => {
         
         const stage = state.stage;
         const participant = stage.participants[0];
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
@@ -97,7 +97,7 @@ suite('reveal', (state) => {
 
         const stage = state.stage;
         const participant = stage.participants[0];
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
@@ -116,7 +116,7 @@ suite('reveal', (state) => {
         
         const stage = state.stage;
         const participant = stage.participants[0];
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
@@ -143,7 +143,7 @@ suite('reveal', (state) => {
             parity.SomethingThrown
         );
 
-        const now = sh.timestamp();
+        const now = ch.timestamp();
         const endTime = stage.endTime;
         await cli.progress("waiting for end phase", endTime - now);
 

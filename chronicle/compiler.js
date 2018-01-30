@@ -90,7 +90,7 @@ const handleOutputs = async (outputs, contracts) => {
         let output = outputs[key];
         let contract = contracts[contractName];
         // save output data to contracts
-        contract.abi = output.interface;
+        contract.abi = JSON.parse(output.interface);
         contract.bytecode = '0x' + output.bytecode;
         // save abi & bytecode
         await h.writeAbi(contractName, contract.abi);

@@ -3,10 +3,6 @@ const cli = require('../chronicle/cli');
 const BigNumber = require('bignumber.js');
 const keccak256 = require('js-sha3').keccak256;
 
-module.exports.timestamp = async () => {
-    return Math.round((new Date()).getTime() / 1000);
-}
-
 module.exports.random = () => {
     const buffer = Buffer.alloc(32);
     crypto.randomFillSync(buffer, 0, 32);

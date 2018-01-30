@@ -18,7 +18,7 @@ module.exports.stage = async (state) => {
 
     stage.revealersCount = stage.revealersCount ? stage.revealersCount : stage.participantsCount;
 
-    const now = h.timestamp();
+    const now = ch.timestamp();
     const revealTime = stage.revealTime;
     await cli.progress("waiting for reveal phase", revealTime - now);
 
