@@ -3,8 +3,8 @@ const cli = require('../chronicle/cli');
 const BigNumber = require('bignumber.js');
 const keccak256 = require('js-sha3').keccak256;
 
-module.exports.timestamp = async (contract) => {
-    return parseInt(await contract.methods.timestamp().call());
+module.exports.timestamp = async () => {
+    return Math.round((new Date()).getTime() / 1000);
 }
 
 module.exports.random = () => {

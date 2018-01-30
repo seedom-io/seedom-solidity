@@ -1,118 +1,60 @@
+const util = require('util');
+const Web3 = require('web3');
+const path = require('path');
+const fs = require('mz/fs');
 const h = require('./helper');
+const compiler = require('./compiler');
 const cli = require('./cli');
-const dir = require('node-dir');
-const path = require("path");
-const deployer = require('./deployer');
 const networks = require('./networks');
-const chrono = require('chrono-node');
+const parity = require('./parity');
+
+const iAmCompletelySure = "I AM COMPLETELY SURE";
 
 module.exports.main = async (state) => {
 
+    // compile first
+    Object.assign(state, await compiler.main({}));
+
     // now stage
     cli.section("stager");
 
-    // if no network specified, default to test
+    // if no network specified, default to localhost
     if (!state.networkName) {
         cli.info("'%s' network chosen as no network specified", h.localNetworkName);
-        state.networkName = h.localNetworkName
+        state.networkName = h.localNetworkName;
     }
 
-    // first deploy
-    state.deployer = await getDeployer(state.networkName);
-
-    // now stage
-    cli.section("stager");
-
-    // setup our state from the deployer's
-    state.accountAddresses = state.deployer.accountAddresses;
-    state.web3 = state.deployer.web3;
-    // get all web 3 instances, including ones not deployed
-    const instances = await getInstances(
-        state.deployer.contractConfig,
-        state.deployer.instances,
-        state.deployer.networkDeployment,
-        state.web3
-    );
-
-    // something bad happened
-    if (!instances) {
-        cli.error("'%s' contract is missing from deployment", contractName);
-        return state;
+    let networkState;
+    // get base state
+    if (networkName == h.localNetworkName) {
+        Object.assign(state, await parity.main({ fresh: false }));
+    } else {
+        Object.assign(state, await networks.main());
     }
-
-    // set stage instances
-    state.stage.instances = instances;
 
     cli.info("staging %s", state.stageName);
-
     // stage with state and fresh stage
     await state.stageModule.stage(state);
+    // log deployment information to network file if we want to
+    if (state.deployment) {
+        h.writeDeployment(networkName, state.deployment);
+        cli.success("deployments written");
+    }
     
     // print out stage for all to see
     printStage(state.stage);
-
+    
     cli.success("%s staging complete", state.stageName);
 
-    return state;
-
 }
 
-const getDeployer = async (networkName) => {
 
-    if (networkName == h.localNetworkName) {
-        // do a first deploy (test network, yes force, no forget)
-        return await deployer.main({
-            force: true,
-            forget: false
-        });
-    } else {
-        // do a first deploy (other network, no force, no forget)
-        return await deployer.main({
-            force: false,
-            forget: false
-        });
+const getDeployment = async (deploymentFile) => {
+    try {
+        return await h.readJsonFile(deploymentFile);
+    } catch (error) {
+        return {};
     }
-
-}
-
-const getInstances = async (
-    contractConfig,
-    deployedinstances,
-    networkDeployment,
-    web3
-) => {
-
-    const instances = {};
-
-    // the contract config is the source of truth
-    for (let contractName in contractConfig) {
-
-        // first check existing deployed web3 instances for this contract
-        if (contractName in deployedinstances) {
-            instances[contractName] = deployedinstances[contractName];
-            continue;
-        }
-
-        // we didn't find it there, let's check for latest deployments
-        const latestDeployment = deployer.getLatestDeployment(contractName, networkDeployment);
-        if (!latestDeployment) {
-            return null;
-        }
-
-        // we found a latest deployment! let's hook up a new web3 instance
-        const abiFile = h.getAbiFile(contractName);
-        instances[contractName] = new web3.eth.Contract(abiFile, latestDeployment.address);
-
-    }
-
-    return instances;
-
-}
-
-const printStage = (stage) => {
-    const instancelessStage = Object.assign({}, stage);
-    delete instancelessStage.instances;
-    cli.json(instancelessStage, "final staging data");
 }
 
 module.exports.prepare = async (program) => {
@@ -186,9 +128,7 @@ const command = (program, stageModules) => {
 
             await this.main(state);
             // kill web3 if we have it
-            if (state.web3) {
-                networks.destroyWeb3(state.web3);
-            }
+            networks.destroyWeb3(state);
 
         });
 

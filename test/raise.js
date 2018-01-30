@@ -2,7 +2,6 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const kickoff = require('../stage/kickoff');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
 const raise = require('../stage/raise');
@@ -25,7 +24,7 @@ suite('raise', (state) => {
         for (let i = 0; i < stage.participantsCount; i++) {
 
             const participant = stage.participants[i];
-            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -34,7 +33,7 @@ suite('raise', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
     
-            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
@@ -51,7 +50,7 @@ suite('raise', (state) => {
 
         }
 
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         const totalEntries = stage.participantsCount * 10;
         assert.equal(actualState._totalEntries, totalEntries, "total entries should be correct");
         assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
@@ -69,17 +68,19 @@ suite('raise', (state) => {
         const participant = state.accountAddresses[2];
         // call fallback function
         await assert.isRejected(
-            parity.sendFallback(state.web3, stage.instances.seedom, { from: participant, value: 10500 }),
+            parity.sendFallback(stage.seedom, {
+                from: participant, value: 10500
+            }, state),
             parity.SomethingThrown
         );
 
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         assert.equal(actualState._totalEntries, 0, "total entries should be zero");
         assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState._totalParticipants, 0, "total participants should be zero");
         assert.equal(actualState._totalRevealers, 0, "total revealers not zero");
 
-        const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant).call({ from: participant });
+        const actualParticipant = await stage.seedom.methods.participantsMapping(participant).call({ from: participant });
         const actualEntries = actualParticipant[0];
         const actualHashedRandom = actualParticipant[1];
         const actualRandom = actualParticipant[2];
@@ -88,7 +89,7 @@ suite('raise', (state) => {
         assert.equal(actualHashedRandom, 0, "hashed random should be zero");
         assert.equal(actualRandom, 0, "random should be zero");
 
-        const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant).call({ from: participant });
+        const actualBalance = await stage.seedom.methods.balancesMapping(participant).call({ from: participant });
         assert.equal(actualBalance, 0, "refund balance should be zero");
 
     });
@@ -101,17 +102,19 @@ suite('raise', (state) => {
         const participant = stage.participants[0];
         // call fallback function
         await assert.isRejected(
-            parity.sendFallback(state.web3, stage.instances.seedom, { from: participant.address, value: 0 }),
+            parity.sendFallback(stage.seedom, {
+                from: participant.address, value: 0
+            }, state),
             parity.SomethingThrown
         );
 
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         assert.equal(actualState._totalEntries, 0, "total entries should be zero");
         assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
         assert.equal(actualState._totalRevealers, 0, "total revealers not zero");
 
-        const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
+        const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
         const actualEntries = actualParticipant[0];
         const actualHashedRandom = actualParticipant[1];
         const actualRandom = actualParticipant[2];
@@ -120,7 +123,7 @@ suite('raise', (state) => {
         assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
         assert.equal(actualRandom, 0, "random should be zero");
 
-        const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
+        const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
         assert.equal(actualBalance, 0, "refund balance should be zero");
 
     });

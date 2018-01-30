@@ -4,7 +4,8 @@
         "gasPrice": "20000000000",
         "password": "password",
         "balance": "100000000000000000000000000",
-        "accounts": 9
+        "accounts": 9,
+        "sendDelay": 1000
     },
     "ropsten": {
         "ws": "165.227.179.253:8546",

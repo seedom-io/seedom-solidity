@@ -42,7 +42,7 @@ contract Seedom {
         uint256 _winnerSplit;
         uint256 _ownerSplit;
         uint256 _valuePerEntry;
-        uint256 _kickoffTime;
+        uint256 _instantiateTime;
         uint256 _revealTime;
         uint256 _endTime;
         uint256 _expireTime;
@@ -94,7 +94,6 @@ contract Seedom {
         uint256 _winnerSplit,
         uint256 _ownerSplit,
         uint256 _valuePerEntry,
-        uint256 _kickoffTime,
         uint256 _revealTime,
         uint256 _endTime,
         uint256 _expireTime,
@@ -155,7 +154,7 @@ contract Seedom {
     // Used by the charity to officially begin their raiser. The charity supplies the first hashed
     // random, which is kept secret and revealed by the charity in end().
     function seed(bytes32 _hashedRandom) public onlyCharity {
-        require(now >= raiser._kickoffTime); // ensure we have kicked off
+        require(now >= raiser._instantiateTime); // ensure we have instantiated
         require(now < raiser._revealTime); // but before the reveal
         require(winner == address(0)); // no winner
         require(!cancelled); // we can't participate in a cancelled charity

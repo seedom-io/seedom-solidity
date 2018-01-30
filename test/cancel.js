@@ -3,7 +3,7 @@ const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
 const instantiate = require('../stage/instantiate');
-const kickoff = require('../stage/kickoff');
+const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
 const raise = require('../stage/raise');
@@ -12,40 +12,40 @@ const end = require('../stage/end');
 
 suite('cancel', (state) => {
 
-    const testCancelRejectedWithoutKickoff = async (account) => {
+    const testCancelRejectedWithoutInstantiate = async (account) => {
 
         const stage = state.stage;
         
         // cancel should still be true initially
-        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        let actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isOk(actualState._cancelled);
 
-        const method = stage.instances.seedom.methods.cancel();
+        const method = stage.seedom.methods.cancel();
         await assert.isRejected(
-            parity.sendMethod(method, { from: account }),
+            networks.sendMethod(method, { from: account }, state),
             parity.SomethingThrown
         );
 
-        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isOk(actualState._cancelled);
 
     };
 
-    test("should reject cancel (by owner) before kickoff", async () => {
+    test("should reject cancel (by owner) before instantiate", async () => {
         
         // first instantiate
         await instantiate.stage(state);
 
         const stage = state.stage;
         // cancel should still be true initially
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         assert.isOk(actualState._cancelled);
 
-        await testCancelRejectedWithoutKickoff(stage.owner);
+        await testCancelRejectedWithoutInstantiate(stage.owner);
 
     });
 
-    test("should reject cancel (by charity) before kickoff", async () => {
+    test("should reject cancel (by charity) before instantiate", async () => {
         
         // first instantiate
         await instantiate.stage(state);
@@ -53,14 +53,14 @@ suite('cancel', (state) => {
         const stage = state.stage;
         const charity = state.accountAddresses[1];
         // cancel should still be true initially
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         assert.isOk(actualState._cancelled);
 
-        await testCancelRejectedWithoutKickoff(charity);
+        await testCancelRejectedWithoutInstantiate(charity);
 
     });
 
-    test("should reject cancel (by participant) before kickoff", async () => {
+    test("should reject cancel (by participant) before instantiate", async () => {
         
         // first instantiate
         await instantiate.stage(state);
@@ -68,72 +68,72 @@ suite('cancel', (state) => {
         const stage = state.stage;
         const participant = state.accountAddresses[2];
         // cancel should still be true initially
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         assert.isOk(actualState._cancelled);
 
-        await testCancelRejectedWithoutKickoff(participant);
+        await testCancelRejectedWithoutInstantiate(participant);
 
     });
 
-    const testCancelAfterKickoff = async (account) => {
+    const testCancelAfterInstantiate = async (account) => {
         
         const stage = state.stage;
-        // after kickoff, cancel should never be true
-        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        // after instantiate, cancel should never be true
+        let actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isNotOk(actualState._cancelled);
 
-        const method = stage.instances.seedom.methods.cancel();
+        const method = stage.seedom.methods.cancel();
         await assert.isFulfilled(
-            parity.sendMethod(method, { from: account })
+            networks.sendMethod(method, { from: account }, state)
         );
 
-        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isOk(actualState._cancelled);
 
     };
 
-    test("should cancel (by owner) after kickoff", async () => {
+    test("should cancel (by owner) after instantiate", async () => {
 
-        // first kickoff
-        await kickoff.stage(state);
+        // first instantiate
+        await instantiate.stage(state);
         const stage = state.stage;
-        await testCancelAfterKickoff(stage.owner);
+        await testCancelAfterInstantiate(stage.owner);
 
     });
 
-    test("should cancel (by charity) after kickoff", async () => {
+    test("should cancel (by charity) after instantiate", async () => {
 
-        // first kickoff
-        await kickoff.stage(state);
+        // first instantiate
+        await instantiate.stage(state);
         const stage = state.stage;
-        await testCancelAfterKickoff(stage.charity);
+        await testCancelAfterInstantiate(stage.charity);
 
     });
 
-    const testCancelRejectedAfterKickoff = async (account) => {
+    const testCancelRejectedAfterInstantiate = async (account) => {
         
         const stage = state.stage;
-        // after kickoff, cancel should never be true
-        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        // after instantiate, cancel should never be true
+        let actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isNotOk(actualState._cancelled);
 
-        const method = stage.instances.seedom.methods.cancel();
+        const method = stage.seedom.methods.cancel();
         await assert.isRejected(
-            parity.sendMethod(method, { from: account }),
+            networks.sendMethod(method, { from: account }, state),
             parity.SomethingThrown
         );
 
-        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isNotOk(actualState._cancelled);
 
     };
 
-    test("should reject cancel (by participant) after kickoff", async () => {
+    test("should reject cancel (by participant) after instantiate", async () => {
 
-        // first kickoff
-        await kickoff.stage(state);
+        // first instantiate
+        await instantiate.stage(state);
         const participant = state.accountAddresses[2];
-        await testCancelRejectedAfterKickoff(participant);
+        await testCancelRejectedAfterInstantiate(participant);
 
     });
 
@@ -142,7 +142,7 @@ suite('cancel', (state) => {
         // first seed
         await seed.stage(state);
         const stage = state.stage;
-        await testCancelAfterKickoff(stage.owner);
+        await testCancelAfterInstantiate(stage.owner);
 
     });
 
@@ -151,16 +151,16 @@ suite('cancel', (state) => {
         // first seed
         await seed.stage(state);
         const stage = state.stage;
-        await testCancelAfterKickoff(stage.charity);
+        await testCancelAfterInstantiate(stage.charity);
 
     });
 
     test("should reject cancel (by participant) after seed", async () => {
         
-        // first kickoff
+        // first Instantiate
         await seed.stage(state);
         const participant = state.accountAddresses[2];
-        await testCancelRejectedAfterKickoff(participant);
+        await testCancelRejectedAfterInstantiate(participant);
 
     });
 
@@ -168,21 +168,21 @@ suite('cancel', (state) => {
 
         const stage = state.stage;
         // make sure we aren't already cancelled
-        let actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        let actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isNotOk(actualState._cancelled);
 
-        const method = stage.instances.seedom.methods.cancel();
+        const method = stage.seedom.methods.cancel();
         await assert.isFulfilled(
-            parity.sendMethod(method, { from: account })
+            networks.sendMethod(method, { from: account }, state)
         );
 
         // verify all participants refunded
         for (let participant of stage.participants) {
-            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 10000, "refund balance should be correct");
         }
 
-        actualState = await stage.instances.seedom.methods.state().call({ from: account });
+        actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isOk(actualState._cancelled);
 
     };
@@ -228,7 +228,7 @@ suite('cancel', (state) => {
         // first end
         await end.stage(state);
         const stage = state.stage;
-        await testCancelRejectedAfterKickoff(stage.owner);
+        await testCancelRejectedAfterInstantiate(stage.owner);
 
     });
 
@@ -237,7 +237,7 @@ suite('cancel', (state) => {
         // first end
         await end.stage(state);
         const stage = state.stage;
-        await testCancelRejectedAfterKickoff(stage.charity);
+        await testCancelRejectedAfterInstantiate(stage.charity);
 
     });
 
@@ -246,14 +246,14 @@ suite('cancel', (state) => {
         // first end
         await end.stage(state);
         const participant = state.accountAddresses[2];
-        await testCancelRejectedAfterKickoff(participant);
+        await testCancelRejectedAfterInstantiate(participant);
 
     });
 
     const testCancelRefundsAfterExpiration = async (account) => {
 
         const stage = state.stage;
-        const now = await sh.timestamp(stage.instances.seedom);
+        const now = sh.timestamp();
         const expireTime = stage.expireTime;
         await cli.progress("waiting for expiration time", expireTime - now);
 

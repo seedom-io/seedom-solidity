@@ -36,19 +36,15 @@ module.exports.main = async (state) => {
         }
     }
 
-    // load network configs and parameters
-    const networkConfig = await h.loadJsonFile(h.networkConfigFile);
-    state.network = networks.get(h.localNetworkName, networkConfig);
+    state.network = h.readNetwork(h.localNetworkName);
     const prepared = await getInitialized();
     
     // if dirs are prepped and we aren't forced, run parity
     if (prepared && !state.fresh) {
-        Object.assign(state, await launch(state.network, pid));
+        await launch(state, pid);
     } else {
-        Object.assign(state, await initialize(state.network, pid));
+        await initialize(state, pid);
     }
-
-    return state;
 
 }
 
@@ -66,28 +62,26 @@ const getInitialized = async () => {
     return items.length > 0;
 }
 
-const launch = async (network, pid) => {
+const launch = async (state, pid) => {
     
     // get parity chain data
-    const parityChain = await h.loadJsonFile(h.parityChainFile);
+    const parityChain = await h.readJsonFile(h.parityChainFile);
     // get account addresses
-    const accountAddresses = getChainAccountAddresses(parityChain.accounts);
+    state.accountAddresses = getChainAccountAddresses(parityChain.accounts);
 
     // execute parity
     if (!pid) {
         await executeUnlocked(accountAddresses);
     }
 
-    // get web3
-    const web3 = await networks.getWeb3(network);
-    // get authorization token
-    const authorizationToken = await getLastAuthorizationToken();
-    
-    return {
-        web3: web3,
-        accountAddresses: accountAddresses,
-        authorizationToken: authorizationToken
+    // set web3
+    if (!await networks.setWeb3(state)) {
+        return false;
     }
+    
+    // get authorization token
+    state.authorizationToken = await getLastAuthorizationToken();
+    return true;
 
 }
 
@@ -202,7 +196,7 @@ const getLastAuthorizationToken = async () => {
     return lastAuthCodeLineParts[0];
 }
 
-const initialize = async (network, pid) => {
+const initialize = async (state, pid) => {
 
     cli.info("initializing parity");
 
@@ -216,7 +210,7 @@ const initialize = async (network, pid) => {
     // get config
     const config = await getConfig();
     if (!config) {
-        return;
+        return false;
     }
 
     await writeToml(config.toml);
@@ -224,21 +218,24 @@ const initialize = async (network, pid) => {
     await h.writeJsonFile(h.parityChainFile, config.chain);
     cli.success("initial parity chain file written");
     // write password file
-    await h.writeFile(h.parityPasswordFile, network.password);
+    await h.writeFile(h.parityPasswordFile, state.network.password);
 
     // run parity to open rpc for account creation
     pid = await execute();
-    // get web3
-    const web3 = await networks.getWeb3(network);
+    // set web3
+    if (!await networks.setWeb3(state)) {
+        return false;
+    }
+    
     // create accounts from network
-    const accountAddresses = await this.createAccounts(network, web3);
+    state.accountAddresses = await createAccounts(state);
     // generate authorization token
-    const authorizationToken = await this.createAuthorizationToken(web3);
+    state.authorizationToken = await createAuthorizationToken(state);
     // close parity
     await kill(pid);
 
     // log accounts to the chain
-    await logAccounts(accountAddresses, network.balance, config.chain);
+    await logAccounts(accountAddresses, state.network.balance, config.chain);
     // write the chain file with accounts now added
     await h.writeJsonFile(h.parityChainFile, config.chain);
     cli.success("final parity chain file written with accounts");
@@ -248,12 +245,7 @@ const initialize = async (network, pid) => {
 
     // run and stop parity (genesis)
     await executeUnlocked(accountAddresses);
-
-    return {
-        web3: web3,
-        accountAddresses: accountAddresses,
-        authorizationToken: authorizationToken
-    }
+    return true;
 
 }
 
@@ -261,7 +253,7 @@ const getConfig = async () => {
 
     try {
 
-        const config = await h.loadJsonFile(h.parityConfigFile);
+        const config = await h.readJsonFile(h.parityConfigFile);
 
         config.toml.parity.base_path = h.parityDir;
         config.toml.parity.chain = h.parityChainFile;
@@ -310,16 +302,16 @@ const logAccounts = (addresses, balance, chain) => {
     }
 }
 
-module.exports.createAccounts = async (network, web3) => {
+const createAccounts = async (state) => {
     
     const addresses = [];
 
-    for (let i = 0; i < network.accounts; i++) {
+    for (let i = 0; i < state.network.accounts; i++) {
 
-        const recovery = network.password + i;
-        const address = await networks.callProvider(web3, 'parity_newAccountFromPhrase', [
-            recovery, network.password
-        ]);
+        const recovery = state.network.password + i;
+        const address = await networks.callProvider('parity_newAccountFromPhrase', [
+            recovery, state.network.password
+        ], state);
 
         cli.success("created network account %s", address);
         addresses.push(address);
@@ -331,60 +323,8 @@ module.exports.createAccounts = async (network, web3) => {
 
 }
 
-module.exports.createAuthorizationToken = async (web3) => {
-    const authorizationToken = await networks.callProvider(web3, 'signer_generateAuthorizationToken');
+const createAuthorizationToken = async (state) => {
+    const authorizationToken = await networks.callProvider('signer_generateAuthorizationToken', [], state);
     cli.success("created authorization token %s", authorizationToken);
     return authorizationToken;
-
-}
-
-module.exports.getTrace = async (transactionHash, web3) => {
-
-    const result = await networks.callProvider(web3, 'trace_replayTransaction', [
-        transactionHash,
-        ['trace']
-    ]);
-
-    return result.trace;
-
-}
-
-module.exports.sendMethod = (method, options) => {
-    return verifySend(method.send(options));
-};
-
-module.exports.sendFallback = (web3, instance, options) => {
-
-    // set to in transaction
-    const transaction = Object.assign({
-        to: instance.options.address
-    }, options);
-
-    return verifySend(web3.eth.sendTransaction(transaction));
-
-};
-
-const verifySend = (call) => {
-
-    return new Promise((accept, reject) => {
-
-        call
-    
-        .on('error', (error) => {
-            reject(error);
-        })
-        
-        .on('confirmation', (num, receipt) => {
-
-            if (!receipt.status || receipt.status === "0x0") {
-                reject(this.SomethingThrown);
-                return;
-            }
-
-            accept(receipt);
-            
-        });
-
-    });
-
 }

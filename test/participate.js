@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const kickoff = require('../stage/kickoff');
+const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
 
@@ -24,7 +24,7 @@ suite('participate', (state) => {
         for (let i = 0; i < stage.participantsCount; i++) {
 
             const participant = stage.participants[i];
-            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -33,7 +33,7 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
@@ -44,7 +44,7 @@ suite('participate', (state) => {
 
         }
 
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         assert.equal(actualState._totalEntries, 0, "total entries should be zero");
         assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
@@ -62,7 +62,7 @@ suite('participate', (state) => {
 
         const stage = state.stage;
         // raise at refund generating amount
-        stage.participationEther = 10500;
+        stage.participationWei = 10500;
 
         await participate.stage(state);
 
@@ -70,7 +70,7 @@ suite('participate', (state) => {
         for (let i = 0; i < stage.participantsCount; i++) {
 
             const participant = stage.participants[i];
-            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = actualParticipant[2];
@@ -79,7 +79,7 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await stage.instances.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
+            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
             assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
@@ -91,7 +91,7 @@ suite('participate', (state) => {
 
         }
 
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         const entries = stage.participantsCount * 10;
         assert.equal(actualState._totalEntries, entries, "total entries should be zero");
         assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
@@ -110,9 +110,9 @@ suite('participate', (state) => {
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
         
-        const method = stage.instances.seedom.methods.participate(hashedRandom);
+        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
@@ -120,31 +120,31 @@ suite('participate', (state) => {
 
     test("should fail participation without seed", async () => {
 
-        await kickoff.stage(state);
+        await instantiate.stage(state);
 
         const stage = state.stage;
         const participant = state.accountAddresses[2];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        const method = stage.instances.seedom.methods.participate(hashedRandom);
+        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
     });
 
-    test("should fail participation without kickoff", async () => {
+    test("should fail participation without instantiate", async () => {
 
         const stage = state.stage;
         const participant = state.accountAddresses[2];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        const method = stage.instances.seedom.methods.participate(hashedRandom);
+        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
@@ -156,7 +156,7 @@ suite('participate', (state) => {
         await seed.stage(state);
 
         const stage = state.stage;
-        const now = await sh.timestamp(stage.instances.seedom);
+        const now = sh.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
@@ -164,9 +164,9 @@ suite('participate', (state) => {
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        method = stage.instances.seedom.methods.participate(hashedRandom);
+        method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
@@ -180,9 +180,9 @@ suite('participate', (state) => {
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, stage.owner);
 
-        const method = stage.instances.seedom.methods.participate(hashedRandom);
+        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: stage.owner }),
+            networks.sendMethod(method, { from: stage.owner }, state),
             parity.SomethingThrown
         );
 
@@ -197,14 +197,14 @@ suite('participate', (state) => {
         let random = sh.random();
         let hashedRandom = sh.hashedRandom(random, participant);
 
-        let method = stage.instances.seedom.methods.participate(hashedRandom);
+        let method = stage.seedom.methods.participate(hashedRandom);
         await assert.isFulfilled(
-            parity.sendMethod(method, { from: participant })
+            networks.sendMethod(method, { from: participant }, state)
         );
 
-        method = stage.instances.seedom.methods.participate(hashedRandom);
+        method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
@@ -212,9 +212,9 @@ suite('participate', (state) => {
         random = sh.random();
         hashedRandom = sh.hashedRandom(random, participant);
 
-        method = stage.instances.seedom.methods.participate(hashedRandom);
+        method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
@@ -228,9 +228,9 @@ suite('participate', (state) => {
         const participant = state.accountAddresses[2];
         const hashedRandom = '0x0000000000000000000000000000000000000000000000000000000000000000';
         
-        const method = stage.instances.seedom.methods.participate(hashedRandom);
+        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown,
             null,
             hashedRandom

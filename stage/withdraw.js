@@ -1,6 +1,6 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
-const parity = require('../chronicle/parity');
+const networks = require('../chronicle/networks');
 const end = require('./end');
 const cli = require('../chronicle/cli');
 
@@ -15,12 +15,18 @@ module.exports.stage = async (state) => {
     
     const stage = state.stage;
     
-    const method = stage.instances.seedom.methods.withdraw();
+    const method = stage.seedom.methods.withdraw();
 
-    stage.charityWithdrawReceipt = await parity.sendMethod(method, { from: stage.charity });
-    stage.winnerWithdrawReceipt = await parity.sendMethod(method, { from: stage.winner });
-    stage.ownerWithdrawReceipt = await parity.sendMethod(method, { from: stage.owner });
+    stage.charityWithdrawReceipt = await networks.sendMethod(method, {
+        from: stage.charity
+    }, state);
 
-    return state;
+    stage.winnerWithdrawReceipt = await networks.sendMethod(method, {
+        from: stage.winner
+    }, state);
+
+    stage.ownerWithdrawReceipt = await networks.sendMethod(method, {
+        from: stage.owner
+    }, state);
 
 }

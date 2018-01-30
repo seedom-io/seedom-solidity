@@ -26,10 +26,7 @@ process.on('warning', (warning) => {
 
 const main = async (name, state) => {
     await require('./' + name).main(state);
-    // kill web3 if we have it
-    if (state.web3) {
-        networks.destroyWeb3(state.web3);
-    }
+    networks.destroyWeb3(state);
 }
 
 program
@@ -53,18 +50,6 @@ program
         main('parity', {
             fresh: options.fresh ? true : false,
             kill: options.kill ? true : false
-        });
-    });
-
-program
-    .command('deploy [network]')
-    .alias('d')
-    .description("deploy chronicle")
-    .option('-f, --force', "force deployment")
-    .action((network, options) => {
-        main('deployer', {
-            networkName: network,
-            force: options.force ? true : false
         });
     });
 

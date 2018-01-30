@@ -17,3 +17,10 @@ deploys contracts to the network specified
 runs the test suites (or all if none specified)
 ### `chronicle --help`
 chronicle help and list of stages
+
+# Notes
+
+- Deployer is no more
+- Move deployer logic to stager
+- Stage decides whether or not to deploy
+- Tests still work off stages

@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const kickoff = require('../stage/kickoff');
+const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
 const raise = require('../stage/raise');
@@ -19,7 +19,7 @@ suite('reveal', (state) => {
 
         for (let participant of stage.participants) {
 
-            const actualParticipant = await stage.instances.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
+            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
             const actualEntries = actualParticipant[0];
             const actualHashedRandom = actualParticipant[1];
             const actualRandom = state.web3.utils.toHex(actualParticipant[2]);
@@ -30,7 +30,7 @@ suite('reveal', (state) => {
 
         }
 
-        const actualState = await stage.instances.seedom.methods.state().call({ from: stage.owner });
+        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
         const totalEntries = stage.participantsCount * 10;
         assert.equal(actualState._totalEntries, totalEntries, "total entries should be correct");
         assert.equal(actualState._totalRevealed, totalEntries, "total revealed not correct");
@@ -49,18 +49,18 @@ suite('reveal', (state) => {
         const random = '0';
         const hashedRandom = sh.hashedRandom(random, participant);
         
-        let method = stage.instances.seedom.methods.participate(hashedRandom);
+        let method = stage.seedom.methods.participate(hashedRandom);
         await assert.isFulfilled(
-            parity.sendMethod(method, { from: participant, value: 10000 })
+            networks.sendMethod(method, { from: participant, value: 10000 }, state)
         );
 
-        now = await sh.timestamp(stage.instances.seedom);
+        now = sh.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
-        method = stage.instances.seedom.methods.reveal('0x00000000000000000000000000000000000000000000000000000000000000');
+        method = stage.seedom.methods.reveal('0x00000000000000000000000000000000000000000000000000000000000000');
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant }),
+            networks.sendMethod(method, { from: participant }, state),
             parity.SomethingThrown
         );
 
@@ -73,18 +73,18 @@ suite('reveal', (state) => {
         
         const stage = state.stage;
         const participant = stage.participants[0];
-        const now = await sh.timestamp(stage.instances.seedom);
+        const now = sh.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
-        const method = stage.instances.seedom.methods.reveal(participant.random);
+        const method = stage.seedom.methods.reveal(participant.random);
         await assert.isFulfilled(
-            parity.sendMethod(method, { from: participant.address }),
+            networks.sendMethod(method, { from: participant.address }, state),
             parity.SomethingThrown
         );
 
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant.address }),
+            networks.sendMethod(method, { from: participant.address }, state),
             parity.SomethingThrown
         );
 
@@ -97,13 +97,13 @@ suite('reveal', (state) => {
 
         const stage = state.stage;
         const participant = stage.participants[0];
-        const now = await sh.timestamp(stage.instances.seedom);
+        const now = sh.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
-        const method = stage.instances.seedom.methods.reveal(participant.random);
+        const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant.address }),
+            networks.sendMethod(method, { from: participant.address }, state),
             parity.SomethingThrown
         );
 
@@ -116,14 +116,14 @@ suite('reveal', (state) => {
         
         const stage = state.stage;
         const participant = stage.participants[0];
-        const now = await sh.timestamp(stage.instances.seedom);
+        const now = sh.timestamp();
         const revealTime = stage.revealTime;
         await cli.progress("waiting for reveal phase", revealTime - now);
 
         const incorrectRandom = sh.random();
-        const method = stage.instances.seedom.methods.reveal(incorrectRandom);
+        const method = stage.seedom.methods.reveal(incorrectRandom);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant.address }),
+            networks.sendMethod(method, { from: participant.address }, state),
             parity.SomethingThrown
         );
 
@@ -137,18 +137,18 @@ suite('reveal', (state) => {
         const stage = state.stage;
         const participant = stage.participants[0];
 
-        const method = stage.instances.seedom.methods.reveal(participant.random);
+        const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant.address }),
+            networks.sendMethod(method, { from: participant.address }, state),
             parity.SomethingThrown
         );
 
-        const now = await sh.timestamp(stage.instances.seedom);
+        const now = sh.timestamp();
         const endTime = stage.endTime;
         await cli.progress("waiting for end phase", endTime - now);
 
         await assert.isRejected(
-            parity.sendMethod(method, { from: participant.address }),
+            networks.sendMethod(method, { from: participant.address }, state),
             parity.SomethingThrown
         );
 

@@ -1,26 +1,26 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
-const parity = require('../chronicle/parity');
-const kickoff = require('./kickoff');
+const instantiate = require('./instantiate');
+const networks = require('../chronicle/networks');
 
 module.exports.optionize = (command) => {
-    return kickoff.optionize(command)
+    return instantiate.optionize(command)
         .option("--charityRandom <number>", "charity random")
 }
 
 module.exports.stage = async (state) => {
 
-    // first kickoff
-    await kickoff.stage(state);
+    // first instantiate
+    await instantiate.stage(state);
 
     const stage = state.stage;
     
     stage.charityRandom = stage.charityRandom ? stage.charityRandom : h.random();
     stage.charityHashedRandom = h.hashedRandom(stage.charityRandom, stage.charity);
 
-    const method = stage.instances.seedom.methods.seed(stage.charityHashedRandom);
-    stage.seedReceipt = await parity.sendMethod(method, { from: stage.charity });
-
-    return state;
+    const method = stage.seedom.methods.seed(stage.charityHashedRandom);
+    stage.seedReceipt = await networks.sendMethod(method, {
+        from: stage.charity
+    }, state);
 
 }

@@ -9,31 +9,21 @@ const cli = require('./cli');
 
 module.exports.main = async (state) => {
 
-    // now compile
     cli.section("compiler");
 
-    // get all contracts
-    state.contractNames = await getContractNames();
-    if (h.objLength(state.contractNames) == 0) {
-        cli.error("no solidity contracts found");
-        return state;
+    state.contracts = await getContracts();
+    if (h.objLength(state.contracts) == 0) {
+        cli.warning("no solidity contracts found");
+        return;
     }
 
-    // see what contracts actually need updating based on hashes
-    state.updatedContractNames = await getUpdatedContractNames(state.contractNames, state.force);
-    if (h.objLength(state.updatedContractNames) == 0) {
-        cli.success("everything is already compiled");
-    } else {
-        await compile(state.updatedContractNames);
-    }
-
-    return state;
+    await compile(state.contracts);
 
 }
 
-const getContractNames = async () => {
+const getContracts = async () => {
 
-    const contractNames = [];
+    const contracts = {};
     const contractFiles = await dir.promiseFiles(h.contractDir);
     for (let contractFile of contractFiles) {
 
@@ -42,109 +32,70 @@ const getContractNames = async () => {
             continue;
         }
 
-        // get contract name and push
         const relativeContractFile = path.relative(h.contractDir, contractFile);
         const contractName = getContractName(relativeContractFile);
-        contractNames.push(contractName);
 
-    }
-
-    return contractNames;
-
-}
-
-const getUpdatedContractNames = async (contractNames, force) => {
-
-    if (force) {
-        return contractNames;
-    }
-
-    const updatedContractNames = [];
-
-    for (let contractName of contractNames) {
-
-        const contractHash = await h.getContractHash(contractName);
-        const calculatedContractHash = await h.calculateContractHash(contractName);
-
-        if (contractHash != calculatedContractHash) {
-            updatedContractNames.push(contractName);
+        contracts[contractName] = {
+            relativeFile: relativeContractFile,
+            source: await h.readSolFile(contractName)
         }
 
     }
 
-    return updatedContractNames;
+    return contracts;
 
 }
 
-const compile = async (contractNames) => {
-
-    // print out all contracts to be compiled
-    for (let contractName of contractNames) {
-        cli.info("'%s' will be compiled", contractName);
-    }
-
-    const sources = await getSources(contractNames);
+const compile = async (contracts) => {
+    const sources = getSources(contracts);
     const output = await solc.compile({ sources: sources }, true);
-    await exportFiles(output.contracts);
-    // print out any solc warnings/errors
-    if ('errors' in output) {
-        for (let line of output.errors) {
-            cli.info(line);
-        }
-    }
-
+    await handleOutputs(output.contracts, contracts);
+    await handleErrors(output.errors);
     cli.success("contract compilation complete");
-
 }
 
-const getSources = async (contractNames) => {
+const getSources = () => {
 
     const sources = {};
-
-    for (let contractName of contractNames) {
-        const contractFile = h.getContractFile(contractName);
-        const relativeContractFile = path.relative(h.contractDir, contractFile);
-        sources[relativeContractFile] = await h.readFile(contractFile);
-    };
+    // flatten sources
+    for (let contractName in contracts) {
+        const contract = contracts[contractName];
+        sources[contract.relativeFile] = contract.source;
+    }
 
     return sources;
 
 }
 
-const exportFiles = async (contracts) => {
+const handleOutputs = (outputs, contracts) => {
 
-    for (let key in contracts) {
+    // retrieve compilation details
+    for (let key in outputs) {
         // key: hey/contract.sol:Contract
-
         // relativeContractFile: hey/contract.sol
         let relativeContractFile = getRelativeContractFile(key);
         // contractName: hey/contract
         let contractName = getContractName(relativeContractFile);
         // relativeContractDir: hey
         let relativeContractDir = getRelativeContractDir(contractName);
-
-        let contractbuildAbiDir = path.join(h.buildAbiDir, relativeContractDir);
-        let contractbuildBytecodeDir = path.join(h.buildBytecodeDir, relativeContractDir);
-        let contractbuildHashDir = path.join(h.buildHashDir, relativeContractDir);
+        // abi & bytecode dirs
+        let abiDir = path.join(h.abiDir, relativeContractDir);
+        let bytecodeDir = path.join(h.bytecodeDir, relativeContractDir);
         // make sure abi & bytecode & hash dir paths exist
-        mkdirp(contractbuildAbiDir);
-        mkdirp(contractbuildBytecodeDir);
-        mkdirp(contractbuildHashDir);
+        mkdirp(abiDir);
+        mkdirp(bytecodeDir);
 
-        let abiFile = h.getAbiFile(contractName);
-        let bytecodeFile = h.getBytecodeFile(contractName);
-        let hashFile = h.getHashFile(contractName);
+        let output = outputs[key];
+        let contract = contracts[contractName];
 
-        let contract = contracts[key];
-        let interface = contract.interface;
-        let bytecode = '0x' + contract.bytecode;
-        let metadata = JSON.parse(contract.metadata);
-        let hash = metadata.sources[relativeContractFile].keccak256;
+        contract.abi = output.interface;
+        contract.bytecode = '0x' + output.bytecode;
+        const metadata = JSON.parse(output.metadata);
+        contract.hash = metadata.sources[relativeContractFile].keccak256;
 
-        await h.writeFile(abiFile, interface);
-        await h.writeFile(bytecodeFile, bytecode);
-        await h.writeFile(hashFile, hash);
-
+        // save abi & bytecode
+        await h.writeAbi(contractName, contract.abi);
+        await h.writeBytecode(contractName, contract.bytecode);
     }
 
 }
@@ -162,4 +113,17 @@ const getContractName = (relativeContractFile) => {
 const getRelativeContractDir = (contractName) => {
     const contractNameLastSlashIndex = contractName.lastIndexOf('/');
     return contractName.substr(0, contractNameLastSlashIndex);
+}
+
+const handleErrors = (errors, contracts) => {
+
+    if (!errors) {
+        return;
+    }
+
+    // print out any solc warnings/errors
+    for (let line of errors) {
+        cli.info(line);
+    }
+
 }
