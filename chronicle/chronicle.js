@@ -33,11 +33,8 @@ program
     .command('compile')
     .alias('c')
     .description("compile contracts")
-    .option('-f, --force', "force compilation")
     .action((options) => {
-        main('compiler', {
-            force: options.force ? true : false
-        });
+        main('compiler', {});
     });
 
 program

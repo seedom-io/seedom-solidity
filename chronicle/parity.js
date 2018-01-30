@@ -36,14 +36,14 @@ module.exports.main = async (state) => {
         }
     }
 
-    state.network = h.readNetwork(h.localNetworkName);
+    state.network = await h.readNetwork(h.localNetworkName);
     const prepared = await getInitialized();
-    
+
     // if dirs are prepped and we aren't forced, run parity
     if (prepared && !state.fresh) {
-        await launch(state, pid);
+        return await launch(state, pid);
     } else {
-        await initialize(state, pid);
+        return await initialize(state, pid);
     }
 
 }
@@ -71,7 +71,7 @@ const launch = async (state, pid) => {
 
     // execute parity
     if (!pid) {
-        await executeUnlocked(accountAddresses);
+        await executeUnlocked(state.accountAddresses);
     }
 
     // set web3
@@ -207,15 +207,12 @@ const initialize = async (state, pid) => {
 
     // deinitialize
     await fse.emptyDir(h.parityDir);
-    // get config
-    const config = await getConfig();
-    if (!config) {
-        return false;
-    }
-
-    await writeToml(config.toml);
+    // populate network configuration
+    populateToml(state.network.toml);
+    // save network toml
+    await writeToml(state.network.toml);
     // write initial chain
-    await h.writeJsonFile(h.parityChainFile, config.chain);
+    await h.writeJsonFile(h.parityChainFile, state.network.chain);
     cli.success("initial parity chain file written");
     // write password file
     await h.writeFile(h.parityPasswordFile, state.network.password);
@@ -235,43 +232,30 @@ const initialize = async (state, pid) => {
     await kill(pid);
 
     // log accounts to the chain
-    await logAccounts(accountAddresses, state.network.balance, config.chain);
+    await logAccounts(state);
     // write the chain file with accounts now added
-    await h.writeJsonFile(h.parityChainFile, config.chain);
+    await h.writeJsonFile(h.parityChainFile, state.network.chain);
     cli.success("final parity chain file written with accounts");
     // delete chain db data
     await fse.emptyDir(h.parityDbDir);
     cli.success("initial chain database cleared for new genesis");
 
     // run and stop parity (genesis)
-    await executeUnlocked(accountAddresses);
+    await executeUnlocked(state.accountAddresses);
     return true;
 
 }
 
-const getConfig = async () => {
-
-    try {
-
-        const config = await h.readJsonFile(h.parityConfigFile);
-
-        config.toml.parity.base_path = h.parityDir;
-        config.toml.parity.chain = h.parityChainFile;
-        config.toml.parity.db_path = h.parityDbDir;
-        config.toml.parity.keys_path = h.parityKeysDir;
-        config.toml.ipc.path = h.parityIpcFile;
-        config.toml.dapps.path = h.parityDappsDir;
-        config.toml.secretstore.path = h.paritySecretstoreDir;
-        config.toml.ui.path = h.paritySignerDir;
-        config.toml.misc.log_file = h.parityLogFile;
-
-        return config;
-
-    } catch (error) {
-        cli.error("failed to parse parity config (" + error + ")");
-        return null;
-    }
-
+const populateToml = (toml) => {
+    toml.parity.base_path = h.parityDir;
+    toml.parity.chain = h.parityChainFile;
+    toml.parity.db_path = h.parityDbDir;
+    toml.parity.keys_path = h.parityKeysDir;
+    toml.ipc.path = h.parityIpcFile;
+    toml.dapps.path = h.parityDappsDir;
+    toml.secretstore.path = h.paritySecretstoreDir;
+    toml.ui.path = h.paritySignerDir;
+    toml.misc.log_file = h.parityLogFile;
 }
 
 const writeToml = async (toml) => {
@@ -294,10 +278,10 @@ const writeToml = async (toml) => {
 
 }
 
-const logAccounts = (addresses, balance, chain) => {
-    for (let address of addresses) {
-        chain.accounts[address] = {
-            balance: balance
+const logAccounts = (state) => {
+    for (let accountAddress of state.accountAddresses) {
+        state.network.chain.accounts[accountAddress] = {
+            balance: state.network.balance
         }
     }
 }

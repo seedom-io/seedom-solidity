@@ -19,6 +19,8 @@ module.exports.main = async (state) => {
 
     await compile(state.contracts);
 
+    cli.success("contract compilation complete");
+
 }
 
 const getContracts = async () => {
@@ -37,7 +39,7 @@ const getContracts = async () => {
 
         contracts[contractName] = {
             relativeFile: relativeContractFile,
-            source: await h.readSolFile(contractName)
+            source: await h.readSol(contractName)
         }
 
     }
@@ -51,10 +53,9 @@ const compile = async (contracts) => {
     const output = await solc.compile({ sources: sources }, true);
     await handleOutputs(output.contracts, contracts);
     await handleErrors(output.errors);
-    cli.success("contract compilation complete");
 }
 
-const getSources = () => {
+const getSources = (contracts) => {
 
     const sources = {};
     // flatten sources
@@ -67,10 +68,11 @@ const getSources = () => {
 
 }
 
-const handleOutputs = (outputs, contracts) => {
+const handleOutputs = async (outputs, contracts) => {
 
     // retrieve compilation details
     for (let key in outputs) {
+
         // key: hey/contract.sol:Contract
         // relativeContractFile: hey/contract.sol
         let relativeContractFile = getRelativeContractFile(key);
@@ -87,15 +89,13 @@ const handleOutputs = (outputs, contracts) => {
 
         let output = outputs[key];
         let contract = contracts[contractName];
-
+        // save output data to contracts
         contract.abi = output.interface;
         contract.bytecode = '0x' + output.bytecode;
-        const metadata = JSON.parse(output.metadata);
-        contract.hash = metadata.sources[relativeContractFile].keccak256;
-
         // save abi & bytecode
         await h.writeAbi(contractName, contract.abi);
         await h.writeBytecode(contractName, contract.bytecode);
+
     }
 
 }
@@ -115,7 +115,7 @@ const getRelativeContractDir = (contractName) => {
     return contractName.substr(0, contractNameLastSlashIndex);
 }
 
-const handleErrors = (errors, contracts) => {
+const handleErrors = (errors) => {
 
     if (!errors) {
         return;

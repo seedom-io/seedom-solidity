@@ -7,6 +7,7 @@ const compiler = require('./compiler');
 const cli = require('./cli');
 const networks = require('./networks');
 const parity = require('./parity');
+const dir = require('node-dir');
 
 const iAmCompletelySure = "I AM COMPLETELY SURE";
 
@@ -24,13 +25,15 @@ module.exports.main = async (state) => {
         state.networkName = h.localNetworkName;
     }
 
-    let networkState;
-    // get base state
-    if (networkName == h.localNetworkName) {
-        Object.assign(state, await parity.main({ fresh: false }));
-    } else {
-        Object.assign(state, await networks.main());
+    const networkState = (networkName == h.localNetworkName)
+        ? await parity.main({ fresh: false })
+        : await networks.main();
+
+    if (!networkState) {
+        return false;
     }
+
+    Object.assign(state, networkState);
 
     cli.info("staging %s", state.stageName);
     // stage with state and fresh stage
@@ -43,7 +46,7 @@ module.exports.main = async (state) => {
     
     // print out stage for all to see
     printStage(state.stage);
-    
+
     cli.success("%s staging complete", state.stageName);
 
 }

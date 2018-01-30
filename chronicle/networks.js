@@ -43,11 +43,11 @@ module.exports.setWeb3 = async (state) => {
     const name = state.network.ws ? state.network.ws : h.localNetworkName;
     if (!(await testWeb3(state.web3))) {
         cli.error("could not connect to %s network", name);
-        return true;
+        return false;
     }
 
     cli.success("connected to %s network", name);
-    return false;
+    return true;
 
 }
 

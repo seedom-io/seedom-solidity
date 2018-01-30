@@ -1,0 +1,7 @@
+{
+    "ws": "165.227.126.255:8546",
+    "verify": true,
+    "requires": "localhost",
+    "gas": "2000000",
+    "gasPrice": "100000000000"
+}

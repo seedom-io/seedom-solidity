@@ -129,17 +129,19 @@ suite('instantiate', (state) => {
 
         const stage = state.stage;
         const now = sh.timestamp();
+        const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
         const revealTime = now + phaseDuration;
         const endTime = revealTime + phaseDuration;
         const expireTime = endTime + phaseDuration;
+        const destructTime = expireTime + phaseDuration;
         
         const testData = [
-            [charity, 20, 30, 50, 1000, revealTime, endTime, expireTime, 5],
-            [charity, 200, 350, 500, 1000, revealTime, endTime, expireTime, 5],
-            [charity, 601, 200, 200, 1000, revealTime, endTime, expireTime, 5],
-            [charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime, 5]
+            [owner, charity, 20, 30, 50, 1000, revealTime, endTime, expireTime, destructTime, 5],
+            [owner, charity, 200, 350, 500, 1000, revealTime, endTime, expireTime, destructTime, 5],
+            [owner, charity, 601, 200, 200, 1000, revealTime, endTime, expireTime, destructTime, 5],
+            [owner, charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime, destructTime, 5]
         ];
         
         for (let testArgs of testData) {
@@ -160,28 +162,32 @@ suite('instantiate', (state) => {
 
         const stage = state.stage;
         const now = sh.timestamp();
+        const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const phaseDuration = 5000;
         const revealTime = now + phaseDuration;
         const endTime = revealTime + phaseDuration;
         const expireTime = endTime + phaseDuration;
-        const oldRevealTime = now - phaseDuration * 3;
+        const destructTime = expireTime + phaseDuration;
+        const oldRevealTime = now - phaseDuration * 4;
         const oldEndTime = oldRevealTime + phaseDuration;
         const oldExpireTime = oldEndTime + phaseDuration;
+        const oldDestructTime = oldExpireTime + phaseDuration;
 
         const testData = [
             // old dates
-            [charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime, 5],
-            [charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime, 5],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime, 5],
+            [owner, charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, oldDestructTime, 5],
             // equal dates
-            [charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime, 5],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, endTime, 5],
-            [charity, 600, 350, 50, 1000, revealTime, endTime, revealTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, endTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, expireTime, 5],
             // out of order dates
-            [charity, 600, 350, 50, 1000, endTime, revealTime, expireTime, 5],
-            [charity, 600, 350, 50, 1000, revealTime, expireTime, endTime, 5],
-            [charity, 600, 350, 50, 1000, endTime, expireTime, revealTime, 5]
+            [owner, charity, 600, 350, 50, 1000, endTime, revealTime, expireTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, expireTime, endTime, destructTime, 5],
+            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, destructTime, expireTime, 5]
         ];
 
         for (let testArgs of testData) {

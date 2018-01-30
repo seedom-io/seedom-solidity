@@ -18,13 +18,13 @@ module.exports.passExt = 'pass';
 module.exports.pidExt = 'pid';
 
 module.exports.testDir = 'test';
-module.exports.configDir = 'config';
 module.exports.contractDir = 'contract';
 module.exports.deploymentDir = 'deployment';
 module.exports.parityDir = 'parity';
 module.exports.stageDir = 'stage';
 module.exports.abiDir = 'abi';
 module.exports.bytecodeDir = 'bytecode';
+module.exports.networkDir = 'network';
 
 module.exports.parityDbDir = path.join(this.parityDir, 'chains');
 module.exports.parityKeysDir = path.join(this.parityDir, 'keys');
@@ -39,9 +39,6 @@ module.exports.parityLogFile = path.join(this.parityDir, 'parity.' + this.logExt
 module.exports.parityPasswordFile = path.join(this.parityDir, 'parity.' + this.passExt);
 module.exports.paritySignerAuthCodesFile = path.join(this.paritySignerDir, 'authcodes');
 module.exports.parityPidFile = path.join(this.parityDir, 'parity.' + this.pidExt);
-
-module.exports.networkConfigFile = path.join(this.configDir, 'network.' + this.jsonExt);
-module.exports.parityConfigFile = path.join(this.configDir, 'parity.' + this.jsonExt);
 
 module.exports.localNetworkName = 'localhost';
 
@@ -76,6 +73,10 @@ module.exports.getDeploymentFile = (networkName) => {
     return path.join(this.deploymentDir, networkName + '.' + this.jsonExt);
 }
 
+module.exports.getNetworkFile = (networkName) => {
+    return path.join(this.networkDir, networkName + '.' + this.jsonExt);
+}
+
 module.exports.readSol = async (contractName) => {
     return this.readFile(this.getSolFile(contractName));
 }
@@ -97,7 +98,7 @@ module.exports.readDeployment = async (networkName) => {
 }
 
 module.exports.readNetwork = async (networkName) => {
-    return this.readJsonFile(networkConfigFile)[networkName];
+    return this.readJsonFile(this.getNetworkFile(networkName));
 }
 
 module.exports.writeAbi = async (contractName, abi) => {
@@ -152,12 +153,4 @@ module.exports.objLength = (obj) => {
 
 module.exports.sleep = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-module.exports.calculateHash = async (contractName) => {
-    const contractFile = this.getSolFile(contractName);
-    const data = await this.readFile(contractFile);
-    var hasher = new keccak256.create(256);
-    hasher.update(data);
-    return '0x' + hasher.hex();
 }
