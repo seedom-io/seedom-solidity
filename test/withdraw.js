@@ -21,18 +21,18 @@ suite('withdraw', (state) => {
         const withdrawMethod = stage.seedom.methods.withdraw();
         await assert.isRejected(
             networks.sendMethod(withdrawMethod, { from: stage.owner }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         await assert.isRejected(
             networks.sendMethod(withdrawMethod, { from: stage.charity }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         for (let participant of stage.participants) {
             await assert.isRejected(
                 networks.sendMethod(withdrawMethod, { from: participant.address }, state),
-                parity.SomethingThrown
+                networks.SomethingThrownException
             );
         }
 
@@ -224,7 +224,7 @@ suite('withdraw', (state) => {
         // attempt second withdraw
         await assert.isRejected(
             networks.sendMethod(withdrawMethod, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -252,15 +252,15 @@ suite('withdraw', (state) => {
         // attempt second withdraws
         await assert.isRejected(
             networks.sendMethod(withdrawMethod, { from: stage.charity }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
         await assert.isRejected(
             networks.sendMethod(withdrawMethod, { from: stage.winner }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
         await assert.isRejected(
             networks.sendMethod(withdrawMethod, { from: stage.owner }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });

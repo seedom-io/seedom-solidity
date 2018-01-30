@@ -13,7 +13,7 @@
         "url": "https://github.com/seedom-io/seedom-solidity/issues"
     },
     "devDependencies": {
-        "bignumber.js": "^4.1.0",
+        "bignumber.js": "6.0.0",
         "chai": "^4.1.2",
         "chai-as-promised": "^7.1.1",
         "chai-string": "^1.4.0",
@@ -34,8 +34,8 @@
         "mz-modules": "^2.0.0",
         "node-dir": "^0.1.17",
         "progress": "^2.0.0",
-        "solc": "^0.4.17",
-        "web3": "^1.0.0-beta.24",
+        "solc": "0.4.19",
+        "web3": "1.0.0-beta.29",
         "wtfnode": "^0.5.5",
         "zeppelin-solidity": "^1.3.0"
     },

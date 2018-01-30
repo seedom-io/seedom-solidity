@@ -38,7 +38,7 @@ suite('seed', (state) => {
         const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: stage.owner }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -55,7 +55,7 @@ suite('seed', (state) => {
         const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });

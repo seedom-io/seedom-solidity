@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require('mz/fs');
 const readline = require('mz/readline');
 const h = require('./helper');
-const deployer = require('./deployer');
+const compiler = require('./compiler');
 const parity = require('./parity');
 const cli = require('./cli');
 const stager = require('./stager');
@@ -18,29 +18,18 @@ global.assert = global.chai.assert;
 
 const testTimeout = 100000;
 
-const defaultParams = {
-    gas: 1500000,
-    gasPrice: 30000000000000
-}
-
 module.exports.main = async (state) => {
-    
-    // do a first deploy (test network, yes force, yes forget)
-    state.deployer = await deployer.main({
-        force: true,
-        forget: true
-    });
 
-    // get parity as a force deployment will have started it
-    state.parity = state.deployer.parity;
+    // compile first
+    await compiler.main(state);
+
+    // get parity state
+    if (!(await parity.main(state))) {
+        return false;
+    }
 
     // now test
     cli.section("tester");
-
-    // grab additional stuff required for testing
-    state.accountAddresses = state.parity.accountAddresses;
-    state.deploymentPlans = state.deployer.deploymentPlans;
-    state.web3 = state.parity.web3;
 
     // set up suite against state
     setupSuite(state);
@@ -51,6 +40,32 @@ module.exports.main = async (state) => {
     await promiseRun(mocha);
 
     return state;
+
+}
+
+const setupSuite = (state) => {
+
+    global.suite = (name, tests) => {
+        Mocha.describe(name, function() {
+
+            beforeEach('reset', async () => {
+                // clear the stage before each test
+                state.stage = {};
+            });
+
+            tests(state);
+
+        });
+    };
+
+    global.test = (name, code) => {
+        
+        Mocha.it(name, async function() {
+            this.timeout(testTimeout);
+            return await code();
+        });
+
+    };
 
 }
 
@@ -80,39 +95,6 @@ const getTestFiles = async (suiteNames) => {
         return testFiles.filter(file => path.extname(file) == '.' + h.jsExt);
 
     }
-
-}
-
-const setupSuite = (state) => {
-
-    // set up the initial stage with deployer web3 instances
-    state.stage = {
-        instances: state.deployer.instances
-    };
-
-    global.suite = (name, tests) => {
-        Mocha.describe(name, function() {
-
-            afterEach("deploy", async () => {
-                // deploy and start with a fresh stage after each test
-                state.stage = {
-                    instances: await deployer.again(state.deploymentPlans, state.web3)
-                };
-            });
-
-            tests(state);
-
-        });
-    };
-
-    global.test = (name, code) => {
-        
-        Mocha.it(name, async function() {
-            this.timeout(testTimeout);
-            return await code();
-        });
-
-    };
 
 }
 

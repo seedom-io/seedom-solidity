@@ -23,7 +23,7 @@ suite('cancel', (state) => {
         const method = stage.seedom.methods.cancel();
         await assert.isRejected(
             networks.sendMethod(method, { from: account }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         actualState = await stage.seedom.methods.state().call({ from: account });
@@ -120,7 +120,7 @@ suite('cancel', (state) => {
         const method = stage.seedom.methods.cancel();
         await assert.isRejected(
             networks.sendMethod(method, { from: account }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         actualState = await stage.seedom.methods.state().call({ from: account });

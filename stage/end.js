@@ -27,9 +27,5 @@ module.exports.stage = async (state) => {
     const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
     // set the winner
     stage.winner = actualState._winner;
-    // set balances
-    stage.charityBalance = await stage.seedom.methods.balancesMapping(stage.charity).call({ from: stage.owner });
-    stage.winnerBalance = await stage.seedom.methods.balancesMapping(stage.winner).call({ from: stage.owner });
-    stage.ownerBalance = await stage.seedom.methods.balancesMapping(stage.owner).call({ from: stage.owner });
 
 }

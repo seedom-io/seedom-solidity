@@ -12,9 +12,6 @@ const dir = require('node-dir');
 const startupDelay = 5;
 const killDelay = 5;
 
-module.exports.NoTraceData = 'NoTraceData';
-module.exports.SomethingThrown = 'SomethingThrown';
-
 module.exports.main = async (state) => {
 
     cli.section("parity");

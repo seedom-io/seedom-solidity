@@ -9,6 +9,8 @@ const defaults = {
     gasPrice: 30000000000000
 }
 
+module.exports.SomethingThrownException = 'SomethingThrownException';
+
 module.exports.main = async (state) => {
 
     // now stage
@@ -60,7 +62,7 @@ const createWeb3 = (network) => {
 
     if (!('ws' in network)) {
         // assume local test; create web3 ipc provider (parity)
-        provider = createParityProvider(network);
+        provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
     } else {
         // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
         provider = new Web3.providers.WebsocketProvider('ws:\\\\' + network.ws);
@@ -151,6 +153,7 @@ module.exports.deploy = async (contractName, args, options, state) => {
     });
 
     const web3Instance = await this.sendMethod(web3Transaction, options, state);
+    web3Instance.setProvider(state.web3.currentProvider);
 
     const contractAddress = web3Instance.options.address;
     // save deployment
@@ -174,11 +177,11 @@ module.exports.sendMethod = (method, options, state) => {
 module.exports.sendFallback = (instance, options, state) => {
     setStandardOptions(options, state);
     options.to = instance.options.address;
-    return verifySend(web3.eth.sendTransaction(options));
+    return verifySend(state.web3.eth.sendTransaction(options));
 };
 
 const setStandardOptions = (options, state) => {
-    options.from = options.fromAddress ? options.fromAddress : state.accountAddresses[0];;
+    options.from = options.from ? options.from : state.accountAddresses[0];
     options.gas = getOption('gas', options, state.network);
     options.gasPrice = getOption('gasPrice', options, state.network);
 }
@@ -203,26 +206,30 @@ const verifySend = (call) => {
 
     return new Promise((accept, reject) => {
 
-        call
-    
-        .on('error', (error) => {
-            reject(error);
-        })
-        
-        .then((result) => {
-
-            // check for contract deployment
-            if (!result.options) {
-                // check for standard transaction result
-                if (!result.status || result.status === "0x0") {
-                    reject(this.SomethingThrown);
-                    return;
-                }
-            }
-
-            accept(result);
+        try {
+            call
             
-        });
+            .on('error', (error) => {
+                reject(this.SomethingThrownException);
+            })
+            
+            .then((result) => {
+
+                // check for contract deployment
+                if (!result.options) {
+                    // check for standard transaction result
+                    if (!result.status || result.status === "0x0") {
+                        reject(this.SomethingThrownException);
+                        return;
+                    }
+                }
+
+                accept(result);
+                
+            });
+        } catch (exception) {
+            reject(this.SomethingThrownException);
+        }
 
     });
 

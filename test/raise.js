@@ -71,7 +71,7 @@ suite('raise', (state) => {
             parity.sendFallback(stage.seedom, {
                 from: participant, value: 10500
             }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
@@ -105,7 +105,7 @@ suite('raise', (state) => {
             parity.sendFallback(stage.seedom, {
                 from: participant.address, value: 0
             }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         const actualState = await stage.seedom.methods.state().call({ from: stage.owner });

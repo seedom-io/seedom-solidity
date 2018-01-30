@@ -113,7 +113,7 @@ suite('participate', (state) => {
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -130,7 +130,7 @@ suite('participate', (state) => {
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -145,7 +145,7 @@ suite('participate', (state) => {
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -167,7 +167,7 @@ suite('participate', (state) => {
         method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -183,7 +183,7 @@ suite('participate', (state) => {
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: stage.owner }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -205,7 +205,7 @@ suite('participate', (state) => {
         method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         // generate a new random just for fun
@@ -215,7 +215,7 @@ suite('participate', (state) => {
         method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -231,7 +231,7 @@ suite('participate', (state) => {
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown,
+            networks.SomethingThrownException,
             null,
             hashedRandom
         );

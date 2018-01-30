@@ -61,7 +61,7 @@ suite('reveal', (state) => {
         method = stage.seedom.methods.reveal('0x00000000000000000000000000000000000000000000000000000000000000');
         await assert.isRejected(
             networks.sendMethod(method, { from: participant }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -80,12 +80,12 @@ suite('reveal', (state) => {
         const method = stage.seedom.methods.reveal(participant.random);
         await assert.isFulfilled(
             networks.sendMethod(method, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         await assert.isRejected(
             networks.sendMethod(method, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -104,7 +104,7 @@ suite('reveal', (state) => {
         const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -124,7 +124,7 @@ suite('reveal', (state) => {
         const method = stage.seedom.methods.reveal(incorrectRandom);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });
@@ -140,7 +140,7 @@ suite('reveal', (state) => {
         const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
             networks.sendMethod(method, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
         const now = ch.timestamp();
@@ -149,7 +149,7 @@ suite('reveal', (state) => {
 
         await assert.isRejected(
             networks.sendMethod(method, { from: participant.address }, state),
-            parity.SomethingThrown
+            networks.SomethingThrownException
         );
 
     });

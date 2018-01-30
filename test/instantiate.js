@@ -1,3 +1,5 @@
+const ch = require('../chronicle/helper');
+const cli = require('../chronicle/cli');
 const instantiate = require('../stage/instantiate');
 const networks = require('../chronicle/networks');
 
@@ -54,7 +56,7 @@ suite('instantiate', (state) => {
         const ownerSplit = 0;
         const maxParticipants = 0;
 
-        await networks.deploy('seedom', [
+        const seedom = await networks.deploy('seedom', [
             charity,
             charitySplit,
             winnerSplit,
@@ -67,7 +69,7 @@ suite('instantiate', (state) => {
             maxParticipants
         ], { from: owner }, state);
 
-        const actualRaiser = await stage.seedom.methods.raiser().call({ from: stage.owner });
+        const actualRaiser = await seedom.methods.raiser().call({ from: owner });
         const actualInstantiateTimeDifference = actualRaiser._instantiateTime - now;
 
         assert.equalIgnoreCase(actualRaiser._owner, owner, "owner does not match");
@@ -87,35 +89,37 @@ suite('instantiate', (state) => {
 
     test("should fail to instantiate with zeroed data", async () => {
 
-        await instantiate.stage(state);
-
-        const stage = state.stage;
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
+        const charitySplit = 600;
+        const winnerSplit = 350;
+        const ownerSplit = 50;
+        const valuePerEntry = 1000;
         const phaseDuration = 5000;
         const revealTime = now + phaseDuration;
         const endTime = revealTime + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
+        const maxParticipants = 5;
         
         const testData = [
-            [0, charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, 0, 600, 350, 50, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 0, 350, 50, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 0, 50, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 0, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, 0, endTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, 0, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, 0, destructTime, 5]
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, 0, 5]
+            [0, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, 0, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, charitySplit, 0, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, charitySplit, winnerSplit, 0, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, charitySplit, winnerSplit, ownerSplit, 0, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, 0, endTime, expireTime, destructTime, maxParticipants],
+            [charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, 0, expireTime, destructTime, maxParticipants],
+            [charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, 0, destructTime, maxParticipants],
+            [charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, 0, maxParticipants]
         ];
         
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testData, { from: stage.owner }, state),
-                parity.SomethingThrown,
+                networks.deploy('seedom', testArgs, { from: owner }, state),
+                networks.SomethingThrownException,
                 null,
                 testArgs
             );
@@ -136,19 +140,20 @@ suite('instantiate', (state) => {
         const endTime = revealTime + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
+        const maxParticipants = 5;
         
         const testData = [
-            [owner, charity, 20, 30, 50, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 200, 350, 500, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 601, 200, 200, 1000, revealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime, destructTime, 5]
+            [charity, 20, 30, 50, 1000, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, 200, 350, 500, 1000, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, 601, 200, 200, 1000, revealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, 6000, 2000, 2000, 1000, revealTime, endTime, expireTime, destructTime, maxParticipants]
         ];
         
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testData, { from: stage.owner }, state),
-                parity.SomethingThrown,
+                networks.deploy('seedom', testArgs, { from: owner }, state),
+                networks.SomethingThrownException,
                 null,
                 testArgs
             );
@@ -173,28 +178,29 @@ suite('instantiate', (state) => {
         const oldEndTime = oldRevealTime + phaseDuration;
         const oldExpireTime = oldEndTime + phaseDuration;
         const oldDestructTime = oldExpireTime + phaseDuration;
+        const maxParticipants = 5;
 
         const testData = [
             // old dates
-            [owner, charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, oldDestructTime, 5],
+            [charity, 600, 350, 50, 1000, oldRevealTime, endTime, expireTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, oldEndTime, expireTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, oldExpireTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, oldDestructTime, maxParticipants],
             // equal dates
-            [owner, charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, endTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, expireTime, 5],
+            [charity, 600, 350, 50, 1000, revealTime, revealTime, expireTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, endTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, expireTime, expireTime, maxParticipants],
             // out of order dates
-            [owner, charity, 600, 350, 50, 1000, endTime, revealTime, expireTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, expireTime, endTime, destructTime, 5],
-            [owner, charity, 600, 350, 50, 1000, revealTime, endTime, destructTime, expireTime, 5]
+            [charity, 600, 350, 50, 1000, endTime, revealTime, expireTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, expireTime, endTime, destructTime, maxParticipants],
+            [charity, 600, 350, 50, 1000, revealTime, endTime, destructTime, expireTime, maxParticipants]
         ];
 
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testData, { from: stage.owner }, state),
-                parity.SomethingThrown,
+                networks.deploy('seedom', testArgs, { from: owner }, state),
+                networks.SomethingThrownException,
                 null,
                 testArgs
             );

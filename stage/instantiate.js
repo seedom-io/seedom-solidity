@@ -18,7 +18,7 @@ module.exports.optionize = (command) => {
 module.exports.stage = async (state) => {
 
     const stage = state.stage;
-    
+
     stage.owner = state.accountAddresses[0];
     stage.charity = stage.charity ? stage.charity : state.accountAddresses[1];
     stage.charitySplit = stage.charitySplit ? stage.charitySplit : 600;
@@ -30,7 +30,7 @@ module.exports.stage = async (state) => {
 
     const now = ch.timestamp();
     // double the parity send delay to get overall transaction duration
-    stage.transactionDuration = Math.floor(state.network.sendDelay / 1000) * 2;
+    stage.transactionDuration = 1;
     // instantiate phase has two initial transactions: deploy and seed
     // and then two transactions per participant: participate and raise
     stage.instantiateDuration = (stage.transactionDuration * 2) + (stage.participantsCount * stage.transactionDuration * 2);

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.19;
 
 contract Seedom {
 
@@ -150,10 +150,9 @@ contract Seedom {
     // Used by the charity to officially begin their raiser. The charity supplies the first hashed
     // random, which is kept secret and revealed by the charity in end().
     function seed(bytes32 _hashedRandom) public onlyCharity {
-        require(now >= raiser._instantiateTime); // ensure we have instantiated
-        require(now < raiser._revealTime); // but before the reveal
+        require(now < raiser._revealTime); // before the reveal
         require(winner == address(0)); // no winner
-        require(!cancelled); // we can't participate in a cancelled charity
+        require(!cancelled); // cannot seed cancelled raiser
         require(charityHashedRandom == 0x0); // safety check
         require(_hashedRandom != 0x0); // hashed random cannot be zero
 
