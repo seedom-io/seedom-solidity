@@ -29,8 +29,8 @@ module.exports.stage = async (state) => {
     stage.maxParticipants = stage.maxParticipants ? stage.maxParticipants : stage.participantsCount;
 
     const now = ch.timestamp();
-    // double the parity send delay to get overall transaction duration
-    stage.transactionDuration = 1;
+    // FIXME: triple the parity send delay to get overall transaction duration
+    stage.transactionDuration = Math.round((state.network.sendDelay / 1000) * 2);
     // instantiate phase has two initial transactions: deploy and seed
     // and then two transactions per participant: participate and raise
     stage.instantiateDuration = (stage.transactionDuration * 2) + (stage.participantsCount * stage.transactionDuration * 2);
@@ -46,7 +46,7 @@ module.exports.stage = async (state) => {
     stage.destructTime = stage.destructTime ? stage.destructTime : stage.expireTime + stage.expireDuration;
 
     // deploy seedom
-    stage.seedom = await networks.deploy('seedom', [
+    const result = await networks.deploy('seedom', [
         stage.charity,
         stage.charitySplit,
         stage.winnerSplit,
@@ -58,5 +58,9 @@ module.exports.stage = async (state) => {
         stage.destructTime,
         stage.maxParticipants
     ], {}, state);
+
+    // save seedom and deploy receipt
+    stage.seedom = result.instance;
+    stage.instantiateReceipt = result.receipt;
 
 }

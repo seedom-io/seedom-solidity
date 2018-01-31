@@ -56,7 +56,7 @@ suite('instantiate', (state) => {
         const ownerSplit = 0;
         const maxParticipants = 0;
 
-        const seedom = await networks.deploy('seedom', [
+        const result = await networks.deploy('seedom', [
             charity,
             charitySplit,
             winnerSplit,
@@ -69,7 +69,7 @@ suite('instantiate', (state) => {
             maxParticipants
         ], { from: owner }, state);
 
-        const actualRaiser = await seedom.methods.raiser().call({ from: owner });
+        const actualRaiser = await result.instance.methods.raiser().call({ from: owner });
         const actualInstantiateTimeDifference = actualRaiser._instantiateTime - now;
 
         assert.equalIgnoreCase(actualRaiser._owner, owner, "owner does not match");
@@ -118,10 +118,7 @@ suite('instantiate', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testArgs, { from: owner }, state),
-                networks.SomethingThrownException,
-                null,
-                testArgs
+                networks.deploy('seedom', testArgs, { from: owner }, state)
             );
         }
 
@@ -129,9 +126,6 @@ suite('instantiate', (state) => {
 
     test("should fail to instantiate with splits that don't add to 1000", async () => {
 
-        await instantiate.stage(state);
-
-        const stage = state.stage;
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
@@ -152,10 +146,7 @@ suite('instantiate', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testArgs, { from: owner }, state),
-                networks.SomethingThrownException,
-                null,
-                testArgs
+                networks.deploy('seedom', testArgs, { from: owner }, state)
             );
         }
 
@@ -163,9 +154,6 @@ suite('instantiate', (state) => {
 
     test("should fail to instantiate with invalid dates", async () => {
 
-        await instantiate.stage(state);
-
-        const stage = state.stage;
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
@@ -199,10 +187,7 @@ suite('instantiate', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testArgs, { from: owner }, state),
-                networks.SomethingThrownException,
-                null,
-                testArgs
+                networks.deploy('seedom', testArgs, { from: owner }, state)
             );
         }
 

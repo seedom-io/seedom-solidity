@@ -2,6 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
+const networks = require('../chronicle/networks');
 const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
@@ -51,7 +52,10 @@ suite('reveal', (state) => {
         
         let method = stage.seedom.methods.participate(hashedRandom);
         await assert.isFulfilled(
-            networks.sendMethod(method, { from: participant, value: 10000 }, state)
+            networks.sendMethod(method, {
+                from: participant,
+                value: 10000
+            }, state)
         );
 
         now = ch.timestamp();
@@ -60,8 +64,7 @@ suite('reveal', (state) => {
 
         method = stage.seedom.methods.reveal('0x00000000000000000000000000000000000000000000000000000000000000');
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant }, state)
         );
 
     });
@@ -79,13 +82,11 @@ suite('reveal', (state) => {
 
         const method = stage.seedom.methods.reveal(participant.random);
         await assert.isFulfilled(
-            networks.sendMethod(method, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant.address }, state)
         );
 
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant.address }, state)
         );
 
     });
@@ -103,8 +104,7 @@ suite('reveal', (state) => {
 
         const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant.address }, state)
         );
 
     });
@@ -123,8 +123,7 @@ suite('reveal', (state) => {
         const incorrectRandom = sh.random();
         const method = stage.seedom.methods.reveal(incorrectRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant.address }, state)
         );
 
     });
@@ -139,8 +138,7 @@ suite('reveal', (state) => {
 
         const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant.address }, state)
         );
 
         const now = ch.timestamp();
@@ -148,8 +146,7 @@ suite('reveal', (state) => {
         await cli.progress("waiting for end phase", endTime - now);
 
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant.address }, state)
         );
 
     });

@@ -2,6 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
+const networks = require('../chronicle/networks');
 const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
@@ -32,9 +33,6 @@ suite('participate', (state) => {
             assert.equal(actualEntries, 0, "entries should be zero");
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
-
-            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
-            assert.equal(actualBalance, 0, "balance should be zero");
 
             const participationReceipt = stage.participationReceipts[i];
             const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
@@ -79,9 +77,6 @@ suite('participate', (state) => {
             assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(actualRandom, 0, "random should be zero");
 
-            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
-            assert.equal(actualBalance, 0, "balance should be zero");
-
             const participationReceipt = stage.participationReceipts[i];
             const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
             // participant should be refunded 500 (partial entry) in transaction for a net loss of 10000
@@ -112,8 +107,7 @@ suite('participate', (state) => {
         
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant }, state)
         );
 
     });
@@ -129,28 +123,11 @@ suite('participate', (state) => {
 
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant }, state)
         );
 
     });
 
-    test("should fail participation without instantiate", async () => {
-
-        const stage = state.stage;
-        const participant = state.accountAddresses[2];
-        const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, participant);
-
-        const method = stage.seedom.methods.participate(hashedRandom);
-        await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
-        );
-
-    });
-
-    
     test("should reject participation after participation phase", async () => {
 
         await seed.stage(state);
@@ -166,8 +143,7 @@ suite('participate', (state) => {
 
         method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant }, state)
         );
 
     });
@@ -182,8 +158,7 @@ suite('participate', (state) => {
 
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: stage.owner }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: stage.owner }, state)
         );
 
     });
@@ -204,8 +179,7 @@ suite('participate', (state) => {
 
         method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant }, state)
         );
 
         // generate a new random just for fun
@@ -214,8 +188,7 @@ suite('participate', (state) => {
 
         method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(method, { from: participant }, state)
         );
 
     });
@@ -230,10 +203,7 @@ suite('participate', (state) => {
         
         const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state),
-            networks.SomethingThrownException,
-            null,
-            hashedRandom
+            networks.sendMethod(method, { from: participant }, state)
         );
 
     });

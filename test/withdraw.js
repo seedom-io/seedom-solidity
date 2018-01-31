@@ -2,6 +2,7 @@ const ch = require('../chronicle/helper');
 const cli = require('../chronicle/cli');
 const sh = require('../stage/helper');
 const parity = require('../chronicle/parity');
+const networks = require('../chronicle/networks');
 const participate = require('../stage/participate');
 const raise = require('../stage/raise');
 const end = require('../stage/end');
@@ -9,9 +10,7 @@ const withdraw = require('../stage/withdraw');
 
 suite('withdraw', (state) => {
 
-    const maxTransactionGasUsed = 500000;
-
-    test("should withdraw no ether after participation with no raising", async () => {
+    test("should fail withdraw after participation", async () => {
 
         // first participate
         await participate.stage(state);
@@ -20,19 +19,16 @@ suite('withdraw', (state) => {
 
         const withdrawMethod = stage.seedom.methods.withdraw();
         await assert.isRejected(
-            networks.sendMethod(withdrawMethod, { from: stage.owner }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(withdrawMethod, { from: stage.owner }, state)
         );
 
         await assert.isRejected(
-            networks.sendMethod(withdrawMethod, { from: stage.charity }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(withdrawMethod, { from: stage.charity }, state)
         );
 
         for (let participant of stage.participants) {
             await assert.isRejected(
-                networks.sendMethod(withdrawMethod, { from: participant.address }, state),
-                networks.SomethingThrownException
+                networks.sendMethod(withdrawMethod, { from: participant.address }, state)
             );
         }
 
@@ -51,9 +47,13 @@ suite('withdraw', (state) => {
 
         const stage = state.stage;
 
+        // instantiate
+        const instantiateGasUsed = stage.instantiateReceipt.gasUsed;
+        const instantiateTransactionCost = await sh.getTransactionCost(instantiateGasUsed, state.web3);
+        initialBalances[stage.owner] = initialBalances[stage.owner].minus(instantiateTransactionCost);
+
         // seed
         const seedGasUsed = stage.seedReceipt.gasUsed;
-        assert.isBelow(seedGasUsed, maxTransactionGasUsed);
         const seedTransactionCost = await sh.getTransactionCost(seedGasUsed, state.web3);
         initialBalances[stage.charity] = initialBalances[stage.charity].minus(seedTransactionCost);
 
@@ -62,7 +62,6 @@ suite('withdraw', (state) => {
             const participant = stage.participants[i];
             const participationReceipt = stage.participationReceipts[i];
             const participationGasUsed = participationReceipt.gasUsed;
-            assert.isBelow(participationGasUsed, maxTransactionGasUsed);
             const participationTransactionCost = await sh.getTransactionCost(participationGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(participationTransactionCost);
         }
@@ -72,7 +71,6 @@ suite('withdraw', (state) => {
             const participant = stage.participants[i];
             const raiseReceipt = stage.raiseReceipts[i];
             const raiseGasUsed = raiseReceipt.gasUsed;
-            assert.isBelow(raiseGasUsed, maxTransactionGasUsed);
             const raiseTransactionCost = await sh.getTransactionCost(raiseGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(raiseTransactionCost.plus(10000));
         }
@@ -82,14 +80,12 @@ suite('withdraw', (state) => {
             const participant = stage.participants[i];
             const revealReceipt = stage.revealReceipts[i];
             const revealGasUsed = revealReceipt.gasUsed;
-            assert.isBelow(revealGasUsed, maxTransactionGasUsed);
             const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(revealTransactionCost);
         }
 
         // end
         const endGasUsed = stage.endReceipt.gasUsed;
-        assert.isBelow(endGasUsed, maxTransactionGasUsed);
         const endTransactionCost = await sh.getTransactionCost(endGasUsed, state.web3);
         initialBalances[stage.charity] = initialBalances[stage.charity].minus(endTransactionCost);
         
@@ -120,24 +116,26 @@ suite('withdraw', (state) => {
         const winnerWithdrawReceipt = await networks.sendMethod(method, { from: stage.winner }, state);
         const ownerWithdrawReceipt = await networks.sendMethod(method, { from: stage.owner }, state);
 
+        // calculate expected rewards
+        const charityReward = 10 * stage.participantsCount * stage.valuePerEntry * stage.charitySplit / 1000;
+        const winnerReward = 10 * stage.participantsCount * stage.valuePerEntry * stage.winnerSplit / 1000;
+        const ownerReward = 10 * stage.participantsCount * stage.valuePerEntry * stage.ownerSplit / 1000;
+
         // verify owner balance
         const ownerWithdrawGasUsed = ownerWithdrawReceipt.gasUsed;
-        assert.isBelow(ownerWithdrawGasUsed, maxTransactionGasUsed);
         const ownerWithdrawTransactionCost = await sh.getTransactionCost(ownerWithdrawGasUsed, state.web3);
-        initialBalances[stage.owner] = initialBalances[stage.owner].minus(ownerWithdrawTransactionCost).plus(stage.ownerBalance);
+        initialBalances[stage.owner] = initialBalances[stage.owner].minus(ownerWithdrawTransactionCost).plus(ownerReward);
 
         // verify charity balance
         const charityWithdrawGasUsed = charityWithdrawReceipt.gasUsed;
-        assert.isBelow(charityWithdrawGasUsed, maxTransactionGasUsed);
         const charityWithdrawTransactionCost = await sh.getTransactionCost(charityWithdrawGasUsed, state.web3);
-        initialBalances[stage.charity] = initialBalances[stage.charity].minus(charityWithdrawTransactionCost).plus(stage.charityBalance);
+        initialBalances[stage.charity] = initialBalances[stage.charity].minus(charityWithdrawTransactionCost).plus(charityReward);
 
         // verify winner balance
         const winnerWithdrawGasUsed = winnerWithdrawReceipt.gasUsed;
-        assert.isBelow(winnerWithdrawGasUsed, maxTransactionGasUsed);
         const winnerWithdrawTransactionCost = await sh.getTransactionCost(winnerWithdrawGasUsed, state.web3);
         const winner = stage.winner.toLowerCase();
-        initialBalances[winner] = initialBalances[winner].minus(winnerWithdrawTransactionCost).plus(stage.winnerBalance);
+        initialBalances[winner] = initialBalances[winner].minus(winnerWithdrawTransactionCost).plus(winnerReward);
 
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
@@ -161,7 +159,6 @@ suite('withdraw', (state) => {
         const cancelMethod = stage.seedom.methods.cancel();
         const cancelReceipt = await networks.sendMethod(cancelMethod, { from: account }, state);
         const cancelGasUsed = cancelReceipt.gasUsed;
-        assert.isBelow(cancelGasUsed, maxTransactionGasUsed);
         const cancelTransactionCost = await sh.getTransactionCost(cancelGasUsed, state.web3);
         initialBalances[account] = initialBalances[account].minus(cancelTransactionCost);
 
@@ -170,7 +167,6 @@ suite('withdraw', (state) => {
             const withdrawMethod = stage.seedom.methods.withdraw();
             const withdrawReceipt = await networks.sendMethod(withdrawMethod, { from: participant.address }, state);
             const withdrawGasUsed = withdrawReceipt.gasUsed;
-            assert.isBelow(withdrawGasUsed, maxTransactionGasUsed);
             const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(10000); 
         }
@@ -183,7 +179,7 @@ suite('withdraw', (state) => {
 
     };
 
-    test("should withdraw cancelled (by owner) participation ether", async () => {
+    test("should withdraw cancelled (by owner) participation wei", async () => {
 
         // first raise
         await raise.stage(state);
@@ -192,7 +188,7 @@ suite('withdraw', (state) => {
 
     });
 
-    test("should withdraw cancelled (by charity) participation ether", async () => {
+    test("should withdraw cancelled (by charity) participation wei", async () => {
         
         // first raise
         await raise.stage(state);
@@ -223,8 +219,7 @@ suite('withdraw', (state) => {
 
         // attempt second withdraw
         await assert.isRejected(
-            networks.sendMethod(withdrawMethod, { from: participant.address }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(withdrawMethod, { from: participant.address }, state)
         );
 
     });
@@ -251,16 +246,13 @@ suite('withdraw', (state) => {
 
         // attempt second withdraws
         await assert.isRejected(
-            networks.sendMethod(withdrawMethod, { from: stage.charity }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(withdrawMethod, { from: stage.charity }, state)
         );
         await assert.isRejected(
-            networks.sendMethod(withdrawMethod, { from: stage.winner }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(withdrawMethod, { from: stage.winner }, state)
         );
         await assert.isRejected(
-            networks.sendMethod(withdrawMethod, { from: stage.owner }, state),
-            networks.SomethingThrownException
+            networks.sendMethod(withdrawMethod, { from: stage.owner }, state)
         );
 
     });

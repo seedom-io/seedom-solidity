@@ -9,8 +9,6 @@ const defaults = {
     gasPrice: 30000000000000
 }
 
-module.exports.SomethingThrownException = 'SomethingThrownException';
-
 module.exports.main = async (state) => {
 
     // now stage
@@ -62,7 +60,7 @@ const createWeb3 = (network) => {
 
     if (!('ws' in network)) {
         // assume local test; create web3 ipc provider (parity)
-        provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
+        provider = createParityProvider(network);
     } else {
         // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
         provider = new Web3.providers.WebsocketProvider('ws:\\\\' + network.ws);
@@ -152,10 +150,10 @@ module.exports.deploy = async (contractName, args, options, state) => {
         arguments: args
     });
 
-    const web3Instance = await this.sendMethod(web3Transaction, options, state);
-    web3Instance.setProvider(state.web3.currentProvider);
+    const web3Result = await this.sendMethod(web3Transaction, options, state);
+    web3Result.instance.setProvider(state.web3.currentProvider);
 
-    const contractAddress = web3Instance.options.address;
+    const contractAddress = web3Result.instance.options.address;
     // save deployment
     if (state.deployment) {
         state.deployment[contractName].unshift({
@@ -165,7 +163,7 @@ module.exports.deploy = async (contractName, args, options, state) => {
     }
 
     cli.success("'%s' contract deployed to %s", contractName, contractAddress);
-    return web3Instance;
+    return web3Result;
 
 }
 
@@ -205,31 +203,36 @@ const getOption = (name, options, network) => {
 const verifySend = (call) => {
 
     return new Promise((accept, reject) => {
+        
+        let receipt;
 
-        try {
-            call
-            
-            .on('error', (error) => {
-                reject(this.SomethingThrownException);
-            })
-            
-            .then((result) => {
+        call.once('receipt', (data) => {
+            // capture receipt
+            receipt = data;
+        }).then((result) => {
 
-                // check for contract deployment
-                if (!result.options) {
-                    // check for standard transaction result
-                    if (!result.status || result.status === "0x0") {
-                        reject(this.SomethingThrownException);
-                        return;
-                    }
+            // triage result type
+            if (!result.options) {
+                // check for standard transaction result
+                if (!result.status || result.status === "0x0") {
+                    reject(new Error("Something Thrown"));
+                    return;
                 }
 
+                // accept result (receipt only)
                 accept(result);
-                
-            });
-        } catch (exception) {
-            reject(this.SomethingThrownException);
-        }
+
+            } else {
+                // accept result (instance) and receipt
+                accept({
+                    instance: result,
+                    receipt
+                });
+            }
+
+        }).catch ((error) => {
+            reject(new Error("Something Caught"));
+        });
 
     });
 

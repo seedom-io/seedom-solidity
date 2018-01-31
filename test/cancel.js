@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const instantiate = require('../stage/instantiate');
+const networks = require('../chronicle/networks');
 const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
@@ -12,70 +12,7 @@ const end = require('../stage/end');
 
 suite('cancel', (state) => {
 
-    const testCancelRejectedWithoutInstantiate = async (account) => {
-
-        const stage = state.stage;
-        
-        // cancel should still be true initially
-        let actualState = await stage.seedom.methods.state().call({ from: account });
-        assert.isOk(actualState._cancelled);
-
-        const method = stage.seedom.methods.cancel();
-        await assert.isRejected(
-            networks.sendMethod(method, { from: account }, state),
-            networks.SomethingThrownException
-        );
-
-        actualState = await stage.seedom.methods.state().call({ from: account });
-        assert.isOk(actualState._cancelled);
-
-    };
-
-    test("should reject cancel (by owner) before instantiate", async () => {
-        
-        // first instantiate
-        await instantiate.stage(state);
-
-        const stage = state.stage;
-        // cancel should still be true initially
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        assert.isOk(actualState._cancelled);
-
-        await testCancelRejectedWithoutInstantiate(stage.owner);
-
-    });
-
-    test("should reject cancel (by charity) before instantiate", async () => {
-        
-        // first instantiate
-        await instantiate.stage(state);
-
-        const stage = state.stage;
-        const charity = state.accountAddresses[1];
-        // cancel should still be true initially
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        assert.isOk(actualState._cancelled);
-
-        await testCancelRejectedWithoutInstantiate(charity);
-
-    });
-
-    test("should reject cancel (by participant) before instantiate", async () => {
-        
-        // first instantiate
-        await instantiate.stage(state);
-
-        const stage = state.stage;
-        const participant = state.accountAddresses[2];
-        // cancel should still be true initially
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        assert.isOk(actualState._cancelled);
-
-        await testCancelRejectedWithoutInstantiate(participant);
-
-    });
-
-    const testCancelAfterInstantiate = async (account) => {
+    const testCancelSuccess = async (account) => {
         
         const stage = state.stage;
         // after instantiate, cancel should never be true
@@ -89,6 +26,23 @@ suite('cancel', (state) => {
 
         actualState = await stage.seedom.methods.state().call({ from: account });
         assert.isOk(actualState._cancelled);
+
+    };
+
+    const testCancelFail = async (account) => {
+        
+        const stage = state.stage;
+        // after instantiate, cancel should never be true
+        let actualState = await stage.seedom.methods.state().call({ from: account });
+        assert.isNotOk(actualState._cancelled);
+
+        const method = stage.seedom.methods.cancel();
+        await assert.isRejected(
+            networks.sendMethod(method, { from: account }, state)
+        );
+
+        actualState = await stage.seedom.methods.state().call({ from: account });
+        assert.isNotOk(actualState._cancelled);
 
     };
 
@@ -97,7 +51,7 @@ suite('cancel', (state) => {
         // first instantiate
         await instantiate.stage(state);
         const stage = state.stage;
-        await testCancelAfterInstantiate(stage.owner);
+        await testCancelSuccess(stage.owner);
 
     });
 
@@ -106,34 +60,16 @@ suite('cancel', (state) => {
         // first instantiate
         await instantiate.stage(state);
         const stage = state.stage;
-        await testCancelAfterInstantiate(stage.charity);
+        await testCancelSuccess(stage.charity);
 
     });
-
-    const testCancelRejectedAfterInstantiate = async (account) => {
-        
-        const stage = state.stage;
-        // after instantiate, cancel should never be true
-        let actualState = await stage.seedom.methods.state().call({ from: account });
-        assert.isNotOk(actualState._cancelled);
-
-        const method = stage.seedom.methods.cancel();
-        await assert.isRejected(
-            networks.sendMethod(method, { from: account }, state),
-            networks.SomethingThrownException
-        );
-
-        actualState = await stage.seedom.methods.state().call({ from: account });
-        assert.isNotOk(actualState._cancelled);
-
-    };
 
     test("should reject cancel (by participant) after instantiate", async () => {
 
         // first instantiate
         await instantiate.stage(state);
         const participant = state.accountAddresses[2];
-        await testCancelRejectedAfterInstantiate(participant);
+        await testCancelFail(participant);
 
     });
 
@@ -142,7 +78,7 @@ suite('cancel', (state) => {
         // first seed
         await seed.stage(state);
         const stage = state.stage;
-        await testCancelAfterInstantiate(stage.owner);
+        await testCancelSuccess(stage.owner);
 
     });
 
@@ -151,7 +87,7 @@ suite('cancel', (state) => {
         // first seed
         await seed.stage(state);
         const stage = state.stage;
-        await testCancelAfterInstantiate(stage.charity);
+        await testCancelSuccess(stage.charity);
 
     });
 
@@ -160,66 +96,43 @@ suite('cancel', (state) => {
         // first Instantiate
         await seed.stage(state);
         const participant = state.accountAddresses[2];
-        await testCancelRejectedAfterInstantiate(participant);
+        await testCancelFail(participant);
 
     });
 
-    const testCancelRefundsAfterRaising = async (account) => {
-
-        const stage = state.stage;
-        // make sure we aren't already cancelled
-        let actualState = await stage.seedom.methods.state().call({ from: account });
-        assert.isNotOk(actualState._cancelled);
-
-        const method = stage.seedom.methods.cancel();
-        await assert.isFulfilled(
-            networks.sendMethod(method, { from: account }, state)
-        );
-
-        // verify all participants refunded
-        for (let participant of stage.participants) {
-            const actualBalance = await stage.seedom.methods.balancesMapping(participant.address).call({ from: participant.address });
-            assert.equal(actualBalance, 10000, "refund balance should be correct");
-        }
-
-        actualState = await stage.seedom.methods.state().call({ from: account });
-        assert.isOk(actualState._cancelled);
-
-    };
-
-    test("should cancel (by owner) and refund after raising", async () => {
+    test("should cancel (by owner) after raise", async () => {
 
         // first raise
         await raise.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterRaising(stage.owner);
+        await testCancelSuccess(stage.owner);
 
     });
 
-    test("should cancel (by charity) and refund after raising", async () => {
+    test("should cancel (by charity) after raise", async () => {
         
         // first raise
         await raise.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterRaising(stage.charity);
+        await testCancelSuccess(stage.charity);
 
     });
 
-    test("should cancel (by owner) and refund after revelation", async () => {
+    test("should cancel (by owner) after revelation", async () => {
 
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterRaising(stage.owner);
+        await testCancelSuccess(stage.owner);
 
     });
 
-    test("should cancel (by charity) and refund after revelation", async () => {
+    test("should cancel (by charity) after revelation", async () => {
         
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterRaising(stage.charity);
+        await testCancelSuccess(stage.charity);
 
     });
 
@@ -228,7 +141,7 @@ suite('cancel', (state) => {
         // first end
         await end.stage(state);
         const stage = state.stage;
-        await testCancelRejectedAfterInstantiate(stage.owner);
+        await testCancelFail(stage.owner);
 
     });
 
@@ -237,7 +150,7 @@ suite('cancel', (state) => {
         // first end
         await end.stage(state);
         const stage = state.stage;
-        await testCancelRejectedAfterInstantiate(stage.charity);
+        await testCancelFail(stage.charity);
 
     });
 
@@ -246,18 +159,17 @@ suite('cancel', (state) => {
         // first end
         await end.stage(state);
         const participant = state.accountAddresses[2];
-        await testCancelRejectedAfterInstantiate(participant);
+        await testCancelFail(participant);
 
     });
 
-    const testCancelRefundsAfterExpiration = async (account) => {
+    const testCancelSuccessAfterExpiration = async (account) => {
 
         const stage = state.stage;
         const now = ch.timestamp();
         const expireTime = stage.expireTime;
         await cli.progress("waiting for expiration time", expireTime - now);
-
-        await testCancelRefundsAfterRaising(account);
+        await testCancelSuccess(account);
 
     };
 
@@ -266,7 +178,7 @@ suite('cancel', (state) => {
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterExpiration(stage.participants[0].address);
+        await testCancelSuccessAfterExpiration(stage.participants[0].address);
 
     });
 
@@ -275,7 +187,7 @@ suite('cancel', (state) => {
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterExpiration(stage.owner);
+        await testCancelSuccessAfterExpiration(stage.owner);
 
     });
 
@@ -284,7 +196,7 @@ suite('cancel', (state) => {
         // first reveal
         await reveal.stage(state);
         const stage = state.stage;
-        await testCancelRefundsAfterExpiration(stage.charity);
+        await testCancelSuccessAfterExpiration(stage.charity);
 
     });
 

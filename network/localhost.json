@@ -4,7 +4,7 @@
     "password": "password",
     "balance": "100000000000000000000000000",
     "accounts": 9,
-    "sendDelay": 500,
+    "sendDelay": 1000,
     "toml": {
         "parity": {
             "mode": "offline"
