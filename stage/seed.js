@@ -1,26 +1,39 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
 const instantiate = require('./instantiate');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 
-module.exports.optionize = (command) => {
-    return instantiate.optionize(command)
-        .option("--charityRandom <number>", "charity random")
-}
+module.exports.previous = 'instantiate';
 
-module.exports.stage = async (state) => {
+module.exports.options = [
+    ['charityRandom', 'number', "charity random"]
+];
 
-    // first instantiate
-    await instantiate.stage(state);
+module.exports.run = async (options, state) => {
 
-    const stage = state.stage;
+    const { stage } = state;
     
-    stage.charityRandom = stage.charityRandom ? stage.charityRandom : h.random();
-    stage.charityHashedRandom = h.hashedRandom(stage.charityRandom, stage.charity);
+    const charityRandom = options.charityRandom ? options.charityRandom : h.random();
+    const charityHashedRandom = h.hashedRandom(charityRandom, stage.charity);
 
-    const method = stage.seedom.methods.seed(stage.charityHashedRandom);
-    stage.seedReceipt = await networks.sendMethod(method, {
+    const method = stage.seedom.methods.seed(charityHashedRandom);
+    const seedReceipt = await network.sendMethod(method, {
         from: stage.charity
     }, state);
+
+    return {
+        charityRandom,
+        charityHashedRandom
+    }
+
+}
+
+module.exports.restore = async (state) => {
+    seed(state);
+}
+
+const seed = (state) => {
+
+    
 
 }

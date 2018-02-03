@@ -3,6 +3,7 @@ const util = require('util');
 const path = require('path');
 const fs = require('mz/fs');
 const keccak256 = require('js-sha3').keccak256;
+const chrono = require('chrono-node');
 
 const defaultEncoding = 'utf8';
 
@@ -22,9 +23,10 @@ module.exports.contractDir = 'contract';
 module.exports.deploymentDir = 'deployment';
 module.exports.parityDir = 'parity';
 module.exports.stageDir = 'stage';
-module.exports.abiDir = 'abi';
-module.exports.bytecodeDir = 'bytecode';
+module.exports.hashDir = 'hash';
+module.exports.outputDir = 'output';
 module.exports.networkDir = 'network';
+module.exports.interfaceDir = 'interface';
 
 module.exports.parityDbDir = path.join(this.parityDir, 'chains');
 module.exports.parityKeysDir = path.join(this.parityDir, 'keys');
@@ -57,64 +59,61 @@ module.exports.writeJsonFile = async (file, obj) => {
     await this.writeFile(file, JSON.stringify(obj, null, 4));
 }
 
-module.exports.getSolFile = (contractName) => {
-    return path.join(this.contractDir, contractName) + '.' + this.solExt;
+module.exports.getSolFile = (name) => {
+    return path.join(this.contractDir, name) + '.' + this.solExt;
 }
 
-module.exports.getAbiFile = (contractName) => {
-    return path.join(this.abiDir, contractName) + '.' + this.jsonExt;
+module.exports.getHashFile = (name) => {
+    return path.join(this.hashDir, name) + '.' + this.hashExt;
 }
 
-module.exports.getBytecodeFile = (contractName) => {
-    return path.join(this.bytecodeDir, contractName) + '.' + this.bytecodeExt;
+module.exports.getOutputFile = (hash) => {
+    return path.join(this.outputDir, hash) + '.' + this.jsonExt;
 }
 
-module.exports.getDeploymentFile = (networkName) => {
-    return path.join(this.deploymentDir, networkName + '.' + this.jsonExt);
+module.exports.getDeploymentFile = (name) => {
+    return path.join(this.deploymentDir, name + '.' + this.jsonExt);
 }
 
-module.exports.getNetworkFile = (networkName) => {
-    return path.join(this.networkDir, networkName + '.' + this.jsonExt);
+module.exports.getNetworkFile = (name) => {
+    return path.join(this.networkDir, name + '.' + this.jsonExt);
 }
 
-module.exports.readSol = async (contractName) => {
-    return this.readFile(this.getSolFile(contractName));
+module.exports.readSol = async (name) => {
+    return this.readFile(this.getSolFile(name));
 }
 
-module.exports.readAbi = async (contractName) => {
-    return this.readJsonFile(this.getAbiFile(contractName));
+module.exports.readHash = async (name) => {
+    return this.readFile(this.getHashFile(name));
 }
 
-module.exports.readBytecode = async (contractName) => {
-    return this.readFile(this.getBytecodeFile(contractName));
+module.exports.readOutput = async (hash) => {
+    return this.readJsonFile(this.getOutputFile(hash));
 }
 
-module.exports.readHash = async (contractName) => {
-    return this.readFile(this.getHashFile(contractName));
+module.exports.readDeployment = async (name) => {
+    const deployment = this.readJsonFile(this.getDeploymentFile(name));
+    if (!deployment) {
+        return {
+            addresses: {}
+        };
+    }
 }
 
-module.exports.readDeployment = async (networkName) => {
-    return this.readJsonFile(this.getDeploymentFile(networkName));
+module.exports.readNetwork = async (name) => {
+    return this.readJsonFile(this.getNetworkFile(name));
 }
 
-module.exports.readNetwork = async (networkName) => {
-    return this.readJsonFile(this.getNetworkFile(networkName));
+module.exports.writeHash = async (name, hash) => {
+    return this.writeFile(this.getHashFile(name), hash);
 }
 
-module.exports.writeAbi = async (contractName, abi) => {
-    return this.writeJsonFile(this.getAbiFile(contractName), abi);
+module.exports.writeOutput = async (hash, output) => {
+    return this.writeJsonFile(this.getOutputFile(hash), output);
 }
 
-module.exports.writeBytecode = async (contractName, bytecode) => {
-    return this.writeFile(this.getBytecodeFile(contractName), bytecode);
-}
-
-module.exports.writeHash = async (contractName, hash) => {
-    return this.writeFile(this.getHashFile(contractName), hash);
-}
-
-module.exports.writeDeployment = async (networkName, deployment) => {
-    return this.writeFile(this.getDeploymentFile(networkName), deployment);
+module.exports.writeDeployment = async (name, deployment) => {
+    return this.writeJsonFile(this.getDeploymentFile(name), deployment);
 }
 
 module.exports.readFile = async (file) => {
@@ -151,6 +150,22 @@ module.exports.objLength = (obj) => {
     return Object.keys(obj).length;
 }
 
-module.exports.sleep = function (ms) {
+module.exports.sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+module.exports.calculateHash = (data) => {
+    var hasher = new keccak256.create(256);
+    for (let datum of data) {
+        hasher.update(datum);
+    }
+    return hasher.hex();
+};
+
+module.exports.arrayArgs = (methodArgs, contractArgs) => {
+    const arrayArgs = [];
+    for (let contractArg of contractArgs) {
+        arrayArgs.push(methodArgs[contractArg]);
+    }
+    return arrayArgs;
+};

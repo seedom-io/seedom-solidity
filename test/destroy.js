@@ -1,7 +1,7 @@
 const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 const raise = require('../stage/raise');
 const end = require('../stage/end');
 const BigNumber = require('bignumber.js');
@@ -32,7 +32,7 @@ suite('destroy', (state) => {
 
         // destroy contract
         const method = stage.seedom.methods.destroy();
-        const destroyReceipt = await networks.sendMethod(method, { from: stage.owner }, state);
+        const destroyReceipt = await network.sendMethod(method, { from: stage.owner }, state);
         const destroyTransactionCost = await sh.getTransactionCost(destroyReceipt.gasUsed, state.web3);
 
         // ensure expected final contract balance
@@ -51,7 +51,7 @@ suite('destroy', (state) => {
         const stage = state.stage;
         const method = stage.seedom.methods.destroy();
         await assert.isRejected(
-            networks.sendMethod(method, { from: account }, state)
+            network.sendMethod(method, { from: account }, state)
         );
 
     };

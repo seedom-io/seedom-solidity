@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const parity = require('../chronicle/parity');
 const instantiate = require('../stage/instantiate');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 
 suite('seed', (state) => {
 
@@ -19,7 +19,7 @@ suite('seed', (state) => {
         const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
         const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isFulfilled(
-            networks.sendMethod(method, { from: stage.charity }, state)
+            network.sendMethod(method, { from: stage.charity }, state)
         );
 
         const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
@@ -37,7 +37,7 @@ suite('seed', (state) => {
 
         const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: stage.owner }, state)
+            network.sendMethod(method, { from: stage.owner }, state)
         );
 
     });
@@ -53,7 +53,7 @@ suite('seed', (state) => {
 
         const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
-            networks.sendMethod(method, { from: participant }, state)
+            network.sendMethod(method, { from: participant }, state)
         );
 
     });

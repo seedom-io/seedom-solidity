@@ -1,6 +1,6 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 const participate = require('./participate');
 const cli = require('../chronicle/cli');
 
@@ -9,10 +9,9 @@ module.exports.optionize = (command) => {
         .option("--raiseWei <number>", "additional wei raised by each participant", parseInt);
 }
 
-module.exports.stage = async (state) => {
+module.exports.dependency = 'participate';
 
-    // first participate
-    await participate.stage(state);
+module.exports.stage = async (state) => {
     
     const stage = state.stage;
 
@@ -20,7 +19,7 @@ module.exports.stage = async (state) => {
     stage.raiseReceipts = [];
 
     for (let participant of stage.participants) {
-        const receipt = await networks.sendFallback(stage.seedom, {
+        const receipt = await network.sendFallback(stage.seedom, {
             from: participant.address,
             value: stage.raiseWei
         }, state);

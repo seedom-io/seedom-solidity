@@ -2,8 +2,10 @@
 
 const program = require('commander');
 const cli = require('./cli');
-const stager = require('./stager');
-const networks = require('./networks');
+const compile = require('./compile');
+const stages = require('./stage');
+const network = require('./network');
+const interface = require('./interface');
 const wtfnode = require('wtfnode');
 
 // print out anything hanging after ctrl-c
@@ -26,40 +28,41 @@ process.on('warning', (warning) => {
 
 const main = async (name, state) => {
     await require('./' + name).main(state);
-    networks.destroyWeb3(state);
+    network.destroyWeb3(state);
 }
 
-program
-    .command('compile')
-    .alias('c')
-    .description("compile contracts")
-    .action((options) => {
-        main('compiler', {});
-    });
+const state = {};
 
-program
-    .command('parity')
-    .alias('p')
-    .description("start parity")
-    .option('-f, --fresh', "fresh start")
-    .option('-k, --kill', "kill parity")
-    .action((options) => {
-        main('parity', {
-            fresh: options.fresh ? true : false,
-            kill: options.kill ? true : false
+compile.prepare(program, state).then(() => {
+
+    program
+        .command('parity')
+        .alias('p')
+        .description("start parity")
+        .option('--fresh', "fresh start")
+        .option('--kill', "kill parity")
+        .action((options) => {
+            main('parity', Object.assign(state, {
+                fresh: options.fresh ? true : false,
+                kill: options.kill ? true : false
+            }));
         });
+
+    /*program
+        .command('test [suites...]')
+        .alias('t')
+        .description("test chronicle")
+        .action((suites) => {
+            main('test', Object.assign(state, {
+                suiteNames: suites
+            }));
+        });*/
+
+    interface.prepare(program, state).then(() => {
+        program.parse(process.argv);
+        /*stage.prepare(program).then(() => {
+            program.parse(process.argv);
+        });*/
     });
 
-program
-    .command('test [suites...]')
-    .alias('t')
-    .description("test chronicle")
-    .action((suites) => {
-        main('tester', {
-            suiteNames: suites
-        });
-    });
-
-stager.prepare(program).then(() => {
-    program.parse(process.argv);
 });

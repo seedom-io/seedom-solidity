@@ -2,6 +2,7 @@ const Web3 = require('web3');
 const cli = require('./cli');
 const net = require('net');
 const h = require('./helper');
+const parity = require('./parity');
 
 const defaults = {
     jsonrpc: "2.0",
@@ -12,7 +13,22 @@ const defaults = {
 module.exports.main = async (state) => {
 
     // now stage
-    cli.section("networks");
+    cli.section("network");
+
+    // if no network specified, default to localhost
+    if (!state.networkName) {
+        cli.info("'%s' network chosen as no network specified", h.localNetworkName);
+        state.networkName = h.localNetworkName;
+    }
+
+    // either setup parity network or another
+    const result = (state.networkName == h.localNetworkName)
+        ? await parity.main(state)
+        : await network(state);
+
+}
+
+const network = async (state) => {
 
     state.network = h.readNetwork(state.networkName);
     // set web3 instance
@@ -35,10 +51,7 @@ module.exports.main = async (state) => {
         }
     }
 
-    // track deployments
-    state.deployment = await h.readDeployment(state.networkName);
-
-}
+};
 
 module.exports.setWeb3 = async (state) => {
 
@@ -154,13 +167,14 @@ module.exports.deploy = async (contractName, args, options, state) => {
     web3Result.instance.setProvider(state.web3.currentProvider);
 
     const contractAddress = web3Result.instance.options.address;
+    // save to addresses as well (for easy lookup)
+    state.deployment.addresses[contractAddress] = contractName;
     // save deployment
-    if (state.deployment) {
-        state.deployment[contractName].unshift({
-            deployed: h.timestamp(),
-            address: contractAddress
-        });
-    }
+    state.deployment[contractName].unshift({
+        deployed: h.timestamp(),
+        address: contractAddress,
+        transactionHash: web3Result.receipt.transactionHash
+    });
 
     cli.success("'%s' contract deployed to %s", contractName, contractAddress);
     return web3Result;

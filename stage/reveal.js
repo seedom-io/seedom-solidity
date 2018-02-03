@@ -1,6 +1,6 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 const raise = require('./raise');
 const cli = require('../chronicle/cli');
 
@@ -9,10 +9,9 @@ module.exports.optionize = (command) => {
         .option("--revealersCount <number>", "number of participants to reveal", parseInt);
 }
 
-module.exports.stage = async (state) => {
+module.exports.dependency = 'raise';
 
-    // first raise
-    await raise.stage(state);
+module.exports.stage = async (state) => {
 
     const stage = state.stage;
 
@@ -29,7 +28,7 @@ module.exports.stage = async (state) => {
     for (let i = 0; i < stage.revealersCount; i++) {
         let participant = stage.participants[i];
         const method = stage.seedom.methods.reveal(participant.random);
-        const receipt = await networks.sendMethod(method, {
+        const receipt = await network.sendMethod(method, {
             from: participant.address
         }, state);
 

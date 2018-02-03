@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 const instantiate = require('../stage/instantiate');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
@@ -21,7 +21,7 @@ suite('cancel', (state) => {
 
         const method = stage.seedom.methods.cancel();
         await assert.isFulfilled(
-            networks.sendMethod(method, { from: account }, state)
+            network.sendMethod(method, { from: account }, state)
         );
 
         actualState = await stage.seedom.methods.state().call({ from: account });
@@ -38,7 +38,7 @@ suite('cancel', (state) => {
 
         const method = stage.seedom.methods.cancel();
         await assert.isRejected(
-            networks.sendMethod(method, { from: account }, state)
+            network.sendMethod(method, { from: account }, state)
         );
 
         actualState = await stage.seedom.methods.state().call({ from: account });

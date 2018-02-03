@@ -29,7 +29,7 @@ module.exports.logo = (text, ...params) => {
 }
 
 module.exports.section = (text, ...params) => {
-    this.log((section ? '\n' : '') + tab + clc.bold.underline(text) + '\n', normalize(params));
+    this.log((section ? '\n' : '') + tab + text + ':' + '\n', normalize(params));
     section = true;
 }
 

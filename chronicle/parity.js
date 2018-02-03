@@ -1,6 +1,6 @@
 const cli = require('./cli');
 const h = require('./helper');
-const networks = require('./networks');
+const network = require('./network');
 const fs = require('mz/fs');
 const fse = require('fs-extra');
 const childProcess = require("child_process");
@@ -72,7 +72,7 @@ const launch = async (state, pid) => {
     }
 
     // set web3
-    if (!await networks.setWeb3(state)) {
+    if (!await network.setWeb3(state)) {
         return false;
     }
     
@@ -217,7 +217,7 @@ const initialize = async (state, pid) => {
     // run parity to open rpc for account creation
     pid = await execute();
     // set web3
-    if (!await networks.setWeb3(state)) {
+    if (!await network.setWeb3(state)) {
         return false;
     }
     
@@ -290,7 +290,7 @@ const createAccounts = async (state) => {
     for (let i = 0; i < state.network.accounts; i++) {
 
         const recovery = state.network.password + i;
-        const address = await networks.callProvider('parity_newAccountFromPhrase', [
+        const address = await network.callProvider('parity_newAccountFromPhrase', [
             recovery, state.network.password
         ], state);
 
@@ -305,7 +305,7 @@ const createAccounts = async (state) => {
 }
 
 const createAuthorizationToken = async (state) => {
-    const authorizationToken = await networks.callProvider('signer_generateAuthorizationToken', [], state);
+    const authorizationToken = await network.callProvider('signer_generateAuthorizationToken', [], state);
     cli.success("created authorization token %s", authorizationToken);
     return authorizationToken;
 }

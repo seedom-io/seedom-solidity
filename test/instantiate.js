@@ -1,7 +1,7 @@
 const ch = require('../chronicle/helper');
 const cli = require('../chronicle/cli');
 const instantiate = require('../stage/instantiate');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 
 suite('instantiate', (state) => {
 
@@ -56,7 +56,7 @@ suite('instantiate', (state) => {
         const ownerSplit = 0;
         const maxParticipants = 0;
 
-        const result = await networks.deploy('seedom', [
+        const result = await network.deploy('seedom', [
             charity,
             charitySplit,
             winnerSplit,
@@ -118,7 +118,7 @@ suite('instantiate', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testArgs, { from: owner }, state)
+                network.deploy('seedom', testArgs, { from: owner }, state)
             );
         }
 
@@ -146,7 +146,7 @@ suite('instantiate', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testArgs, { from: owner }, state)
+                network.deploy('seedom', testArgs, { from: owner }, state)
             );
         }
 
@@ -187,7 +187,7 @@ suite('instantiate', (state) => {
         for (let testArgs of testData) {
             cli.info(testArgs);
             await assert.isRejected(
-                networks.deploy('seedom', testArgs, { from: owner }, state)
+                network.deploy('seedom', testArgs, { from: owner }, state)
             );
         }
 

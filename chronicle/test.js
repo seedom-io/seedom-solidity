@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require('mz/fs');
 const readline = require('mz/readline');
 const h = require('./helper');
-const compiler = require('./compiler');
+const compile = require('./compile');
 const parity = require('./parity');
 const cli = require('./cli');
 const stager = require('./stager');
@@ -21,7 +21,7 @@ const testTimeout = 100000;
 module.exports.main = async (state) => {
 
     // compile first
-    await compiler.main(state);
+    await compile.main(state);
 
     // get parity state
     if (!(await parity.main(state))) {
@@ -29,7 +29,7 @@ module.exports.main = async (state) => {
     }
 
     // now test
-    cli.section("tester");
+    cli.section("test");
 
     // set up suite against state
     setupSuite(state);

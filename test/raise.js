@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../stage/helper');
 const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 const seed = require('../stage/seed');
 const participate = require('../stage/participate');
 const raise = require('../stage/raise');
@@ -66,7 +66,7 @@ suite('raise', (state) => {
         const participant = state.accountAddresses[2];
         // call fallback function
         await assert.isRejected(
-            networks.sendFallback(stage.seedom, {
+            network.sendFallback(stage.seedom, {
                 from: participant,
                 value: 10500
             }, state)
@@ -97,7 +97,7 @@ suite('raise', (state) => {
         const participant = stage.participants[0];
         // call fallback function
         await assert.isRejected(
-            networks.sendFallback(stage.seedom, {
+            network.sendFallback(stage.seedom, {
                 from: participant.address,
                 value: 0
             }, state)

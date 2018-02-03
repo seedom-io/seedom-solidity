@@ -1,6 +1,6 @@
 const ch = require('../chronicle/helper');
 const h = require('./helper');
-const networks = require('../chronicle/networks');
+const network = require('../chronicle/network');
 const reveal = require('./reveal');
 const cli = require('../chronicle/cli');
 
@@ -8,10 +8,9 @@ module.exports.optionize = (command) => {
     return reveal.optionize(command);
 }
 
-module.exports.stage = async (state) => {
+module.exports.dependency = 'reveal';
 
-    // first reveal
-    await reveal.stage(state);
+module.exports.stage = async (state) => {
     
     const stage = state.stage;
     const now = ch.timestamp();
@@ -20,7 +19,7 @@ module.exports.stage = async (state) => {
 
     // only the charity can end the ether-raiser
     const method = stage.seedom.methods.end(stage.charityRandom);
-    stage.endReceipt = await networks.sendMethod(method, {
+    stage.endReceipt = await network.sendMethod(method, {
         from: stage.charity
     }, state);
 
