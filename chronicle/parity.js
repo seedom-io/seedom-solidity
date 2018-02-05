@@ -14,7 +14,7 @@ const killDelay = 5;
 
 module.exports.main = async (state) => {
 
-    cli.section("parity");
+    cli.section("Parity");
 
     // ensure parity installed
     if (!(await getInstalled())) {

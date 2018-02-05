@@ -13,7 +13,7 @@ const defaults = {
 module.exports.main = async (state) => {
 
     // now stage
-    cli.section("network");
+    cli.section("Network");
 
     // if no network specified, default to localhost
     if (!state.networkName) {
@@ -148,18 +148,10 @@ module.exports.callProvider = async (method, args, state) => {
 
 };
 
-module.exports.deploy = async (contractName, args, options, state) => {
+module.exports.deploy = async (contract, args, options, web3Instance, state) => {
 
-    // find the compiled contract
-    const contract = state.contracts[contractName];
-    if (!contract) {
-        cli.error('contract not found');
-        return null;
-    }
-
-    const web3Contract = new state.web3.eth.Contract(contract.abi);
-    const web3Transaction = web3Contract.deploy({
-        data: contract.bytecode,
+    const web3Transaction = web3Instance.deploy({
+        data: '0x' + contract.evm.bytecode.object,
         arguments: args
     });
 
@@ -167,16 +159,7 @@ module.exports.deploy = async (contractName, args, options, state) => {
     web3Result.instance.setProvider(state.web3.currentProvider);
 
     const contractAddress = web3Result.instance.options.address;
-    // save to addresses as well (for easy lookup)
-    state.deployment.addresses[contractAddress] = contractName;
-    // save deployment
-    state.deployment[contractName].unshift({
-        deployed: h.timestamp(),
-        address: contractAddress,
-        transactionHash: web3Result.receipt.transactionHash
-    });
-
-    cli.success("'%s' contract deployed to %s", contractName, contractAddress);
+    cli.success("'%s' contract deployed to %s", contract.name, contractAddress);
     return web3Result;
 
 }

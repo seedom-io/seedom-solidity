@@ -1,25 +1,20 @@
 const parsers = require('../chronicle/parsers');
-const ch = require('../chronicle/helper');
+const interface = require('../chronicle/interface');
 
- const interface = (contract, web3Instance) => {
+module.exports = {
 
-    deploy: (args) => {
+    deploy: (contract, finish) => async (args, options) => {
 
-        const arrayArgs = ch.arrayArgs({
+        const finalArgs = {
             ...args,
-            _revealTime: parsers.parseDate(args._revealTime),
-            _endTime: parsers.parseDate(args._endTime),
-            _expireTime: parsers.parseDate(args._expireTime),
-            _destructTime: parsers.parseDate(args._destructTime),
-        }, contract.methods.deploy);
+            revealTime: parsers.parseDate(args.revealTime),
+            endTime: parsers.parseDate(args.endTime),
+            expireTime: parsers.parseDate(args.expireTime),
+            destructTime: parsers.parseDate(args.destructTime)
+        };
 
-        return web3Instance.deploy({
-            data: contract.bytecode,
-            arguments: arrayArgs
-        });
+        return await finish(finalArgs, options);
 
     }
 
 }
-
-module.exports.interface = interface;

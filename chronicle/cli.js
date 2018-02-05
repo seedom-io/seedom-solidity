@@ -5,6 +5,7 @@ const f = require('figures');
 const columnify = require('columnify');
 const Progress = require('progress');
 const readline = require('mz/readline');
+const chalkline = require('chalkline');
 
 const normalize = (params) => {
     if (Array.isArray(params) && (params.length == 1) && Array.isArray(params[0])) {
@@ -105,7 +106,7 @@ module.exports.progress = (text, seconds) => {
 }
 
 module.exports.json = (obj, text, ...params) => {
-    this.info(clc.underline(text), normalize(params));
+    chalkline.yellow();
     this.log('\n' + clc.yellow(JSON.stringify(obj, null, 4)) + '\n');
 }
 

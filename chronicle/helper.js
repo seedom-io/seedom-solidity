@@ -3,7 +3,6 @@ const util = require('util');
 const path = require('path');
 const fs = require('mz/fs');
 const keccak256 = require('js-sha3').keccak256;
-const chrono = require('chrono-node');
 
 const defaultEncoding = 'utf8';
 
@@ -92,12 +91,7 @@ module.exports.readOutput = async (hash) => {
 }
 
 module.exports.readDeployment = async (name) => {
-    const deployment = this.readJsonFile(this.getDeploymentFile(name));
-    if (!deployment) {
-        return {
-            addresses: {}
-        };
-    }
+    return await this.readJsonFile(this.getDeploymentFile(name));
 }
 
 module.exports.readNetwork = async (name) => {
@@ -160,12 +154,4 @@ module.exports.calculateHash = (data) => {
         hasher.update(datum);
     }
     return hasher.hex();
-};
-
-module.exports.arrayArgs = (methodArgs, contractArgs) => {
-    const arrayArgs = [];
-    for (let contractArg of contractArgs) {
-        arrayArgs.push(methodArgs[contractArg]);
-    }
-    return arrayArgs;
 };
