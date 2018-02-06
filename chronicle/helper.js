@@ -21,11 +21,11 @@ module.exports.testDir = 'test';
 module.exports.contractDir = 'contract';
 module.exports.deploymentDir = 'deployment';
 module.exports.parityDir = 'parity';
-module.exports.stageDir = 'stage';
 module.exports.hashDir = 'hash';
 module.exports.outputDir = 'output';
 module.exports.networkDir = 'network';
 module.exports.interfaceDir = 'interface';
+module.exports.scriptDir = 'script';
 
 module.exports.parityDbDir = path.join(this.parityDir, 'chains');
 module.exports.parityKeysDir = path.join(this.parityDir, 'keys');

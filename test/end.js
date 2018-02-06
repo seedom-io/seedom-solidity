@@ -1,26 +1,18 @@
-const ch = require('../chronicle/helper');
-const sh = require('../stage/helper');
-const cli = require('../chronicle/cli');
-const parity = require('../chronicle/parity');
-const end = require('../stage/end');
+const end = require('../script/simulation/end');
 
 suite('end', (state) => {
 
     test("should choose a winner", async () => {
 
-        const stage = state.stage;
-        const participantsCount = (state.accountAddresses.length - 2);
-        // set stage to reveal only half the participants
-        stage.revealersCount = Math.floor(participantsCount / 2);
-
         // first end
-        await end.stage(state);
-        
-        const winner = stage.winner;
+        await end.run(state);
+
+        const { env } = state;
 
         let foundWinner = false;
-        for (let revealer of stage.revealers) {
-            if (revealer == winner.toLowerCase()) {
+        const winner = env.winner.toLowerCase();
+        for (let participant of env.participants) {
+            if (participant.address.toLowerCase() === winner) {
                 foundWinner = true;
             }
         }

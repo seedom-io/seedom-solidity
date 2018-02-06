@@ -11,28 +11,28 @@ suite('destroy', (state) => {
     test("should destroy (by owner) after destruct and send wei (to owner)", async () => {
 
         // first stage
-        await raise.stage(state);
+        await raise.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
 
         // get initial owner balance after raise
-        const initialOwnerBalance = await sh.getBalance(stage.owner, state.web3);
+        const initialOwnerBalance = await sh.getBalance(env.owner, state.web3);
 
         // get contract balance after raise
-        const contractAddress = stage.seedom.options.address;
+        const contractAddress = env.seedom.options.address;
         const initialContractBalance = await sh.getBalance(contractAddress, state.web3);
 
         // ensure expected initial contract balance
-        const expectedInitialContractBalance = new BigNumber(10 * stage.participantsCount * stage.valuePerEntry);
+        const expectedInitialContractBalance = new BigNumber(10 * env.participantsCount * env.valuePerEntry);
         assert.equal(initialContractBalance.toString(), expectedInitialContractBalance.toString(), "initial contract balance does not match expected");
 
         const now = ch.timestamp();
-        const destructTime = stage.destructTime;
+        const destructTime = env.destructTime;
         await cli.progress("waiting for destruct time", destructTime - now);
 
         // destroy contract
-        const method = stage.seedom.methods.destroy();
-        const destroyReceipt = await network.sendMethod(method, { from: stage.owner }, state);
+        await (await state.interfaces.seedom).destroy();
+        const destroyReceipt = await network.sendMethod(method, { from: env.owner }, state);
         const destroyTransactionCost = await sh.getTransactionCost(destroyReceipt.gasUsed, state.web3);
 
         // ensure expected final contract balance
@@ -41,15 +41,15 @@ suite('destroy', (state) => {
 
         // ensure expected owner balance
         const expectedOwnerBalance = initialOwnerBalance.plus(expectedInitialContractBalance).minus(destroyTransactionCost);
-        const ownerBalance = await sh.getBalance(stage.owner, state.web3);
+        const ownerBalance = await sh.getBalance(env.owner, state.web3);
         assert.equal(ownerBalance.toString(), expectedOwnerBalance.toString(), "owner balance not expected");
 
     });
 
     const testDestroyFail = async (account) => {
         
-        const stage = state.stage;
-        const method = stage.seedom.methods.destroy();
+        const { env } = state;
+        await (await state.interfaces.seedom).destroy();
         await assert.isRejected(
             network.sendMethod(method, { from: account }, state)
         );
@@ -59,39 +59,39 @@ suite('destroy', (state) => {
     test("should reject destroy (by owner) after expire", async () => {
 
         // first end
-        await end.stage(state);
+        await end.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const now = ch.timestamp();
-        const expireTime = stage.expireTime;
+        const expireTime = env.expireTime;
         await cli.progress("waiting for expiration time", expireTime - now);
-        await testDestroyFail(stage.owner);
+        await testDestroyFail(env.owner);
 
     });
 
     test("should reject destroy (by charity) after destruct", async () => {
 
         // first end
-        await end.stage(state);
+        await end.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const now = ch.timestamp();
-        const destructTime = stage.destructTime;
+        const destructTime = env.destructTime;
         await cli.progress("waiting for destruct time", destructTime - now);
-        await testDestroyFail(stage.charity);
+        await testDestroyFail(env.charity);
 
     });
 
     test("should reject destroy (by participant) after destruct", async () => {
 
         // first end
-        await end.stage(state);
+        await end.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const now = ch.timestamp();
-        const destructTime = stage.destructTime;
+        const destructTime = env.destructTime;
         await cli.progress("waiting for destruct time", destructTime - now);
-        await testDestroyFail(stage.participants[0].address);
+        await testDestroyFail(env.participants[0].address);
 
     });
 

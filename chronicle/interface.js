@@ -2,9 +2,18 @@ const compile = require('./compile');
 const h = require('./helper');
 const cli = require('./cli');
 const dir = require('node-dir');
-const parsers = require('./parsers');
+const parser = require('./parser');
 const path = require('path');
 const network = require('./network');
+
+const methodOptionOptions = parser.getOptions([
+    ['from'],
+    ['to'],
+    ['value'],
+    ['gas'],
+    ['gasPrice'],
+    ['transact', false, 'bool']
+]);
 
 module.exports.save = async (state) => {
     await h.writeDeployment(state.networkName, state.deployment);
@@ -21,32 +30,47 @@ module.exports.main = async (state) => {
     // track deployments
     state.deployment = await getDeployment(state.networkName);
 
-    // set up receipt catching
-    state.receipts = {};
-
-    // set up instances proxy
-    state.instances = new Proxy({}, {
+    // set up interfaces proxy
+    state.interfaces = new Proxy({}, {
         get: async (target, name) => {
-            return await resolveInstance(target, name, state);
+            return await resolveInterface(target, name, state);
         }
     });
 
+    cli.success('interfaces prepared');
+
     // check for a contract & method
-    if (state.contractName && state.methodName) {
+    if (state.methodName) {
 
-        const instance = await state.instances[state.contractName];
-        const method = await instance[state.methodName];
-        const result = await method(
-            state.methodArgs,
-            state.methodOptions
-        );
+        // to is either the contract addy or name
+        const to = state.methodOptions.to ? state.methodOptions.to : state.contractName;
 
-        if (state.methodName !== 'deploy') {
-            cli.json(result, "result");
+        cli.info(`running ${to}.${state.methodName}`);
+
+        const interface = await state.interfaces[to];
+        if (!interface) {
+
+            cli.error(`contract ${to} not found`);
+            
+        } else {
+
+            const method = await interface[state.methodName];
+            const result = await method(
+                state.methodArgs,
+                state.methodOptions
+            );
+
+            if (state.methodName !== 'deploy') {
+                cli.json(result, "result");
+            }
+
+            await this.save(state);
+
         }
 
-        await this.save(state);
+        
         network.destroyWeb3(state);
+
     }
 
 };
@@ -67,21 +91,19 @@ const getDeployment = async (networkName) => {
 
 };
 
-const resolveInstance = async (instances, name, state) => {
+const resolveInterface = async (interfaces, name, state) => {
 
-    // if we have the instance, just return it
-    if (name in instances) {
-        return instances[name];
+    // if we have the interface, just return it
+    if (name in interfaces) {
+        return interfaces[name];
     }
 
     // if we have a contract name or address, look up the deployment
-    const instance = await resolveStringInstance(name, state);
-    instances[name] = instance;
-    return instance;
+    return await resolveStringInterface(name, state);
 
 };
 
-const resolveStringInstance = async (name, state) => {
+const resolveStringInterface = async (name, state) => {
 
     const isAddress = name.startsWith('0x');
     const { contractName, deploymentRelease } = resolveContractNameAndDeploymentRelease(name, isAddress, state);
@@ -96,9 +118,9 @@ const resolveStringInstance = async (name, state) => {
         return null;
     }
 
-    const web3Instance = await resolveWeb3Instance(contract, deploymentRelease, state);
-    // get proxy instance
-    return getInstance(web3Instance, contract, state);
+    const web3Result = await resolveWeb3Result(contract, deploymentRelease, state);
+    // get proxy interface
+    return getInterface(name, web3Result, contract, state);
 
 };
 
@@ -177,109 +199,110 @@ const resolveContract = async (contractName, deploymentRelease, state) => {
 
 };
 
-const resolveWeb3Instance = async (contract, deploymentRelease, state) => {
+const resolveWeb3Result = async (contract, deploymentRelease, state) => {
+
+    const web3Result = {};
 
     if (deploymentRelease) {
 
         // resurrect deployment receipt
         if (deploymentRelease.transactionHash) {
-            state.receipts[deploymentRelease.transactionHash]
-                = await state.web3.eth.getTransactionReceipt(deploymentRelease.transactionHash);
+            web3Result.receipt = await state.web3.eth.getTransactionReceipt(deploymentRelease.transactionHash);
         }
 
         // get web3 attached to addy
-        return new state.web3.eth.Contract(contract.abi, deploymentRelease.address);
+        web3Result.instance = new state.web3.eth.Contract(contract.abi, deploymentRelease.address);
+
+    } else {
+
+        web3Result.instance = new state.web3.eth.Contract(contract.abi);
 
     }
-
-    // get web3
-    return new state.web3.eth.Contract(contract.abi);
+    
+    return web3Result;
 
 };
 
-const getInstance = (web3Instance, contract, state) => {
-    // create instance proxy
-    return new Proxy(web3Instance, {
-        get: async (target, name) => {
+const getInterface = (interfaceName, web3Result, contract, state) => {
+    
+    // create interface proxy
+    const interface = new Proxy(web3Result, {
+        get: (target, name) => {
 
-            // ignore cascading desires to fufill proxy
+            // ignore cascading desires to fulfill proxy
             if (name === 'then') {
                 return this;
             }
 
-            const isDeploy = (name === 'deploy');
-            return await resolveInstanceMethod(name, isDeploy, target, contract, state);
+            // if asking for receipt, return it
+            if (name === 'receipt') {
+                return web3Result.receipt;
+            }
+
+            return resolveInterfaceMethod(name, target.instance, contract, state);
 
         }
     });
+
+    // cache the interface
+    state.interfaces[interfaceName] = interface;
+    return interface;
+
 };
 
-const resolveInstanceMethod = async (methodName, isDeploy, web3Instance, contract, state) => {
+const resolveInterfaceMethod = (methodName, web3Instance, contract, state) => {
 
+    const isConstructor = methodName === 'deploy';
+    const isFallback = methodName === 'fallback';
     // if we are deploying, override contract to latest (ignoring releases)
-    if (isDeploy) {
+    if (isConstructor) {
         contract = state.contracts[contract.name];
     }
 
-    // how we finish this
-    const finish = async (args, options) => {
-        return await runWeb3Method(methodName, args, options, web3Instance, contract, state);
-    }
+    return async (methodArgs, methodOptions) => {
 
-    // see if we have middleware (through interfaces)
-    const interface = state.interfaces[contract.name];
-    // check for the method in middleware
-    if (interface && (methodName in interface)) {
+        if (!methodOptions) {
+            methodOptions = methodArgs;
+        }
 
-        const method = interface[methodName];
-        // check for a method interface action
-        if (typeof method === 'function') {
-            return await method(contract, finish);
-        } else if (typeof method === 'object') {
-            return await method.action(contract, finish);
+        // see if we transact and then delete this non-standard option
+        const transact = methodOptions.transact;
+        delete methodOptions.transact;
+        
+        // massage the args
+        const contractArgs = contract.methods[methodName];
+        const web3Args = getWeb3Args(methodArgs, contractArgs);
+
+        // run proper web3 method
+        if (isConstructor) {
+            return await runWeb3Deploy(contract, web3Args, methodOptions, web3Instance, state);
+        } else if (isFallback) {
+            return await runWeb3Fallback(web3Args, methodOptions, web3Instance, state);
+        } else if (transact) {
+            return await runWeb3Transaction(methodName, web3Args, methodOptions, web3Instance, state);
+        } else {
+            return await runWeb3Call(methodName, web3Args, methodOptions, web3Instance);
         }
 
     }
 
-    // fall to web3 method
-    return await finish;
-
 }
 
+const getWeb3Args = (methodArgs, contractArgs) => {
 
-const runWeb3Method = async (
-    methodName,
-    args,
-    options,
-    web3Instance,
-    contract,
-    state
-) => {
-
-    // see if we transact and then delete this non-standard option
-    const transact = options.transact;
-    delete options.transact;
-    // massage the args
-    const contractArgs = contract.methods[methodName];
-    const web3Args = getWeb3Args(args, contractArgs);
-
-    // run proper web3 method
-    if (methodName == 'deploy') {
-        return await runWeb3Deploy(contract, web3Args, options, web3Instance, state);
-    } else if (transact) {
-        return await runWeb3Transaction(methodName, web3Args, options, web3Instance, state);
-    } else {
-        return await runWeb3Call(methodName, web3Args, options, web3Instance);
+    // if we only have a single contract arg,
+    // return the first element of method args
+    if (contractArgs.length == 1) {
+        const name = Object.keys(methodArgs)[0];
+        return [ methodArgs[name] ];
     }
 
-};
-
-const getWeb3Args = (methodArgs, contractArgs) => {
     const preparedArgs = [];
     for (let contractArg of contractArgs) {
         const methodArg = contractArg.substr(1);
         preparedArgs.push(methodArgs[methodArg]);
     }
+
     return preparedArgs;
 };
 
@@ -293,8 +316,7 @@ const runWeb3Deploy = async (
 
     // network deploy
     const web3Result = await network.deploy(contract, web3Args, options, web3Instance, state);
-    // save the receipt
-    state.receipts[web3Result.receipt.transactionHash] = web3Result.receipt;
+    // get contract addy
     const contractAddress = web3Result.instance.options.address;
     // save to addresses as well (for easy lookup)
     state.deployment.addresses[contractAddress] = contract.name;
@@ -318,20 +340,22 @@ const runWeb3Deploy = async (
 
     // super weird, but because we have to return a proxy in a proxy to
     // override the parent proxy (trust me)
-    return new Proxy(web3Result.instance, {
-        get: async (target, name) => {
-
-            // ignore cascading desires to fufill proxy
-            if (name === 'then') {
-                return this;
-            }
-
-            return await resolveInstanceMethod(name, target, instance, contract, state);
-
-        }
-    });
+    return getInterface(contract.name, web3Result, contract, state);
 
 };
+
+const runWeb3Fallback = async (web3Args, options, web3Instance, state) => {
+
+    // fallback transaction
+    const web3Receipt = await network.sendFallback(
+        web3Instance,
+        options,
+        state
+    );
+
+    return web3Receipt;
+
+}
 
 const runWeb3Transaction = async (methodName, web3Args, options, web3Instance, state) => {
 
@@ -342,90 +366,72 @@ const runWeb3Transaction = async (methodName, web3Args, options, web3Instance, s
         state
     );
 
-    // save & return receipt
-    state.receipts[web3Receipt.transactionHash] = web3Receipt;
     return web3Receipt;
 
-}
-
-const runWeb3Call = async (methodName, web3Args, options, web3Instance) => {
-    const web3Result = await web3Instance.methods[methodName].apply(null, web3Args).call(options);
-    return getResult(web3Result);
 };
 
-const getResult = (web3Result) => {
+const runWeb3Call = async (methodName, web3Args, options, web3Instance) => {
+    const web3Return = await web3Instance.methods[methodName].apply(null, web3Args).call(options);
+    return getReturn(web3Return);
+};
+
+const getReturn = (web3Return) => {
     const result = {};
-    for (let name in web3Result) {
+    for (let name in web3Return) {
         if (name.startsWith('_')) {
-            result[name.substr(1)] = web3Result[name];
+            result[name.substr(1)] = web3Return[name];
         }
     }
     return result;
 };
 
 module.exports.prepare = async (program, state) => {
-    state.interfaces = await getInterfaces();
-    prepareCommands(program, state);
-};
-
-const getInterfaces = async () => {
-
-    const interfaces = [];
-    const interfaceFiles = await getInterfaceFiles();
-    for (let interfaceFile of interfaceFiles) {
-        const relativeInterfaceFile = path.relative(h.interfaceDir, interfaceFile);
-        const relativeInterfaceFileExtIndex = relativeInterfaceFile.indexOf('.' + h.jsExt);
-        const interfaceName = relativeInterfaceFile.substr(0, relativeInterfaceFileExtIndex);
-        const requireInterfaceFile = path.join('../', interfaceFile);
-        const interface = require(requireInterfaceFile);
-        interfaces[interfaceName] = interface;
-    }
-
-    return interfaces;
-
-};
-
-const getInterfaceFiles = async () => {
-    const interfaceFiles = await dir.promiseFiles(h.interfaceDir);
-    return interfaceFiles.filter(file => path.extname(file) == '.' + h.jsExt);
-};
-
-const prepareCommands = (program, state) => {
     for (let contractName in state.contracts) {
         const contract = state.contracts[contractName];
-        const interface = state.interfaces[contractName];
-        prepareCommand(program, contract, interface, state)
+        prepareCommand(program, contract, state)
     }
 };
 
-const prepareCommand = (program, contract, interface, state) => {
+const prepareCommand = (program, contract, state) => {
 
-    for (let methodName in contract.methods) {
+    for (let component of contract.abi) {
+
+        const isFunction = component.type === 'function';
+        const isConstructor = component.type === 'constructor';
+        const isFallback = component.type === 'fallback';
+        // skip non-functions and non-constructors and non-fallbacks
+        if (!isFunction && !isConstructor && !isFallback) {
+            continue;
+        }
+
+        let methodName;
+        if (isFunction) {
+            methodName = component.name;
+        } else if (isConstructor) {
+            methodName = 'deploy';
+        } else {
+            methodName = 'fallback';
+        }
 
         // set up command
-        const command = program
-            .command(contract.name + ':' + methodName  + ' [network]')
-            .option('--from <value>', 'from address')
-            .option('--to <value>', 'contract address')
-            .option('--value <value>', 'value')
-            .option('--gas <value>', 'gas')
-            .option('--gasPrice <value>', 'gas price')
-            .option('--transact', 'do a transaction');
+        const command = program.command(contract.name + ':' + methodName  + ' [network]');
 
-        // get args
-        const args = contract.methods[methodName];
-        // see if we have an interface for this command
-        const interfaceArgs = getInterfaceArgs(methodName, interface);
-        // get command options
-        const optionNames = prepareCommandOptions(command, args, interfaceArgs);
+        // add standard options
+        prepareCommandOptions(command, methodOptionOptions);
+
+        // add method arg options
+        const methodArgDefinitions = getMethodArgDefinitions(component.inputs);
+        const methodArgOptions = parser.getOptions(methodArgDefinitions);
+        prepareCommandOptions(command, methodArgOptions);
+
         // prepare action
         command.action((network, options, commander) => {
             this.main(Object.assign(state, {
                 networkName: network,
                 contractName: contract.name,
                 methodName,
-                methodArgs: getMethodArgs(options, optionNames),
-                methodOptions: getMethodOptions(options)
+                methodArgs: parser.getValues(options, methodArgOptions),
+                methodOptions: parser.getValues(options, methodOptionOptions)
             }));
         });
 
@@ -433,101 +439,24 @@ const prepareCommand = (program, contract, interface, state) => {
 
 };
 
-const getInterfaceArgs = (methodName, interface) => {
-
-    if (!interface) {
-        return [];
+const prepareCommandOptions = (command, options) => {
+    for (let option of options) {
+        command.option.apply(command, option.commander);
     }
-
-    const method = interface[methodName];
-    if (!method) {
-        return [];
-    }
-
-    if (typeof method === 'function') {
-        return [];
-    } else if (typeof method === 'object') {
-        return method.args;
-    }
-
-    return [];
-
 }
 
-const prepareCommandOptions = (command, args, interfaceArgs) => {
+const getMethodArgDefinitions = (inputs) => {
 
-    let propertyNames = [];
+    if (!inputs) {
+        return [];
+    }
 
+    let definitions = [];
     // add abi inputs
-    for (let arg of args) {
-        propertyNames.push(getPropertyName(arg));
-        command.option(getOptionName(arg));
+    for (let input of inputs) {
+        definitions.push([ input.name, true, input.type ]);
     }
 
-    // add additional interface args
-    for (let interfaceArg of interfaceArgs) {
-        // we support "name" and ["name", "description"]
-        if (typeof interfaceArg === 'string') {
-            propertyNames.push(getPropertyName(interfaceArg));
-            command.option(getOptionName(interfaceArg));
-        } else if (typeof interfaceArg === 'array') {
-            propertyNames.push(getPropertyName(interfaceArg[0]));
-            command.option(getOptionName(interfaceArg[0]), interfaceArg[1]);
-        }
-    }
-
-    return propertyNames;
+    return definitions;
 
 }
-
-const getPropertyName = (arg) => {
-    return arg.replace('_', '');
-}
-
-const getOptionName = (arg) => {
-    return arg.replace('_', '--') + '  <value>';
-}
-
-const getMethodArgs = (options, optionNames) => {
-
-    const args = {};
-    // move arguments out
-    for (let optionName of optionNames) {
-        args[optionName] = options[optionName];
-    }
-
-    return args;
-
-}
-
-const getMethodOptions = (options) => {
-
-    const methodOptions = {};
-
-    if (options.from) {
-        methodOptions.from = options.from;
-    }
-
-    if (options.to) {
-        methodOptions.from = options.to;
-    }
-
-    if (options.value) {
-        methodOptions.from = options.value;
-    }
-
-    if (options.gas) {
-        methodOptions.from = options.gas;
-    }
-
-    if (options.gasPrice) {
-        methodOptions.from = options.gasPrice;
-    }
-
-    if (options.transact) {
-        methodOptions.transact = options.transact;
-    }
-
-    return methodOptions;
-
-};

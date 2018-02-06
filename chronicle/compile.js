@@ -314,13 +314,15 @@ const getContractMethodArgs = (component) => {
         return [];
     }
 
+    let index = 0;
     const args = [];
     for (let input of component.inputs) {
         if (input.name === "") {
-            args.push("_value");
+            args.push('_' + index++);
         } else {
             args.push(input.name);
         }
+        
     }
 
     return args;

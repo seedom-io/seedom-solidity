@@ -1,11 +1,9 @@
 const ch = require('../chronicle/helper');
-const sh = require('../stage/helper');
+const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
-const parity = require('../chronicle/parity');
-const network = require('../chronicle/network');
-const instantiate = require('../stage/instantiate');
-const seed = require('../stage/seed');
-const participate = require('../stage/participate');
+const seed = require('../script/simulation/seed');
+const instantiate = require('../script/simulation/instantiate');
+const participate = require('../script/simulation/participate');
 
 suite('participate', (state) => {
 
@@ -17,36 +15,33 @@ suite('participate', (state) => {
             initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
-        await participate.stage(state);
+        await participate.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
 
         // validate every participant
-        for (let i = 0; i < stage.participantsCount; i++) {
+        for (let participant of env.participants) {
 
-            const participant = stage.participants[i];
-            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
-            const actualEntries = actualParticipant[0];
-            const actualHashedRandom = actualParticipant[1];
-            const actualRandom = actualParticipant[2];
+            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+                address: participant.address
+            }, { from: participant.address });
 
-            assert.equal(actualEntries, 0, "entries should be zero");
-            assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
-            assert.equal(actualRandom, 0, "random should be zero");
+            assert.equal(actualParticipant.entries, 0, "entries should be zero");
+            assert.equal(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
+            assert.equal(actualParticipant.random, 0, "random should be zero");
 
-            const participationReceipt = stage.participationReceipts[i];
-            const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
-            const participationBalance = initialBalances[participant.address].minus(participationTransactionCost);
+            const participateTransactionCost = await sh.getTransactionCost(participant.participateReceipt.gasUsed, state.web3);
+            const participationBalance = initialBalances[participant.address].minus(participateTransactionCost);
             const finalBalance = await sh.getBalance(participant.address, state.web3);
             assert.equal(finalBalance.toString(), participationBalance.toString(), "balance not expected for " + participant.address);
 
         }
 
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        assert.equal(actualState._totalEntries, 0, "total entries should be zero");
-        assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
-        assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
-        assert.equal(actualState._totalRevealers, 0, "total revealers not zero");
+        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        assert.equal(actualState.totalEntries, 0, "total entries should be zero");
+        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
+        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
 
     });
 
@@ -58,152 +53,156 @@ suite('participate', (state) => {
             initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
-        const stage = state.stage;
+        const { env } = state;
         // raise at refund generating amount
-        stage.participationWei = 10500;
+        env.participateRaise = 10500;
 
-        await participate.stage(state);
+        await participate.run(state);
 
         // validate every participant
-        for (let i = 0; i < stage.participantsCount; i++) {
+        for (let participant of env.participants) {
 
-            const participant = stage.participants[i];
-            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
-            const actualEntries = actualParticipant[0];
-            const actualHashedRandom = actualParticipant[1];
-            const actualRandom = actualParticipant[2];
+            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+                address: participant.address
+            }, { from: participant.address });
 
-            assert.equal(actualEntries, 10, "entries should be correct");
-            assert.equal(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
-            assert.equal(actualRandom, 0, "random should be zero");
+            assert.equal(actualParticipant.entries, 10, "entries should be correct");
+            assert.equal(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
+            assert.equal(actualParticipant.random, 0, "random should be zero");
 
-            const participationReceipt = stage.participationReceipts[i];
-            const participationTransactionCost = await sh.getTransactionCost(participationReceipt.gasUsed, state.web3);
+            const participateTransactionCost = await sh.getTransactionCost(participant.participateReceipt.gasUsed, state.web3);
             // participant should be refunded 500 (partial entry) in transaction for a net loss of 10000
-            const participationBalance = initialBalances[participant.address].minus(participationTransactionCost).minus(10000);
+            const participationBalance = initialBalances[participant.address].minus(participateTransactionCost).minus(10000);
             const finalBalance = await sh.getBalance(participant.address, state.web3);
             assert.equal(finalBalance.toString(), participationBalance.toString(), "balance not expected for " + participant.address);
 
         }
 
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        const entries = stage.participantsCount * 10;
-        assert.equal(actualState._totalEntries, entries, "total entries should be zero");
-        assert.equal(actualState._totalRevealed, 0, "total revealed not zero");
-        assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
-        assert.equal(actualState._totalRevealers, 0, "total revealers not zero");
+        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const entries = env.participantsCount * 10;
+        assert.equal(actualState.totalEntries, entries, "total entries should be zero");
+        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
+        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
 
     });
 
     test("reject participation if over max participants", async () => {
 
-        await participate.stage(state);
+        await participate.run(state);
         
-        const stage = state.stage;
+        const { env } = state;
         // get last participant that is never used otherwise
         const participant = state.accountAddresses[8];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
         
-        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
     });
 
     test("should fail participation without seed", async () => {
 
-        await instantiate.stage(state);
+        await instantiate.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const participant = state.accountAddresses[2];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
     });
 
     test("should reject participation after participation phase", async () => {
 
-        await seed.stage(state);
+        await seed.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const now = ch.timestamp();
-        const revealTime = stage.revealTime;
-        await cli.progress("waiting for reveal phase", revealTime - now);
+        await cli.progress("waiting for reveal phase", env.revealTime - now);
 
         const participant = state.accountAddresses[2];
         const random = sh.random();
         const hashedRandom = sh.hashedRandom(random, participant);
 
-        method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
     });
 
     test("should fail owner participation after seed", async () => {
 
-        await seed.stage(state);
+        await seed.run(state);
         
-        const stage = state.stage;
+        const { env } = state;
         const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, stage.owner);
+        const hashedRandom = sh.hashedRandom(random, env.owner);
 
-        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: stage.owner }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: env.owner, transact: true })
         );
 
     });
 
     test("should reject multiple participation from same address after seed", async () => {
 
-        await seed.stage(state);
+        await seed.run(state);
         
-        const stage = state.stage;
+        const { env } = state;
         const participant = state.accountAddresses[2];
         let random = sh.random();
         let hashedRandom = sh.hashedRandom(random, participant);
 
-        let method = stage.seedom.methods.participate(hashedRandom);
         await assert.isFulfilled(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
-        method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
         // generate a new random just for fun
         random = sh.random();
         hashedRandom = sh.hashedRandom(random, participant);
 
-        method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
     });
 
     test("reject participation of bad hashed randoms after seed", async () => {
 
-        await seed.stage(state);
+        await seed.run(state);
         
-        const stage = state.stage;
+        const { env } = state;
         const participant = state.accountAddresses[2];
         const hashedRandom = '0x0000000000000000000000000000000000000000000000000000000000000000';
         
-        const method = stage.seedom.methods.participate(hashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, transact: true })
         );
 
     });

@@ -12,7 +12,6 @@ const defaults = {
 
 module.exports.main = async (state) => {
 
-    // now stage
     cli.section("Network");
 
     // if no network specified, default to localhost
@@ -159,7 +158,7 @@ module.exports.deploy = async (contract, args, options, web3Instance, state) => 
     web3Result.instance.setProvider(state.web3.currentProvider);
 
     const contractAddress = web3Result.instance.options.address;
-    cli.success("'%s' contract deployed to %s", contract.name, contractAddress);
+    cli.info("'%s' contract deployed to %s", contract.name, contractAddress);
     return web3Result;
 
 }

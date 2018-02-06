@@ -1,70 +1,67 @@
 const ch = require('../chronicle/helper');
-const sh = require('../stage/helper');
+const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
-const parity = require('../chronicle/parity');
-const network = require('../chronicle/network');
-const instantiate = require('../stage/instantiate');
-const seed = require('../stage/seed');
-const participate = require('../stage/participate');
-const raise = require('../stage/raise');
-const reveal = require('../stage/reveal');
+const instantiate = require('../script/simulation/instantiate');
+const seed = require('../script/simulation/seed');
+const participate = require('../script/simulation/participate');
+const raise = require('../script/simulation/raise');
+const reveal = require('../script/simulation/reveal');
 
 suite('reveal', (state) => {
 
     test("should allow revelation after participation", async () => {
 
         // first reveal
-        await reveal.stage(state);
+        await reveal.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
 
-        for (let participant of stage.participants) {
+        for (let participant of env.participants) {
 
-            const actualParticipant = await stage.seedom.methods.participantsMapping(participant.address).call({ from: participant.address });
-            const actualEntries = actualParticipant[0];
-            const actualHashedRandom = actualParticipant[1];
-            const actualRandom = state.web3.utils.toHex(actualParticipant[2]);
+            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+                address: participant.address
+            }, { from: participant.address });
 
-            assert.equal(actualEntries, 10, "entries should be correct");
-            assert.equalIgnoreCase(actualHashedRandom, participant.hashedRandom, "hashed random does not match");
-            assert.equal(actualRandom, participant.random, "random should be set");
+            assert.equal(actualParticipant.entries, 10, "entries should be correct");
+            assert.equalIgnoreCase(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
+            assert.equal(state.web3.utils.toHex(actualParticipant.random), participant.random, "random should be set");
 
         }
 
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        const totalEntries = stage.participantsCount * 10;
-        assert.equal(actualState._totalEntries, totalEntries, "total entries should be correct");
-        assert.equal(actualState._totalRevealed, totalEntries, "total revealed not correct");
-        assert.equal(actualState._totalParticipants, stage.participantsCount, "total participants incorrect");
-        assert.equal(actualState._totalRevealers, stage.participantsCount, "total revealers incorrect");
+        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+
+        const totalEntries = env.participantsCount * 10;
+        assert.equal(actualState.totalEntries, totalEntries, "total entries should be correct");
+        assert.equal(actualState.totalRevealed, totalEntries, "total revealed not correct");
+        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.totalRevealers, env.participantsCount, "total revealers incorrect");
 
     });
 
     test("should reject random revelations of zero", async () => {
 
         // first seed
-        await seed.stage(state);
+        await seed.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
+
         const participant = state.accountAddresses[2];
         const random = '0';
         const hashedRandom = sh.hashedRandom(random, participant);
         
-        let method = stage.seedom.methods.participate(hashedRandom);
         await assert.isFulfilled(
-            network.sendMethod(method, {
-                from: participant,
-                value: 10000
-            }, state)
+            (await state.interfaces.seedom).participate({
+                hashedRandom
+            }, { from: participant, value: 10000, transact: true })
         );
 
         now = ch.timestamp();
-        const revealTime = stage.revealTime;
-        await cli.progress("waiting for reveal phase", revealTime - now);
+        await cli.progress("waiting for reveal phase", env.revealTime - now);
 
-        method = stage.seedom.methods.reveal('0x00000000000000000000000000000000000000000000000000000000000000');
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).reveal({
+                random: '0x00000000000000000000000000000000000000000000000000000000000000'
+            }, { from: participant, value: 10000, transact: true })
         );
 
     });
@@ -72,21 +69,24 @@ suite('reveal', (state) => {
     test("should reject multiple revelations from same address", async () => {
         
         // first raise
-        await raise.stage(state);
+        await raise.run(state);
         
-        const stage = state.stage;
-        const participant = stage.participants[0];
-        const now = ch.timestamp();
-        const revealTime = stage.revealTime;
-        await cli.progress("waiting for reveal phase", revealTime - now);
+        const { env } = state;
 
-        const method = stage.seedom.methods.reveal(participant.random);
+        const participant = env.participants[0];
+        const now = ch.timestamp();
+        await cli.progress("waiting for reveal phase", env.revealTime - now);
+
         await assert.isFulfilled(
-            network.sendMethod(method, { from: participant.address }, state)
+            (await state.interfaces.seedom).reveal({
+                random: participant.random
+            }, { from: participant.address, transact: true })
         );
 
         await assert.isRejected(
-            network.sendMethod(method, { from: participant.address }, state)
+            (await state.interfaces.seedom).reveal({
+                random: participant.random
+            }, { from: participant.address, transact: true })
         );
 
     });
@@ -94,17 +94,18 @@ suite('reveal', (state) => {
     test("should reject revelations without raising", async () => {
         
         // first participate
-        await participate.stage(state);
+        await participate.run(state);
 
-        const stage = state.stage;
-        const participant = stage.participants[0];
+        const { env } = state;
+        
+        const participant = env.participants[0];
         const now = ch.timestamp();
-        const revealTime = stage.revealTime;
-        await cli.progress("waiting for reveal phase", revealTime - now);
+        await cli.progress("waiting for reveal phase", env.revealTime - now);
 
-        const method = stage.seedom.methods.reveal(participant.random);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant.address }, state)
+            (await state.interfaces.seedom).reveal({
+                random: participant.random
+            }, { from: participant.address, transact: true })
         );
 
     });
@@ -112,18 +113,19 @@ suite('reveal', (state) => {
     test("should reject incorrect randoms", async () => {
         
         // first raise
-        await raise.stage(state);
+        await raise.run(state);
         
-        const stage = state.stage;
-        const participant = stage.participants[0];
+        const { env } = state;
+        
+        const participant = env.participants[0];
         const now = ch.timestamp();
-        const revealTime = stage.revealTime;
-        await cli.progress("waiting for reveal phase", revealTime - now);
+        await cli.progress("waiting for reveal phase", env.revealTime - now);
 
         const incorrectRandom = sh.random();
-        const method = stage.seedom.methods.reveal(incorrectRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant.address }, state)
+            (await state.interfaces.seedom).reveal({
+                random: incorrectRandom
+            }, { from: participant.address, transact: true })
         );
 
     });
@@ -131,22 +133,25 @@ suite('reveal', (state) => {
     test("should reject revelations before and after revelation period", async () => {
 
         // first raise
-        await raise.stage(state);
+        await raise.run(state);
         
-        const stage = state.stage;
-        const participant = stage.participants[0];
+        const { env } = state;
 
-        const method = stage.seedom.methods.reveal(participant.random);
+        const participant = env.participants[0];
+
         await assert.isRejected(
-            network.sendMethod(method, { from: participant.address }, state)
+            (await state.interfaces.seedom).reveal({
+                random: participant.random
+            }, { from: participant.address, transact: true })
         );
 
         const now = ch.timestamp();
-        const endTime = stage.endTime;
-        await cli.progress("waiting for end phase", endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            network.sendMethod(method, { from: participant.address }, state)
+            (await state.interfaces.seedom).reveal({
+                random: participant.random
+            }, { from: participant.address, transact: true })
         );
 
     });

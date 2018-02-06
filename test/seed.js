@@ -1,59 +1,63 @@
 const ch = require('../chronicle/helper');
-const sh = require('../stage/helper');
+const sh = require('../script/helper');
 const parity = require('../chronicle/parity');
-const instantiate = require('../stage/instantiate');
+const instantiate = require('../script/simulation/instantiate');
 const network = require('../chronicle/network');
 
 suite('seed', (state) => {
 
     test("should seed properly from charity", async () => {
 
-        await instantiate.stage(state);
+        await instantiate.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
 
-        const actualRaiser = await stage.seedom.methods.raiser().call({ from: stage.owner });
-        assert.equalIgnoreCase(actualRaiser._charity, stage.charity, "charity does not match");
+        const actualRaiser = await (await state.interfaces.seedom).raiser({ from: env.owner });
+        assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
 
         const charityRandom = sh.random();
-        const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
-        const method = stage.seedom.methods.seed(charityHashedRandom);
+        const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
+
         await assert.isFulfilled(
-            network.sendMethod(method, { from: stage.charity }, state)
+            (await state.interfaces.seedom).seed({
+                charityHashedRandom
+            }, { from: env.charity, transact: true })
         );
 
-        const actualState = await stage.seedom.methods.state().call({ from: stage.owner });
-        assert.equal(actualState._charityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
+        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        assert.equal(actualState.charityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
 
     });
 
     test("should reject seed from owner", async () => {
         
-        await instantiate.stage(state);
+        await instantiate.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const charityRandom = sh.random();
-        const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
+        const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
 
-        const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: stage.owner }, state)
+            (await state.interfaces.seedom).seed({
+                charityHashedRandom
+            }, { from: env.owner, transact: true })
         );
 
     });
 
     test("should reject seed from participant", async () => {
         
-        await instantiate.stage(state);
+        await instantiate.run(state);
 
-        const stage = state.stage;
+        const { env } = state;
         const charityRandom = sh.random();
-        const charityHashedRandom = sh.hashedRandom(charityRandom, stage.charity);
+        const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
         const participant = state.accountAddresses[2];
 
-        const method = stage.seedom.methods.seed(charityHashedRandom);
         await assert.isRejected(
-            network.sendMethod(method, { from: participant }, state)
+            (await state.interfaces.seedom).seed({
+                charityHashedRandom
+            }, { from: participant, transact: true })
         );
 
     });

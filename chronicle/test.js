@@ -5,10 +5,9 @@ const path = require("path");
 const fs = require('mz/fs');
 const readline = require('mz/readline');
 const h = require('./helper');
-const compile = require('./compile');
+const interface = require('./interface');
 const parity = require('./parity');
 const cli = require('./cli');
-const stager = require('./stager');
 const Mocha = require('mocha');
 
 global.chai = require('chai');
@@ -20,16 +19,11 @@ const testTimeout = 100000;
 
 module.exports.main = async (state) => {
 
-    // compile first
-    await compile.main(state);
-
-    // get parity state
-    if (!(await parity.main(state))) {
-        return false;
-    }
+    // first interface
+    await interface.main(state);
 
     // now test
-    cli.section("test");
+    cli.section("Test");
 
     // set up suite against state
     setupSuite(state);
@@ -39,8 +33,6 @@ module.exports.main = async (state) => {
     const mocha = createMocha(testFiles);
     await promiseRun(mocha);
 
-    return state;
-
 }
 
 const setupSuite = (state) => {
@@ -49,8 +41,8 @@ const setupSuite = (state) => {
         Mocha.describe(name, function() {
 
             beforeEach('reset', async () => {
-                // clear the stage before each test
-                state.stage = {};
+                // clear the script env before each test
+                state.env = {};
             });
 
             tests(state);

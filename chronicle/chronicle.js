@@ -3,7 +3,7 @@
 const program = require('commander');
 const cli = require('./cli');
 const compile = require('./compile');
-const stages = require('./stage');
+const script = require('./script');
 const network = require('./network');
 const interface = require('./interface');
 const wtfnode = require('wtfnode');
@@ -48,21 +48,20 @@ compile.prepare(program, state).then(() => {
             }));
         });
 
-    /*program
+    program
         .command('test [suites...]')
         .alias('t')
-        .description("test chronicle")
+        .description("run tests")
         .action((suites) => {
             main('test', Object.assign(state, {
                 suiteNames: suites
             }));
-        });*/
+        });
 
     interface.prepare(program, state).then(() => {
-        program.parse(process.argv);
-        /*stage.prepare(program).then(() => {
+        script.prepare(program, state).then(() => {
             program.parse(process.argv);
-        });*/
+        });
     });
 
 });

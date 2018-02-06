@@ -127,6 +127,8 @@ contract Seedom {
         );
     }
 
+    bool[2][] public m_pairsOfFlags;
+
     function state() public view returns (
         bytes32 _charityHashedRandom,
         address _winner,
@@ -149,16 +151,16 @@ contract Seedom {
 
     // Used by the charity to officially begin their raiser. The charity supplies the first hashed
     // random, which is kept secret and revealed by the charity in end().
-    function seed(bytes32 _hashedRandom) public onlyCharity {
+    function seed(bytes32 _charityHashedRandom) public onlyCharity {
         require(now < raiser._revealTime); // before the reveal
         require(winner == address(0)); // no winner
         require(!cancelled); // cannot seed cancelled raiser
         require(charityHashedRandom == 0x0); // safety check
-        require(_hashedRandom != 0x0); // hashed random cannot be zero
+        require(_charityHashedRandom != 0x0); // hashed random cannot be zero
 
-        charityHashedRandom = _hashedRandom;
+        charityHashedRandom = _charityHashedRandom;
         // broadcast seed
-        Seed(_hashedRandom);
+        Seed(_charityHashedRandom);
     }
 
     // Participate in this raiser by contributing randomness to the global selection of a winner.
