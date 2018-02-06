@@ -95,7 +95,7 @@ const prepareCommands = (program, state) => {
 const prepareCommand = (program, script, state) => {
 
     const command = program
-        .command('script:' + script.name + ' [network]')
+        .command(`script:${script.name} [network]`)
         .option('--forget', "forget network deployment");
 
     // get script options

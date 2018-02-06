@@ -127,8 +127,6 @@ contract Seedom {
         );
     }
 
-    bool[2][] public m_pairsOfFlags;
-
     function state() public view returns (
         bytes32 _charityHashedRandom,
         address _winner,

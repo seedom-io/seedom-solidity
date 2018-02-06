@@ -20,56 +20,54 @@ const tab = '  ';
 let section = false;
 let subsection = false;
 
-module.exports.log = (text, ...params) => {
-    params = normalize(params);
-    let args = params ? [text].concat(params) : [text];
-    console.log.apply(null, args);
+module.exports.log = (text) => {
+    console.log(text);
 }
 
-module.exports.logo = (text, ...params) => {
-    this.log(figlet.textSync(text), normalize(params));
+module.exports.logo = (text) => {
+    this.log(figlet.textSync(text));
 }
 
-module.exports.section = (text, ...params) => {
-    this.log((section ? '\n' : '') + tab + text + ':' + '\n', normalize(params));
+module.exports.section = (text) => {
+    this.log((section ? '\n' : '') + tab + text + ':' + '\n');
     section = true;
 }
 
-module.exports.subsection = (text, ...params) => {
-    this.log((subsection ? '\n' : '') + tab + clc.underline(text) + '\n', normalize(params));
+module.exports.subsection = (text) => {
+    this.log((subsection ? '\n' : '') + tab + clc.underline(text) + '\n');
     subsection = true;
 }
 
-module.exports.item = (symbol, text, ...params) => {
-    this.log(tab + tab + symbol + tab + text, normalize(params));
+module.exports.item = (symbol, text) => {
+    this.log(tab + tab + symbol + tab + text);
 }
 
-module.exports.subitem = (text, ...params) => {
-    this.log(tab + tab + ' ' + tab + text, normalize(params));
+module.exports.subitem = (text) => {
+    this.log(tab + tab + ' ' + tab + text);
 }
 
-module.exports.message = (text, ...params) => {
-    this.log(tab + text, normalize(params));
+module.exports.message = (text) => {
+    this.log(tab + text);
 }
 
-module.exports.success = (text, ...params) => {
-    this.item(ls.success, clc.green(text), normalize(params));
+module.exports.success = (text) => {
+    this.item(ls.success, clc.green(text));
 }
 
-module.exports.warning = (text, ...params) => {
-    this.item(ls.warning, clc.yellow(text), normalize(params));
+module.exports.warning = (text) => {
+    this.item(ls.warning, clc.yellow(text));
 }
 
-module.exports.info = (text, ...params) => {
-    this.item(ls.info, clc.yellow(text), normalize(params));
+module.exports.info = (text) => {
+    this.item(ls.info, clc.yellow(text));
 }
 
-module.exports.error = (text, ...params) => {
-    this.item(ls.error, clc.red(text), normalize(params));
+module.exports.error = (text) => {
+    this.item(ls.error, clc.red(text));
 }
 
-module.exports.important = (text, ...params) => {
-    this.message(clc.bold.blue.bgRed(text), normalize(params));
+module.exports.important = (text) => {
+    this.message(clc.bold.blue.bgRed(text));
 }
 
 module.exports.pass = (name) => {
@@ -77,7 +75,7 @@ module.exports.pass = (name) => {
 }
 
 module.exports.suite = (name) => {
-    this.subsection("suite:%s", name);
+    this.subsection(`suite:${name}`);
 }
 
 module.exports.fail = (name, error) => {
@@ -106,7 +104,7 @@ module.exports.progress = (text, seconds) => {
 
 }
 
-module.exports.json = (obj, text, ...params) => {
+module.exports.json = (obj, text) => {
     this.log(prettyjson.render({"": obj}, { defaultIndentation: 7 }));
     this.log('');
 }

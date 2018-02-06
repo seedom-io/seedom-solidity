@@ -10,6 +10,7 @@ module.exports.run = async (state) => {
     await seed.run(state);
 
     const { env } = state;
+    const seedom = await state.interfaces.seedom;
 
     const raise = env.participateRaise ? env.participateRaise : 0;
     
@@ -20,7 +21,7 @@ module.exports.run = async (state) => {
         const random = h.random();
         const hashedRandom = h.hashedRandom(random, address);
 
-        const receipt = await (await state.interfaces.seedom).participate({
+        const receipt = await seedom.participate({
             hashedRandom
         }, { from: address, value: raise, transact: true });
 

@@ -294,7 +294,7 @@ const createAccounts = async (state) => {
             recovery, state.network.password
         ], state);
 
-        cli.success("created network account %s", address);
+        cli.success(`created network account ${address}`);
         addresses.push(address);
 
     }
@@ -306,6 +306,6 @@ const createAccounts = async (state) => {
 
 const createAuthorizationToken = async (state) => {
     const authorizationToken = await network.callProvider('signer_generateAuthorizationToken', [], state);
-    cli.success("created authorization token %s", authorizationToken);
+    cli.success(`created authorization token ${authorizationToken}`);
     return authorizationToken;
 }

@@ -37,7 +37,7 @@ module.exports.main = async (state) => {
         }
     });
 
-    cli.success('interfaces prepared');
+    cli.success("interfaces prepared");
 
     // check for a contract & method
     if (state.methodName) {
@@ -414,7 +414,7 @@ const prepareCommand = (program, contract, state) => {
         }
 
         // set up command
-        const command = program.command(contract.name + ':' + methodName  + ' [network]');
+        const command = program.command(`${contract.name}:${methodName} [network]`);
 
         // add standard options
         prepareCommandOptions(command, methodOptionOptions);

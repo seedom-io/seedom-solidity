@@ -1,9 +1,9 @@
 const ch = require('../chronicle/helper');
-const sh = require('../stage/helper');
+const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
 const network = require('../chronicle/network');
-const raise = require('../stage/raise');
-const end = require('../stage/end');
+const raise = require('../script/simulation/raise');
+const end = require('../script/simulation/end');
 const BigNumber = require('bignumber.js');
 
 suite('destroy', (state) => {
@@ -14,12 +14,13 @@ suite('destroy', (state) => {
         await raise.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         // get initial owner balance after raise
         const initialOwnerBalance = await sh.getBalance(env.owner, state.web3);
 
         // get contract balance after raise
-        const contractAddress = env.seedom.options.address;
+        const contractAddress = seedom.receipt.contractAddress;
         const initialContractBalance = await sh.getBalance(contractAddress, state.web3);
 
         // ensure expected initial contract balance
@@ -27,12 +28,10 @@ suite('destroy', (state) => {
         assert.equal(initialContractBalance.toString(), expectedInitialContractBalance.toString(), "initial contract balance does not match expected");
 
         const now = ch.timestamp();
-        const destructTime = env.destructTime;
-        await cli.progress("waiting for destruct time", destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now);
 
         // destroy contract
-        await (await state.interfaces.seedom).destroy();
-        const destroyReceipt = await network.sendMethod(method, { from: env.owner }, state);
+        const destroyReceipt = await seedom.destroy({ from: env.owner, transact: true });
         const destroyTransactionCost = await sh.getTransactionCost(destroyReceipt.gasUsed, state.web3);
 
         // ensure expected final contract balance
@@ -47,13 +46,9 @@ suite('destroy', (state) => {
     });
 
     const testDestroyFail = async (account) => {
-        
-        const { env } = state;
-        await (await state.interfaces.seedom).destroy();
         await assert.isRejected(
-            network.sendMethod(method, { from: account }, state)
+            (await state.interfaces.seedom).destroy({ from: account, transact: true })
         );
-
     };
 
     test("should reject destroy (by owner) after expire", async () => {
@@ -62,9 +57,10 @@ suite('destroy', (state) => {
         await end.run(state);
 
         const { env } = state;
+
         const now = ch.timestamp();
-        const expireTime = env.expireTime;
-        await cli.progress("waiting for expiration time", expireTime - now);
+        await cli.progress("waiting for expiration time", env.expireTime - now);
+
         await testDestroyFail(env.owner);
 
     });
@@ -75,9 +71,10 @@ suite('destroy', (state) => {
         await end.run(state);
 
         const { env } = state;
+
         const now = ch.timestamp();
-        const destructTime = env.destructTime;
-        await cli.progress("waiting for destruct time", destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now);
+
         await testDestroyFail(env.charity);
 
     });
@@ -88,9 +85,10 @@ suite('destroy', (state) => {
         await end.run(state);
 
         const { env } = state;
+
         const now = ch.timestamp();
-        const destructTime = env.destructTime;
-        await cli.progress("waiting for destruct time", destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now);
+
         await testDestroyFail(env.participants[0].address);
 
     });

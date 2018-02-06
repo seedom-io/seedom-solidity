@@ -9,8 +9,9 @@ suite('instantiate', (state) => {
         await instantiate.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
         const now = ch.timestamp();
-        const actualRaiser = await (await state.interfaces.seedom).raiser({ from: env.owner });
+        const actualRaiser = await seedom.raiser({ from: env.owner });
         const actualInstantiateTimeDifference = actualRaiser.instantiateTime - now;
 
         assert.equalIgnoreCase(actualRaiser.owner, env.owner, "owner does not match");
@@ -26,7 +27,7 @@ suite('instantiate', (state) => {
         assert.equal(actualRaiser.destructTime, env.destructTime, "destruct time does not match");
         assert.equal(actualRaiser.maxParticipants, env.maxParticipants, "max participants does not match");
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
 
         assert.equal(actualState.charityHashedRandom, 0, "charity hashed random zero");
         assert.equal(actualState.winner, 0, "winner zero");
@@ -41,6 +42,8 @@ suite('instantiate', (state) => {
     test("should instantiate properly with no owner split and no max participants", async () => {
 
         const { env } = state;
+        let seedom = await state.interfaces.seedom;
+        
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
@@ -55,7 +58,7 @@ suite('instantiate', (state) => {
         const ownerSplit = 0;
         const maxParticipants = 0;
 
-        const seedom = await (await state.interfaces.seedom).deploy({
+        seedom = await seedom.deploy({
             charity,
             charitySplit,
             winnerSplit,

@@ -9,6 +9,7 @@ module.exports.run = async (state) => {
     await raise.run(state);
 
     const { env } = state;
+    const seedom = await state.interfaces.seedom;
     
     const now = ch.timestamp();
     await cli.progress("waiting for reveal phase", env.revealTime - now);
@@ -16,7 +17,7 @@ module.exports.run = async (state) => {
     // reveal original participants with their randoms
     for (let participant of env.participants) {
 
-        participant.revealReceipt = await (await state.interfaces.seedom).reveal({
+        participant.revealReceipt = await seedom.reveal({
             random: participant.random
         }, { from: participant.address, transact: true });
 

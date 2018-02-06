@@ -18,11 +18,12 @@ suite('participate', (state) => {
         await participate.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+            const actualParticipant = await seedom.participantsMapping({
                 address: participant.address
             }, { from: participant.address });
 
@@ -37,7 +38,7 @@ suite('participate', (state) => {
 
         }
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
         assert.equal(actualState.totalEntries, 0, "total entries should be zero");
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
@@ -54,15 +55,17 @@ suite('participate', (state) => {
         }
 
         const { env } = state;
+
         // raise at refund generating amount
         env.participateRaise = 10500;
-
         await participate.run(state);
+
+        const seedom = await state.interfaces.seedom;
 
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+            const actualParticipant = await seedom.participantsMapping({
                 address: participant.address
             }, { from: participant.address });
 
@@ -78,7 +81,7 @@ suite('participate', (state) => {
 
         }
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
         const entries = env.participantsCount * 10;
         assert.equal(actualState.totalEntries, entries, "total entries should be zero");
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
@@ -163,18 +166,19 @@ suite('participate', (state) => {
         await seed.run(state);
         
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
         const participant = state.accountAddresses[2];
         let random = sh.random();
         let hashedRandom = sh.hashedRandom(random, participant);
 
         await assert.isFulfilled(
-            (await state.interfaces.seedom).participate({
+            seedom.participate({
                 hashedRandom
             }, { from: participant, transact: true })
         );
 
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            seedom.participate({
                 hashedRandom
             }, { from: participant, transact: true })
         );
@@ -184,7 +188,7 @@ suite('participate', (state) => {
         hashedRandom = sh.hashedRandom(random, participant);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            seedom.participate({
                 hashedRandom
             }, { from: participant, transact: true })
         );

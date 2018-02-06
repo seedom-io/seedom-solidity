@@ -33,13 +33,13 @@ module.exports.getBalance = async (address, web3) => {
     const latestBlock = await web3.eth.getBlock('latest');
     const latestBlockNumber = latestBlock.number;
     const balance = await web3.eth.getBalance(address, latestBlockNumber);
-    cli.info("%s has a balance of %s (block %d)", address, balance, latestBlockNumber);
+    cli.info(`${address} has a balance of ${balance} (block ${latestBlockNumber})`);
     return new BigNumber(balance);
 };
 
 module.exports.getTransactionCost = async (gasUsed, web3) => {
     const gasPrice = await web3.eth.getGasPrice();
     const transactionCost = gasUsed * gasPrice;
-    cli.info("gas used %d; gas price %d; transaction cost %d", gasUsed, gasPrice, transactionCost);
+    cli.info(`gas used ${gasUsed}; gas price ${gasPrice}; transaction cost ${transactionCost}`);
     return new BigNumber(transactionCost);
 };

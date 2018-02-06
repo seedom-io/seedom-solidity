@@ -47,6 +47,6 @@ module.exports.run = async (state) => {
     });
 
     // save receipt
-    env.seedomReceipt = env.seedom.receipt;
+    env.deployReceipt = env.seedom.receipt;
     
 };

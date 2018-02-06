@@ -1,12 +1,11 @@
 const ch = require('../chronicle/helper');
 const cli = require('../chronicle/cli');
-const sh = require('../stage/helper');
-const parity = require('../chronicle/parity');
-const network = require('../chronicle/network');
-const participate = require('../stage/participate');
-const raise = require('../stage/raise');
-const end = require('../stage/end');
-const withdraw = require('../stage/withdraw');
+const sh = require('../script/helper');
+const instantiate = require('../script/simulation/instantiate');
+const participate = require('../script/simulation/participate');
+const raise = require('../script/simulation/raise');
+const end = require('../script/simulation/end');
+const withdraw = require('../script/simulation/withdraw');
 
 suite('withdraw', (state) => {
 
@@ -16,20 +15,26 @@ suite('withdraw', (state) => {
         await participate.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
-        const withdrawMethod = env.seedom.methods.withdraw();
         await assert.isRejected(
-            network.sendMethod(withdrawMethod, { from: env.owner }, state)
+            seedom.withdraw({
+                from: env.owner, transact: true
+            })
         );
 
         await assert.isRejected(
-            network.sendMethod(withdrawMethod, { from: env.charity }, state)
+            seedom.withdraw({
+                from: env.charity, transact: true
+            })
         );
 
         for (let participant of env.participants) {
             await assert.isRejected(
-                network.sendMethod(withdrawMethod, { from: participant.address }, state)
-            );
+                seedom.withdraw({
+                    from: participant.address, transact: true
+                })
+            )
         }
 
     });
@@ -47,10 +52,10 @@ suite('withdraw', (state) => {
 
         const { env } = state;
 
-        // instantiate
-        const instantiateGasUsed = env.instantiateReceipt.gasUsed;
-        const instantiateTransactionCost = await sh.getTransactionCost(instantiateGasUsed, state.web3);
-        initialBalances[env.owner] = initialBalances[env.owner].minus(instantiateTransactionCost);
+        // deploy
+        const deployGasUsed = env.deployReceipt.gasUsed;
+        const deployTransactionCost = await sh.getTransactionCost(deployGasUsed, state.web3);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(deployTransactionCost);
 
         // seed
         const seedGasUsed = env.seedReceipt.gasUsed;
@@ -58,28 +63,22 @@ suite('withdraw', (state) => {
         initialBalances[env.charity] = initialBalances[env.charity].minus(seedTransactionCost);
 
         // participate
-        for (let i = 0; i < env.participantsCount; i++) {
-            const participant = env.participants[i];
-            const participationReceipt = env.participationReceipts[i];
-            const participationGasUsed = participationReceipt.gasUsed;
-            const participationTransactionCost = await sh.getTransactionCost(participationGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(participationTransactionCost);
+        for (let participant of env.participants) {
+            const participateGasUsed = participant.participateReceipt.gasUsed;
+            const participateTransactionCost = await sh.getTransactionCost(participateGasUsed, state.web3);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(participateTransactionCost);
         }
 
         // raise
-        for (let i = 0; i < env.participantsCount; i++) {
-            const participant = env.participants[i];
-            const raiseReceipt = env.raiseReceipts[i];
-            const raiseGasUsed = raiseReceipt.gasUsed;
+        for (let participant of env.participants) {
+            const raiseGasUsed = participant.raiseReceipt.gasUsed;
             const raiseTransactionCost = await sh.getTransactionCost(raiseGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(raiseTransactionCost.plus(10000));
         }
 
         // reveal
-        for (let i = 0; i < env.participantsCount; i++) {
-            const participant = env.participants[i];
-            const revealReceipt = env.revealReceipts[i];
-            const revealGasUsed = revealReceipt.gasUsed;
+        for (let participant of env.participants) {
+            const revealGasUsed = participant.revealReceipt.gasUsed;
             const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(revealTransactionCost);
         }
@@ -109,12 +108,20 @@ suite('withdraw', (state) => {
         }
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
-        await (await state.interfaces.seedom).withdraw();
         // issue withdraws
-        const charityWithdrawReceipt = await network.sendMethod(method, { from: env.charity }, state);
-        const winnerWithdrawReceipt = await network.sendMethod(method, { from: env.winner }, state);
-        const ownerWithdrawReceipt = await network.sendMethod(method, { from: env.owner }, state);
+        const charityWithdrawReceipt = await seedom.withdraw({
+            from: env.charity, transact: true
+        });
+    
+        const winnerWithdrawReceipt = await seedom.withdraw({
+            from: env.winner, transact: true
+        });
+    
+        const ownerWithdrawReceipt = await seedom.withdraw({
+            from: env.owner, transact: true
+        });
 
         // calculate expected rewards
         const charityReward = 10 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
@@ -154,18 +161,17 @@ suite('withdraw', (state) => {
         }
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         // now cancel
-        const cancelMethod = env.seedom.methods.cancel();
-        const cancelReceipt = await network.sendMethod(cancelMethod, { from: account }, state);
+        const cancelReceipt = await seedom.cancel({ from: account, transact: true });
         const cancelGasUsed = cancelReceipt.gasUsed;
         const cancelTransactionCost = await sh.getTransactionCost(cancelGasUsed, state.web3);
         initialBalances[account] = initialBalances[account].minus(cancelTransactionCost);
 
         // withdraw all participants
         for (let participant of env.participants) {
-            const withdrawMethod = env.seedom.methods.withdraw();
-            const withdrawReceipt = await network.sendMethod(withdrawMethod, { from: participant.address }, state);
+            const withdrawReceipt = await seedom.withdraw({ from: participant.address, transact: true });
             const withdrawGasUsed = withdrawReceipt.gasUsed;
             const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(10000); 
@@ -180,21 +186,13 @@ suite('withdraw', (state) => {
     };
 
     test("should withdraw cancelled (by owner) participation wei", async () => {
-
-        // first raise
         await raise.run(state);
-        const { env } = state;
-        await testCancelWithdrawFunds(env.owner);
-
+        await testCancelWithdrawFunds(state.env.owner);
     });
 
     test("should withdraw cancelled (by charity) participation wei", async () => {
-        
-        // first raise
         await raise.run(state);
-        const { env } = state;
-        await testCancelWithdrawFunds(env.charity);
-
+        await testCancelWithdrawFunds(state.env.charity);
     });
 
     test("should reject multiple withdraw attempts after cancel", async () => {
@@ -203,56 +201,53 @@ suite('withdraw', (state) => {
         await raise.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         // now cancel
-        const cancelMethod = env.seedom.methods.cancel();
-        await network.sendMethod(cancelMethod, { from: env.owner }, state);
+        await seedom.cancel({ from: env.owner, transact: true });
 
         // withdraw a single participant
         const participant = env.participants[0];
-        const withdrawMethod = env.seedom.methods.withdraw();
 
         // initial withdraw
         await assert.isFulfilled(
-            network.sendMethod(withdrawMethod, { from: participant.address }, state)
+            seedom.withdraw({ from: participant.address, transact: true })
         );
 
         // attempt second withdraw
         await assert.isRejected(
-            network.sendMethod(withdrawMethod, { from: participant.address }, state)
+            seedom.withdraw({ from: participant.address, transact: true })
         );
 
     });
 
     test("should reject multiple withdraw attempts after end", async () => {
         
-        // first raise
         await end.run(state);
 
         const { env } = state;
-
-        const withdrawMethod = env.seedom.methods.withdraw();
+        const seedom = await state.interfaces.seedom;
 
         // initial withdraws
         await assert.isFulfilled(
-            network.sendMethod(withdrawMethod, { from: env.charity }, state)
+            seedom.withdraw({ from: env.charity, transact: true })
         );
         await assert.isFulfilled(
-            network.sendMethod(withdrawMethod, { from: env.winner }, state)
+            seedom.withdraw({ from: env.winner, transact: true })
         );
         await assert.isFulfilled(
-            network.sendMethod(withdrawMethod, { from: env.owner }, state)
+            seedom.withdraw({ from: env.owner, transact: true })
         );
 
         // attempt second withdraws
         await assert.isRejected(
-            network.sendMethod(withdrawMethod, { from: env.charity }, state)
+            seedom.withdraw({ from: env.charity, transact: true })
         );
         await assert.isRejected(
-            network.sendMethod(withdrawMethod, { from: env.winner }, state)
+            seedom.withdraw({ from: env.winner, transact: true })
         );
         await assert.isRejected(
-            network.sendMethod(withdrawMethod, { from: env.owner }, state)
+            seedom.withdraw({ from: env.owner, transact: true })
         );
 
     });

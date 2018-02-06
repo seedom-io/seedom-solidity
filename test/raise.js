@@ -18,11 +18,12 @@ suite('raise', (state) => {
         await raise.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+            const actualParticipant = await seedom.participantsMapping({
                 address: participant.address
             }, { from: participant.address });
     
@@ -42,7 +43,7 @@ suite('raise', (state) => {
 
         }
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
         const totalEntries = env.participantsCount * 10;
         assert.equal(actualState.totalEntries, totalEntries, "total entries should be correct");
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
@@ -56,23 +57,24 @@ suite('raise', (state) => {
         await seed.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
         
         const participant = state.accountAddresses[2];
         // call fallback function
         await assert.isRejected(
-            (await state.interfaces.seedom).fallback({
+            seedom.fallback({
                 from: participant, value: 10500, transact: true
             })
         );
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
 
         assert.equal(actualState.totalEntries, 0, "total entries should be zero");
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState.totalParticipants, 0, "total participants should be zero");
         assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
 
-        const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+        const actualParticipant = await seedom.participantsMapping({
             participant
         }, { from: participant });
 
@@ -87,21 +89,22 @@ suite('raise', (state) => {
         await participate.run(state);
         
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
         const participant = env.participants[0];
         // call fallback function
         await assert.isRejected(
-            (await state.interfaces.seedom).fallback({
+            seedom.fallback({
                 from: participant.address, value: 0, transact: true
             })
         );
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
         assert.equal(actualState.totalEntries, 0, "total entries should be zero");
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
 
-        const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+        const actualParticipant = await seedom.participantsMapping({
             address: participant.address
         }, { from: participant.address });
 

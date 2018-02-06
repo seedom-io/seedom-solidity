@@ -16,7 +16,7 @@ module.exports.main = async (state) => {
 
     // if no network specified, default to localhost
     if (!state.networkName) {
-        cli.info("'%s' network chosen as no network specified", h.localNetworkName);
+        cli.info(`${h.localNetworkName} network chosen as no network specified`);
         state.networkName = h.localNetworkName;
     }
 
@@ -37,7 +37,7 @@ const network = async (state) => {
 
     state.accountAddresses = await state.web3.eth.getAccounts();
     if (accountAddresses.length == 0) {
-        cli.error("'%s' network contains no accounts", networkName);
+        cli.error(`${networkName} network contains no accounts`);
         return;
     }
 
@@ -57,11 +57,11 @@ module.exports.setWeb3 = async (state) => {
     state.web3 = createWeb3(state.network);
     const name = state.network.ws ? state.network.ws : h.localNetworkName;
     if (!(await testWeb3(state.web3))) {
-        cli.error("could not connect to %s network", name);
+        cli.error(`could not connect to ${name} network`);
         return false;
     }
 
-    cli.success("connected to %s network", name);
+    cli.success(`connected to ${name} network`);
     return true;
 
 }
@@ -158,7 +158,7 @@ module.exports.deploy = async (contract, args, options, web3Instance, state) => 
     web3Result.instance.setProvider(state.web3.currentProvider);
 
     const contractAddress = web3Result.instance.options.address;
-    cli.info("'%s' contract deployed to %s", contract.name, contractAddress);
+    cli.info(`${contract.name} contract deployed to ${contractAddress}`);
     return web3Result;
 
 }

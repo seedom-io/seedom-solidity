@@ -11,20 +11,21 @@ suite('seed', (state) => {
         await instantiate.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
-        const actualRaiser = await (await state.interfaces.seedom).raiser({ from: env.owner });
+        const actualRaiser = await seedom.raiser({ from: env.owner });
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
 
         const charityRandom = sh.random();
         const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
 
         await assert.isFulfilled(
-            (await state.interfaces.seedom).seed({
+            seedom.seed({
                 charityHashedRandom
             }, { from: env.charity, transact: true })
         );
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
         assert.equal(actualState.charityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
 
     });

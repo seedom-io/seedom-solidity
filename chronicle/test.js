@@ -133,10 +133,10 @@ function reporter(runner) {
         cli.subsection("results");
 
         if (failures > 0) {
-            cli.error("%d total failures", failures);
+            cli.error(`${failures} total failures`);
         }
 
-        cli.success("%d total passes", passes);
+        cli.success(`${passes} total passes`);
 
     });
 

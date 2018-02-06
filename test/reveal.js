@@ -15,10 +15,11 @@ suite('reveal', (state) => {
         await reveal.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         for (let participant of env.participants) {
 
-            const actualParticipant = await (await state.interfaces.seedom).participantsMapping({
+            const actualParticipant = await seedom.participantsMapping({
                 address: participant.address
             }, { from: participant.address });
 
@@ -28,7 +29,7 @@ suite('reveal', (state) => {
 
         }
 
-        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        const actualState = await seedom.state({ from: env.owner });
 
         const totalEntries = env.participantsCount * 10;
         assert.equal(actualState.totalEntries, totalEntries, "total entries should be correct");
@@ -44,13 +45,14 @@ suite('reveal', (state) => {
         await seed.run(state);
 
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         const participant = state.accountAddresses[2];
         const random = '0';
         const hashedRandom = sh.hashedRandom(random, participant);
         
         await assert.isFulfilled(
-            (await state.interfaces.seedom).participate({
+            seedom.participate({
                 hashedRandom
             }, { from: participant, value: 10000, transact: true })
         );
@@ -59,7 +61,7 @@ suite('reveal', (state) => {
         await cli.progress("waiting for reveal phase", env.revealTime - now);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
+            seedom.reveal({
                 random: '0x00000000000000000000000000000000000000000000000000000000000000'
             }, { from: participant, value: 10000, transact: true })
         );
@@ -72,19 +74,20 @@ suite('reveal', (state) => {
         await raise.run(state);
         
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         const participant = env.participants[0];
         const now = ch.timestamp();
         await cli.progress("waiting for reveal phase", env.revealTime - now);
 
         await assert.isFulfilled(
-            (await state.interfaces.seedom).reveal({
+            seedom.reveal({
                 random: participant.random
             }, { from: participant.address, transact: true })
         );
 
         await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
+            seedom.reveal({
                 random: participant.random
             }, { from: participant.address, transact: true })
         );
@@ -136,11 +139,12 @@ suite('reveal', (state) => {
         await raise.run(state);
         
         const { env } = state;
+        const seedom = await state.interfaces.seedom;
 
         const participant = env.participants[0];
 
         await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
+            seedom.reveal({
                 random: participant.random
             }, { from: participant.address, transact: true })
         );
@@ -149,7 +153,7 @@ suite('reveal', (state) => {
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
+            seedom.reveal({
                 random: participant.random
             }, { from: participant.address, transact: true })
         );
