@@ -1,9 +1,9 @@
-const instantiate = require('./instantiate');
+const deploy = require('./deploy');
 const seed = require('../seed');
 
 module.exports.run = async (state) => {
 
-    await instantiate.run(state);
+    await deploy.run(state);
     await seed.run(state);
 
 }

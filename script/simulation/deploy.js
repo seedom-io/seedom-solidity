@@ -16,10 +16,10 @@ module.exports.run = async (state) => {
     const now = ch.timestamp();
     // FIXME: triple the parity send delay to get overall transaction duration
     const transactionDuration = Math.round((state.network.sendDelay / 1000) * 2);
-    // instantiate phase has two initial transactions: deploy and seed
+    // deploy phase has two initial transactions: deploy and seed
     // and then two transactions per participant: participate and raise
-    const instantiateDuration = (transactionDuration * 2) + (env.participantsCount * transactionDuration * 2);
-    env.revealTime = now + instantiateDuration;
+    const deployDuration = (transactionDuration * 2) + (env.participantsCount * transactionDuration * 2);
+    env.revealTime = now + deployDuration;
     // reveal phase has max one transactions per participant: reveal
     const revealDuration = env.participantsCount * transactionDuration;
     env.endTime = env.revealTime + revealDuration;

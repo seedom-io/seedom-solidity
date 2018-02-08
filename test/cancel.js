@@ -1,7 +1,7 @@
 const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
-const instantiate = require('../script/simulation/instantiate');
+const deploy = require('../script/simulation/deploy');
 const seed = require('../script/simulation/seed');
 const participate = require('../script/simulation/participate');
 const raise = require('../script/simulation/raise');
@@ -14,7 +14,7 @@ suite('cancel', (state) => {
         
         const { env } = state;
         const seedom = await state.interfaces.seedom;
-        // after instantiate, cancel should never be true
+        // after deploy, cancel should never be true
         let actualState = await seedom.state({ from: account });
         assert.isNotOk(actualState.cancelled);
 
@@ -31,7 +31,7 @@ suite('cancel', (state) => {
         
         const { env } = state;
         const seedom = await state.interfaces.seedom;
-        // after instantiate, cancel should never be true
+        // after deploy, cancel should never be true
         let actualState = await seedom.state({ from: account });
         assert.isNotOk(actualState.cancelled);
 
@@ -44,18 +44,18 @@ suite('cancel', (state) => {
 
     };
 
-    test("should cancel (by owner) after instantiate", async () => {
-        await instantiate.run(state);
+    test("should cancel (by owner) after deploy", async () => {
+        await deploy.run(state);
         await testCancelSuccess(state.env.owner);
     });
 
-    test("should cancel (by charity) after instantiate", async () => {
-        await instantiate.run(state);
+    test("should cancel (by charity) after deploy", async () => {
+        await deploy.run(state);
         await testCancelSuccess(state.env.charity);
     });
 
-    test("should reject cancel (by participant) after instantiate", async () => {
-        await instantiate.run(state);
+    test("should reject cancel (by participant) after deploy", async () => {
+        await deploy.run(state);
         const participant = state.accountAddresses[2];
         await testCancelFail(participant);
     });

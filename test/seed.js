@@ -1,14 +1,14 @@
 const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const parity = require('../chronicle/parity');
-const instantiate = require('../script/simulation/instantiate');
+const deploy = require('../script/simulation/deploy');
 const network = require('../chronicle/network');
 
 suite('seed', (state) => {
 
     test("should seed properly from charity", async () => {
 
-        await instantiate.run(state);
+        await deploy.run(state);
 
         const { env } = state;
         const seedom = await state.interfaces.seedom;
@@ -32,7 +32,7 @@ suite('seed', (state) => {
 
     test("should reject seed from owner", async () => {
         
-        await instantiate.run(state);
+        await deploy.run(state);
 
         const { env } = state;
         const charityRandom = sh.random();
@@ -48,7 +48,7 @@ suite('seed', (state) => {
 
     test("should reject seed from participant", async () => {
         
-        await instantiate.run(state);
+        await deploy.run(state);
 
         const { env } = state;
         const charityRandom = sh.random();

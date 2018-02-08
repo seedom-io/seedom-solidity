@@ -1,17 +1,18 @@
 const ch = require('../chronicle/helper');
 const cli = require('../chronicle/cli');
-const instantiate = require('../script/simulation/instantiate');
+const deploy = require('../script/simulation/deploy');
 
-suite('instantiate', (state) => {
+suite('deploy', (state) => {
 
     test("should have proper initial raiser and state", async () => {
 
-        await instantiate.run(state);
+        await deploy.run(state);
 
         const { env } = state;
         const seedom = await state.interfaces.seedom;
         const now = ch.timestamp();
         const actualRaiser = await seedom.raiser({ from: env.owner });
+        const deployTimeDifference = actualRaiser.deployTime - now;
 
         assert.equalIgnoreCase(actualRaiser.owner, env.owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
@@ -19,6 +20,7 @@ suite('instantiate', (state) => {
         assert.equal(actualRaiser.winnerSplit, env.winnerSplit, "winner split does not match");
         assert.equal(actualRaiser.ownerSplit, env.ownerSplit, "validOwner split does not match");
         assert.equal(actualRaiser.valuePerEntry, env.valuePerEntry, "wei per entry does not match");
+        assert.isAtMost(deployTimeDifference, 2, "deploy time delta too high");
         assert.equal(actualRaiser.revealTime, env.revealTime, "reveal time does not match");
         assert.equal(actualRaiser.endTime, env.endTime, "end time does not match");
         assert.equal(actualRaiser.expireTime, env.expireTime, "expire time does not match");
@@ -37,7 +39,7 @@ suite('instantiate', (state) => {
         assert.equal(actualState.totalRevealed, 0, "total revealed zero");
     });
 
-    test("should instantiate properly with no owner split and no max participants", async () => {
+    test("should deploy properly with no owner split and no max participants", async () => {
 
         const { env } = state;
         let seedom = await state.interfaces.seedom;
@@ -70,6 +72,7 @@ suite('instantiate', (state) => {
         }, { from: owner });
 
         const actualRaiser = await seedom.raiser({ from: owner });
+        const deployTimeDifference = actualRaiser.deployTime - now;
 
         assert.equalIgnoreCase(actualRaiser.owner, owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, charity, "charity does not match");
@@ -77,6 +80,7 @@ suite('instantiate', (state) => {
         assert.equal(actualRaiser.winnerSplit, winnerSplit, "winner split does not match");
         assert.equal(actualRaiser.ownerSplit, ownerSplit, "validOwner split does not match");
         assert.equal(actualRaiser.valuePerEntry, valuePerEntry, "wei per entry does not match");
+        assert.isAtMost(deployTimeDifference, 2, "deploy time delta too high");
         assert.equal(actualRaiser.revealTime, revealTime, "reveal time does not match");
         assert.equal(actualRaiser.endTime, endTime, "end time does not match");
         assert.equal(actualRaiser.expireTime, expireTime, "expire time does not match");
@@ -85,7 +89,7 @@ suite('instantiate', (state) => {
 
     });
 
-    test("should fail to instantiate with zeroed data", async () => {
+    test("should fail to deploy with zeroed data", async () => {
 
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];
@@ -122,7 +126,7 @@ suite('instantiate', (state) => {
 
     });
 
-    test("should fail to instantiate with splits that don't add to 1000", async () => {
+    test("should fail to deploy with splits that don't add to 1000", async () => {
 
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];
@@ -151,7 +155,7 @@ suite('instantiate', (state) => {
 
     });
 
-    test("should fail to instantiate with invalid dates", async () => {
+    test("should fail to deploy with invalid dates", async () => {
 
         const now = ch.timestamp();
         const owner = state.accountAddresses[0];

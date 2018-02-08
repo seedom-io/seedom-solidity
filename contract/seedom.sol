@@ -42,6 +42,7 @@ contract Seedom {
         uint256 _winnerSplit;
         uint256 _ownerSplit;
         uint256 _valuePerEntry;
+        uint256 _deployTime;
         uint256 _revealTime;
         uint256 _endTime;
         uint256 _expireTime;
@@ -120,6 +121,7 @@ contract Seedom {
             _winnerSplit,
             _ownerSplit,
             _valuePerEntry,
+            now,
             _revealTime,
             _endTime,
             _expireTime,

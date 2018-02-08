@@ -2,7 +2,7 @@ const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
 const seed = require('../script/simulation/seed');
-const instantiate = require('../script/simulation/instantiate');
+const deploy = require('../script/simulation/deploy');
 const participate = require('../script/simulation/participate');
 
 suite('participate', (state) => {
@@ -114,7 +114,7 @@ suite('participate', (state) => {
 
     test("should fail participation without seed", async () => {
 
-        await instantiate.run(state);
+        await deploy.run(state);
 
         const { env } = state;
         const participant = state.accountAddresses[2];

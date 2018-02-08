@@ -1,7 +1,7 @@
 const ch = require('../../chronicle/helper');
 const h = require('../helper');
 const cli = require('../../chronicle/cli');
-const instantiate = require('./instantiate');
+const deploy = require('./deploy');
 const seed = require('./seed');
 
 module.exports.run = async (state) => {
