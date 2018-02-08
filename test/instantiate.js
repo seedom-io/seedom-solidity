@@ -12,7 +12,6 @@ suite('instantiate', (state) => {
         const seedom = await state.interfaces.seedom;
         const now = ch.timestamp();
         const actualRaiser = await seedom.raiser({ from: env.owner });
-        const actualInstantiateTimeDifference = actualRaiser.instantiateTime - now;
 
         assert.equalIgnoreCase(actualRaiser.owner, env.owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
@@ -20,7 +19,6 @@ suite('instantiate', (state) => {
         assert.equal(actualRaiser.winnerSplit, env.winnerSplit, "winner split does not match");
         assert.equal(actualRaiser.ownerSplit, env.ownerSplit, "validOwner split does not match");
         assert.equal(actualRaiser.valuePerEntry, env.valuePerEntry, "wei per entry does not match");
-        assert.isAtMost(actualInstantiateTimeDifference, 2, "instantiate time delta too high");
         assert.equal(actualRaiser.revealTime, env.revealTime, "reveal time does not match");
         assert.equal(actualRaiser.endTime, env.endTime, "end time does not match");
         assert.equal(actualRaiser.expireTime, env.expireTime, "expire time does not match");
@@ -72,7 +70,6 @@ suite('instantiate', (state) => {
         }, { from: owner });
 
         const actualRaiser = await seedom.raiser({ from: owner });
-        const actualInstantiateTimeDifference = actualRaiser.instantiateTime - now;
 
         assert.equalIgnoreCase(actualRaiser.owner, owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, charity, "charity does not match");
@@ -80,7 +77,6 @@ suite('instantiate', (state) => {
         assert.equal(actualRaiser.winnerSplit, winnerSplit, "winner split does not match");
         assert.equal(actualRaiser.ownerSplit, ownerSplit, "validOwner split does not match");
         assert.equal(actualRaiser.valuePerEntry, valuePerEntry, "wei per entry does not match");
-        assert.isAtMost(actualInstantiateTimeDifference, 2, "instantiate time delta too high");
         assert.equal(actualRaiser.revealTime, revealTime, "reveal time does not match");
         assert.equal(actualRaiser.endTime, endTime, "end time does not match");
         assert.equal(actualRaiser.expireTime, expireTime, "expire time does not match");

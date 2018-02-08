@@ -36,6 +36,10 @@ suite('participate', (state) => {
             const finalBalance = await sh.getBalance(participant.address, state.web3);
             assert.equal(finalBalance.toString(), participationBalance.toString(), "balance not expected for " + participant.address);
 
+            // check balance()s
+            const actualParticipantBalance = await seedom.balance({ from: participant.address });
+            assert.equal(actualParticipantBalance, 0, "participant balance not zero");
+
         }
 
         const actualState = await seedom.state({ from: env.owner });

@@ -147,7 +147,9 @@ module.exports.callProvider = async (method, args, state) => {
 
 };
 
-module.exports.deploy = async (contract, args, options, web3Instance, state) => {
+module.exports.deploy = async (contract, args, options, state) => {
+
+    const web3Instance = new state.web3.eth.Contract(contract.abi);
 
     const web3Transaction = web3Instance.deploy({
         data: '0x' + contract.evm.bytecode.object,

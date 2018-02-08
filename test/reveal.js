@@ -27,15 +27,25 @@ suite('reveal', (state) => {
             assert.equalIgnoreCase(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
             assert.equal(state.web3.utils.toHex(actualParticipant.random), participant.random, "random should be set");
 
+            // check balance()s
+            const actualParticipantBalance = await seedom.balance({ from: participant.address });
+            assert.equal(actualParticipantBalance, 0, "participant balance not zero");
+
         }
 
+        // check state
         const actualState = await seedom.state({ from: env.owner });
-
         const totalEntries = env.participantsCount * 10;
         assert.equal(actualState.totalEntries, totalEntries, "total entries should be correct");
         assert.equal(actualState.totalRevealed, totalEntries, "total revealed not correct");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalRevealers, env.participantsCount, "total revealers incorrect");
+
+        // check balance()s
+        const actualCharityReward = await seedom.balance({ from: env.charity });
+        assert.equal(actualCharityReward, 0, "charity reward balance not zero");
+        const actualOwnerReward = await seedom.balance({ from: env.owner });
+        assert.equal(actualOwnerReward, 0, "owner reward balance not zero");
 
     });
 

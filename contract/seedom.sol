@@ -42,7 +42,6 @@ contract Seedom {
         uint256 _winnerSplit;
         uint256 _ownerSplit;
         uint256 _valuePerEntry;
-        uint256 _instantiateTime;
         uint256 _revealTime;
         uint256 _endTime;
         uint256 _expireTime;
@@ -80,13 +79,16 @@ contract Seedom {
     
     Raiser public raiser;
     mapping(address => Participant) public participantsMapping;
-    address[] participants;
-    address[] revealers;
+    address[] public participants;
+    address[] public revealers;
     bytes32 charityHashedRandom;
     address winner;
     uint256 totalEntries;
     uint256 totalRevealed;
     bool cancelled;
+    bool charityWithdrawn;
+    bool winnerWithdrawn;
+    bool ownerWithdrawn;
 
     function Seedom(
         address _charity,
@@ -118,7 +120,6 @@ contract Seedom {
             _winnerSplit,
             _ownerSplit,
             _valuePerEntry,
-            now,
             _revealTime,
             _endTime,
             _expireTime,
@@ -145,6 +146,42 @@ contract Seedom {
         _totalEntries = totalEntries;
         _totalRevealers = revealers.length;
         _totalRevealed = totalRevealed;
+    }
+
+    // Returns the balance of a charity, winner, owner, or participant.
+    function balance() public view returns (uint256) {
+        // check for winner, cancelled, or invalid
+        if (winner != address(0)) {
+            // winner, get split
+            uint256 _split;
+            // determine split based on sender
+            if (msg.sender == raiser._charity) {
+                if (charityWithdrawn) {
+                    return 0;
+                }
+                _split = raiser._charitySplit;
+            } else if (msg.sender == winner) {
+                if (winnerWithdrawn) {
+                    return 0;
+                }
+                _split = raiser._winnerSplit;
+            } else if (msg.sender == raiser._owner) {
+                if (ownerWithdrawn) {
+                    return 0;
+                }
+                _split = raiser._ownerSplit;
+            } else {
+                return 0;
+            }
+            // multiply total entries by split % (non-revealed winnings are forfeited)
+            return totalEntries * raiser._valuePerEntry * _split / 1000;
+        } else if (cancelled) {
+            // value per entry times participant entries == balance
+            Participant storage _participant = participantsMapping[msg.sender];
+            return _participant._entries * raiser._valuePerEntry;
+        }
+
+        return 0;
     }
 
     // Used by the charity to officially begin their raiser. The charity supplies the first hashed
@@ -367,34 +404,27 @@ contract Seedom {
     // Used to withdraw funds from the contract from either winnings or refunds from a
     // cancellation.
     function withdraw() public {
-
-        uint256 _refund;
+        // check for a balance
+        uint256 _balance = balance();
+        require (_balance > 0); // can only withdraw a balance
         // check for winner, cancelled, or invalid
         if (winner != address(0)) {
 
-            uint256 _split;
             // determine split based on sender
             if (msg.sender == raiser._charity) {
-                _split = raiser._charitySplit;
+                charityWithdrawn = true;
             } else if (msg.sender == winner) {
-                _split = raiser._winnerSplit;
+                winnerWithdrawn = true;
             } else if (msg.sender == raiser._owner) {
-                _split = raiser._ownerSplit;
+                ownerWithdrawn = true;
             } else {
                 revert();
             }
 
-            // divide it up amongst all entities (non-revealed winnings are forfeited)
-            _refund = totalEntries * raiser._valuePerEntry * _split / 1000;
-            require (_refund > 0); // ensure this results in a refund
-
         } else if (cancelled) {
 
-            // find participant to refund their entries
+            // set participant entries to zero to prevent multiple refunds
             Participant storage _participant = participantsMapping[msg.sender];
-            require(_participant._entries > 0); // make sure they have entries
-            _refund = _participant._entries * raiser._valuePerEntry;
-            // set entries to zero to prevent multiple refunds
             _participant._entries = 0;
 
         } else {
@@ -403,7 +433,7 @@ contract Seedom {
         }
 
         // execute the refund if we have one
-        msg.sender.transfer(_refund);
+        msg.sender.transfer(_balance);
         // send withdrawal event
         Withdrawal(msg.sender);
     }

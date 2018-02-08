@@ -110,23 +110,23 @@ suite('withdraw', (state) => {
         const { env } = state;
         const seedom = await state.interfaces.seedom;
 
-        // issue withdraws
-        const charityWithdrawReceipt = await seedom.withdraw({
-            from: env.charity, transact: true
-        });
-    
-        const winnerWithdrawReceipt = await seedom.withdraw({
-            from: env.winner, transact: true
-        });
-    
-        const ownerWithdrawReceipt = await seedom.withdraw({
-            from: env.owner, transact: true
-        });
-
         // calculate expected rewards
         const charityReward = 10 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
         const winnerReward = 10 * env.participantsCount * env.valuePerEntry * env.winnerSplit / 1000;
         const ownerReward = 10 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
+
+        // check balances
+        const actualCharityReward = await seedom.balance({ from: env.charity });
+        assert.equal(actualCharityReward, charityReward, "charity reward balance incorrect");
+        const actualWinnerReward = await seedom.balance({ from: env.winner });
+        assert.equal(actualWinnerReward, winnerReward, "winner reward balance incorrect");
+        const actualOwnerReward = await seedom.balance({ from: env.owner });
+        assert.equal(actualOwnerReward, ownerReward, "owner reward balance incorrect");
+
+        // issue withdraws
+        const charityWithdrawReceipt = await seedom.withdraw({ from: env.charity, transact: true });
+        const winnerWithdrawReceipt = await seedom.withdraw({ from: env.winner, transact: true });
+        const ownerWithdrawReceipt = await seedom.withdraw({ from: env.owner, transact: true });
 
         // verify owner balance
         const ownerWithdrawGasUsed = ownerWithdrawReceipt.gasUsed;
@@ -171,10 +171,33 @@ suite('withdraw', (state) => {
 
         // withdraw all participants
         for (let participant of env.participants) {
+
+            // check pre-balance
+            let actualParticipantBalance = await seedom.balance({ from: participant.address });
+            assert.equal(actualParticipantBalance, 10000, "participant pre-balance incorrect");
+
+            // verify pre-participant
+            let actualParticipant = await seedom.participantsMapping({
+                address: participant.address
+            }, { from: participant.address });
+            assert.equal(actualParticipant.entries, 10, "participant pre-entries incorrect");
+
+            // issue withdraw and update local balance
             const withdrawReceipt = await seedom.withdraw({ from: participant.address, transact: true });
             const withdrawGasUsed = withdrawReceipt.gasUsed;
             const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(10000); 
+
+            // check post-balance
+            actualParticipantBalance = await seedom.balance({ from: participant.address });
+            assert.equal(actualParticipantBalance, 0, "participant pre-balance incorrect");
+
+            // verify pre-participant
+            actualParticipant = await seedom.participantsMapping({
+                address: participant.address
+            }, { from: participant.address });
+            assert.equal(actualParticipant.entries, 0, "participant post-entries incorrect");
+
         }
 
         // verify all balances are expected
@@ -195,7 +218,7 @@ suite('withdraw', (state) => {
         await testCancelWithdrawFunds(state.env.charity);
     });
 
-    test("should reject multiple withdraw attempts after cancel", async () => {
+    test("should reject multiple withdraw attempts (from participant) after cancel", async () => {
         
         // first raise
         await raise.run(state);
@@ -221,30 +244,65 @@ suite('withdraw', (state) => {
 
     });
 
-    test("should reject multiple withdraw attempts after end", async () => {
+    test("should reject multiple withdraw attempts (by charity) after end", async () => {
         
-        await end.run(state);
-
         const { env } = state;
+
+        // set charity lowest so it can
+        // have a chance at withdrawing twice
+        env.charitySplit = 100
+        env.winnerSplit = 450;
+        env.ownerSplit = 450;
+        await end.run(state);
+        
         const seedom = await state.interfaces.seedom;
 
-        // initial withdraws
         await assert.isFulfilled(
             seedom.withdraw({ from: env.charity, transact: true })
         );
-        await assert.isFulfilled(
-            seedom.withdraw({ from: env.winner, transact: true })
-        );
-        await assert.isFulfilled(
-            seedom.withdraw({ from: env.owner, transact: true })
+        await assert.isRejected(
+            seedom.withdraw({ from: env.charity, transact: true })
         );
 
-        // attempt second withdraws
-        await assert.isRejected(
-            seedom.withdraw({ from: env.charity, transact: true })
+    });
+
+    test("should reject multiple withdraw attempts (by winner) after end", async () => {
+        
+        const { env } = state;
+
+        // set winner lowest so it can
+        // have a chance at withdrawing twice
+        env.winnerSplit = 100;
+        env.charitySplit = 100
+        env.ownerSplit = 450;
+        await end.run(state);
+        
+        const seedom = await state.interfaces.seedom;
+
+        await assert.isFulfilled(
+            seedom.withdraw({ from: env.winner, transact: true })
         );
         await assert.isRejected(
             seedom.withdraw({ from: env.winner, transact: true })
+        );
+
+    });
+
+    test("should reject multiple withdraw attempts (by owner) after end", async () => {
+        
+        const { env } = state;
+
+        // set winner lowest so it can
+        // have a chance at withdrawing twice
+        env.ownerSplit = 100;
+        env.winnerSplit = 450;
+        env.charitySplit = 450;
+        await end.run(state);
+        
+        const seedom = await state.interfaces.seedom;
+
+        await assert.isFulfilled(
+            seedom.withdraw({ from: env.owner, transact: true })
         );
         await assert.isRejected(
             seedom.withdraw({ from: env.owner, transact: true })

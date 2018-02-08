@@ -201,25 +201,19 @@ const resolveContract = async (contractName, deploymentRelease, state) => {
 
 const resolveWeb3Result = async (contract, deploymentRelease, state) => {
 
-    const web3Result = {};
-
-    if (deploymentRelease) {
-
-        // resurrect deployment receipt
-        if (deploymentRelease.transactionHash) {
-            web3Result.receipt = await state.web3.eth.getTransactionReceipt(deploymentRelease.transactionHash);
-        }
-
-        // get web3 attached to addy
-        web3Result.instance = new state.web3.eth.Contract(contract.abi, deploymentRelease.address);
-
-    } else {
-
-        web3Result.instance = new state.web3.eth.Contract(contract.abi);
-
+    if (!deploymentRelease) {
+        return {};
     }
+
+    // resurrect deployment receipt
+    const receipt = await state.web3.eth.getTransactionReceipt(deploymentRelease.transactionHash);
+    // get web3 attached to addy
+    const instance = new state.web3.eth.Contract(contract.abi, deploymentRelease.address);
     
-    return web3Result;
+    return {
+        receipt,
+        instance
+    };
 
 };
 
@@ -275,7 +269,7 @@ const resolveInterfaceMethod = (methodName, web3Instance, contract, state) => {
 
         // run proper web3 method
         if (isConstructor) {
-            return await runWeb3Deploy(contract, web3Args, methodOptions, web3Instance, state);
+            return await runWeb3Deploy(contract, web3Args, methodOptions, state);
         } else if (isFallback) {
             return await runWeb3Fallback(web3Args, methodOptions, web3Instance, state);
         } else if (transact) {
@@ -310,12 +304,11 @@ const runWeb3Deploy = async (
     contract,
     web3Args,
     options,
-    web3Instance,
     state
 ) => {
 
     // network deploy
-    const web3Result = await network.deploy(contract, web3Args, options, web3Instance, state);
+    const web3Result = await network.deploy(contract, web3Args, options, state);
     // get contract addy
     const contractAddress = web3Result.instance.options.address;
     // save to addresses as well (for easy lookup)
@@ -376,13 +369,30 @@ const runWeb3Call = async (methodName, web3Args, options, web3Instance) => {
 };
 
 const getReturn = (web3Return) => {
-    const result = {};
-    for (let name in web3Return) {
-        if (name.startsWith('_')) {
-            result[name.substr(1)] = web3Return[name];
+
+    // handle objects (arrays and objects)
+    if (typeof web3Return === 'object') {
+
+        // handle arrays
+        if (Array.isArray(web3Return)) {
+            return web3Return;
         }
+
+        const result = {};
+        // handle objects
+        for (let name in web3Return) {
+            if (name.startsWith('_')) {
+                result[name.substr(1)] = web3Return[name];
+            }
+        }
+
+        return result;
+
     }
-    return result;
+
+    // return literals directly
+    return web3Return;
+    
 };
 
 module.exports.prepare = async (program, state) => {

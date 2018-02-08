@@ -9,6 +9,7 @@ const interface = require('./interface');
 const parity = require('./parity');
 const cli = require('./cli');
 const Mocha = require('mocha');
+const network = require('./network');
 
 global.chai = require('chai');
 global.chai.use(require('chai-as-promised'));
@@ -32,6 +33,7 @@ module.exports.main = async (state) => {
     const testFiles = await getTestFiles(state.suiteNames);
     const mocha = createMocha(testFiles);
     await promiseRun(mocha);
+    network.destroyWeb3(state);
 
 }
 
