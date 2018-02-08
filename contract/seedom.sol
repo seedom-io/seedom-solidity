@@ -3,7 +3,7 @@ pragma solidity ^0.4.19;
 contract Seedom {
 
     event Seed(
-        bytes32 _hashedRandom
+        bytes32 _charityHashedRandom
     );
 
     event Participation(
