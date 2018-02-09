@@ -59,7 +59,7 @@ suite('reveal', (state) => {
 
         const participant = state.accountAddresses[2];
         const random = '0';
-        const hashedRandom = sh.hashedRandom(random, participant);
+        const hashedRandom = sh.hashRandom(random, participant);
         
         await assert.isFulfilled(
             seedom.participate({
@@ -134,7 +134,7 @@ suite('reveal', (state) => {
         const now = ch.timestamp();
         await cli.progress("waiting for reveal phase", env.revealTime - now);
 
-        const incorrectRandom = sh.random();
+        const incorrectRandom = sh.randomHex();
         await assert.isRejected(
             (await state.interfaces.seedom).reveal({
                 random: incorrectRandom

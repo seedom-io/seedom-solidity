@@ -1,5 +1,5 @@
 {
-    "ws": "165.227.179.253:8546",
+    "url": "wss://manager1.seedom.io:8548",
     "verify": true,
     "requires": "localhost",
     "gas": "2000000",

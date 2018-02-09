@@ -18,8 +18,8 @@ module.exports.run = async (state) => {
     for (let i = 0; i < env.participantsCount; i++) {
 
         const address = state.accountAddresses[i + 2];
-        const random = h.random();
-        const hashedRandom = h.hashedRandom(random, address);
+        const random = h.randomHex();
+        const hashedRandom = h.hashRandom(random, address);
 
         const receipt = await seedom.participate({
             hashedRandom

@@ -32,7 +32,7 @@ contract Seedom {
     event Cancellation();
 
     event Withdrawal(
-        address _participant
+        address _address
     );
 
     struct Raiser {

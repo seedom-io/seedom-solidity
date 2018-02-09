@@ -16,8 +16,8 @@ suite('seed', (state) => {
         const actualRaiser = await seedom.raiser({ from: env.owner });
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
 
-        const charityRandom = sh.random();
-        const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
+        const charityRandom = sh.randomHex();
+        const charityHashedRandom = sh.hashRandom(charityRandom, env.charity);
 
         await assert.isFulfilled(
             seedom.seed({
@@ -35,8 +35,8 @@ suite('seed', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const charityRandom = sh.random();
-        const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
+        const charityRandom = sh.randomHex();
+        const charityHashedRandom = sh.hashRandom(charityRandom, env.charity);
 
         await assert.isRejected(
             (await state.interfaces.seedom).seed({
@@ -51,8 +51,8 @@ suite('seed', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const charityRandom = sh.random();
-        const charityHashedRandom = sh.hashedRandom(charityRandom, env.charity);
+        const charityRandom = sh.randomHex();
+        const charityHashedRandom = sh.hashRandom(charityRandom, env.charity);
         const participant = state.accountAddresses[2];
 
         await assert.isRejected(

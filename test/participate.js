@@ -101,8 +101,8 @@ suite('participate', (state) => {
         const { env } = state;
         // get last participant that is never used otherwise
         const participant = state.accountAddresses[8];
-        const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, participant);
+        const random = sh.randomHex();
+        const hashedRandom = sh.hashRandom(random, participant);
         
         await assert.isRejected(
             (await state.interfaces.seedom).participate({
@@ -118,8 +118,8 @@ suite('participate', (state) => {
 
         const { env } = state;
         const participant = state.accountAddresses[2];
-        const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, participant);
+        const random = sh.randomHex();
+        const hashedRandom = sh.hashRandom(random, participant);
 
         await assert.isRejected(
             (await state.interfaces.seedom).participate({
@@ -138,8 +138,8 @@ suite('participate', (state) => {
         await cli.progress("waiting for reveal phase", env.revealTime - now);
 
         const participant = state.accountAddresses[2];
-        const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, participant);
+        const random = sh.randomHex();
+        const hashedRandom = sh.hashRandom(random, participant);
 
         await assert.isRejected(
             (await state.interfaces.seedom).participate({
@@ -154,8 +154,8 @@ suite('participate', (state) => {
         await seed.run(state);
         
         const { env } = state;
-        const random = sh.random();
-        const hashedRandom = sh.hashedRandom(random, env.owner);
+        const random = sh.randomHex();
+        const hashedRandom = sh.hashRandom(random, env.owner);
 
         await assert.isRejected(
             (await state.interfaces.seedom).participate({
@@ -172,8 +172,8 @@ suite('participate', (state) => {
         const { env } = state;
         const seedom = await state.interfaces.seedom;
         const participant = state.accountAddresses[2];
-        let random = sh.random();
-        let hashedRandom = sh.hashedRandom(random, participant);
+        let random = sh.randomHex();
+        let hashedRandom = sh.hashRandom(random, participant);
 
         await assert.isFulfilled(
             seedom.participate({
@@ -188,8 +188,8 @@ suite('participate', (state) => {
         );
 
         // generate a new random just for fun
-        random = sh.random();
-        hashedRandom = sh.hashedRandom(random, participant);
+        random = sh.randomHex();
+        hashedRandom = sh.hashRandom(random, participant);
 
         await assert.isRejected(
             seedom.participate({

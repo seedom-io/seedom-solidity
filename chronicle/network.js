@@ -29,39 +29,38 @@ module.exports.main = async (state) => {
 
 const network = async (state) => {
 
-    state.network = h.readNetwork(state.networkName);
+    state.network = await h.readNetwork(state.networkName);
     // set web3 instance
     if (!await this.setWeb3(state)) {
         return;
     }
 
     state.accountAddresses = await state.web3.eth.getAccounts();
-    if (accountAddresses.length == 0) {
+    if (state.accountAddresses.length == 0) {
         cli.error(`${networkName} network contains no accounts`);
         return;
     }
 
     // ask user for verification (optional)
-    if (state.network.verify) {
+    /*if (state.network.verify) {
         const question = "verification required!";
         if (!(await cli.question(question, iAmCompletelySure))) {
             cli.error("deployment aborted");
             return;
         }
-    }
+    }*/
 
 };
 
 module.exports.setWeb3 = async (state) => {
 
     state.web3 = createWeb3(state.network);
-    const name = state.network.ws ? state.network.ws : h.localNetworkName;
     if (!(await testWeb3(state.web3))) {
-        cli.error(`could not connect to ${name} network`);
+        cli.error(`could not connect to ${state.networkName} network`);
         return false;
     }
 
-    cli.success(`connected to ${name} network`);
+    cli.success(`connected to ${state.networkName} network`);
     return true;
 
 }
@@ -70,12 +69,12 @@ const createWeb3 = (network) => {
 
     let provider;
 
-    if (!('ws' in network)) {
+    if (!('url' in network)) {
         // assume local test; create web3 ipc provider (parity)
         provider = createParityProvider(network);
     } else {
         // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
-        provider = new Web3.providers.WebsocketProvider('ws:\\\\' + network.ws);
+        provider = new Web3.providers.WebsocketProvider(network.url);
     }
 
     return new Web3(provider);
