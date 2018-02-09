@@ -145,10 +145,10 @@ const resolveContractNameAndDeploymentRelease = (name, isAddress, state) => {
             return result;
         }
 
-        const releases = state.deployment.releases[contractName];
+        const releases = state.deployment.releases[result.contractName];
         // now search for the deployment release
         for (let release of releases) {
-            if (release.address === address) {
+            if (release.address === name) {
                 result.deploymentRelease = release;
             }
         }
