@@ -124,4 +124,34 @@ suite('raise', (state) => {
 
     });
 
+    test("should reject raising with not enough value for one entry after participation", async () => {
+
+        await participate.run(state);
+        
+        const { env } = state;
+        const seedom = await state.interfaces.seedom;
+        const participant = env.participants[0];
+        // call fallback function
+        await assert.isRejected(
+            seedom.fallback({
+                from: participant.address, value: 500, transact: true
+            })
+        );
+
+        const actualState = await seedom.state({ from: env.owner });
+        assert.equal(actualState.totalEntries, 0, "total entries should be zero");
+        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
+        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+
+        const actualParticipant = await seedom.participantsMapping({
+            address: participant.address
+        }, { from: participant.address });
+
+        assert.equal(actualParticipant.entries, 0, "entries should be zero");
+        assert.equal(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
+        assert.equal(actualParticipant.random, 0, "random should be zero");
+
+    });
+
 });

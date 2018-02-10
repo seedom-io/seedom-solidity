@@ -215,7 +215,7 @@ contract Seedom {
         Participant storage _participant = participantsMapping[msg.sender];
         require(_participant._entries == 0); // safety check
         require(_participant._hashedRandom == 0x0); // make sure they have not participated
-        require(_participant._random == 0); // safety check
+        require(_participant._random == 0x0); // safety check
         // save hashed random, add to tracked
         _participant._hashedRandom = _hashedRandom;
         participants.push(msg.sender);
@@ -235,12 +235,10 @@ contract Seedom {
     ) {
         // calculate the number of entries from the wei sent
         _newEntries = msg.value / raiser._valuePerEntry;
+        require(_newEntries >= 1); // ensure we have at least one entry
         // if we have any, update participant and total
-        if (_newEntries > 0) {
-            _participant._entries += _newEntries;
-            totalEntries += _newEntries;
-        }
-
+        _participant._entries += _newEntries;
+        totalEntries += _newEntries;
         // calculate partial entry refund
         _refund = msg.value % raiser._valuePerEntry;
         // refund any excess wei immediately (partial entry)
