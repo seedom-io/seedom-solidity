@@ -1,10 +1,17 @@
 {
     "addresses": {
         "0x2c2Be9BB48D7f99A9E0456ee08Ba2AdAfF15A69c": "seedom",
-        "0x4d661B233e90bb168DDE57841fB232e37df5154F": "seedom"
+        "0x4d661B233e90bb168DDE57841fB232e37df5154F": "seedom",
+        "0xBC8AE73A0D0b7158dd0C3B2dFCd6ae908271929b": "seedom"
     },
     "releases": {
         "seedom": [
+            {
+                "deployed": 1518406186,
+                "address": "0xBC8AE73A0D0b7158dd0C3B2dFCd6ae908271929b",
+                "transactionHash": "0x532473a055c5bf4aff974aee4acb71841dd781b1a854656159f001b14e9faa49",
+                "hash": "27715e6c45da4ef857aa13228fa760863864b8fda40eb0ce89ce30102256f428"
+            },
             {
                 "deployed": 1518143579,
                 "address": "0x4d661B233e90bb168DDE57841fB232e37df5154F",
