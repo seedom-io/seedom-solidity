@@ -47,6 +47,8 @@ suite('participate', (state) => {
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState.winner, 0, "winner not zero");
+        assert.equal(actualState.charityRandom, 0, "charity random not zero");
 
     });
 
@@ -91,6 +93,8 @@ suite('participate', (state) => {
         assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState.winner, 0, "winner not zero");
+        assert.equal(actualState.charityRandom, 0, "charity random not zero");
 
     });
 

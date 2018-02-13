@@ -37,6 +37,7 @@ suite('deploy', (state) => {
         assert.equal(actualState.totalEntries, 0, "total entries zero");
         assert.equal(actualState.totalRevealers, 0, "total revealers zero");
         assert.equal(actualState.totalRevealed, 0, "total revealed zero");
+        assert.equal(actualState.charityRandom, 0, "charity random zero");
     });
 
     test("should deploy properly with no owner split and no max participants", async () => {

@@ -115,17 +115,20 @@ suite('withdraw', (state) => {
         const winnerReward = 10 * env.participantsCount * env.valuePerEntry * env.winnerSplit / 1000;
         const ownerReward = 10 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
 
+        // get state
+        const actualState = await seedom.state({ from: env.owner });
+
         // check balances
         const actualCharityReward = await seedom.balance({ from: env.charity });
         assert.equal(actualCharityReward, charityReward, "charity reward balance incorrect");
-        const actualWinnerReward = await seedom.balance({ from: env.winner });
+        const actualWinnerReward = await seedom.balance({ from: actualState.winner });
         assert.equal(actualWinnerReward, winnerReward, "winner reward balance incorrect");
         const actualOwnerReward = await seedom.balance({ from: env.owner });
         assert.equal(actualOwnerReward, ownerReward, "owner reward balance incorrect");
 
         // issue withdraws
         const charityWithdrawReceipt = await seedom.withdraw({ from: env.charity, transact: true });
-        const winnerWithdrawReceipt = await seedom.withdraw({ from: env.winner, transact: true });
+        const winnerWithdrawReceipt = await seedom.withdraw({ from: actualState.winner, transact: true });
         const ownerWithdrawReceipt = await seedom.withdraw({ from: env.owner, transact: true });
 
         // verify owner balance
@@ -141,7 +144,7 @@ suite('withdraw', (state) => {
         // verify winner balance
         const winnerWithdrawGasUsed = winnerWithdrawReceipt.gasUsed;
         const winnerWithdrawTransactionCost = await sh.getTransactionCost(winnerWithdrawGasUsed, state.web3);
-        const winner = env.winner.toLowerCase();
+        const winner = actualState.winner.toLowerCase();
         initialBalances[winner] = initialBalances[winner].minus(winnerWithdrawTransactionCost).plus(winnerReward);
 
         // verify all balances are expected
@@ -279,11 +282,14 @@ suite('withdraw', (state) => {
         
         const seedom = await state.interfaces.seedom;
 
+        // get state
+        const actualState = await seedom.state({ from: env.owner });
+
         await assert.isFulfilled(
-            seedom.withdraw({ from: env.winner, transact: true })
+            seedom.withdraw({ from: actualState.winner, transact: true })
         );
         await assert.isRejected(
-            seedom.withdraw({ from: env.winner, transact: true })
+            seedom.withdraw({ from: actualState.winner, transact: true })
         );
 
     });

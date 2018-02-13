@@ -25,8 +25,9 @@ contract Seedom {
     );
 
     event Win(
-        address _participant,
-        bytes32 _random
+        address _winner,
+        bytes32 _winnerRandom,
+        bytes32 _charityRandom
     );
 
     event Cancellation();
@@ -73,7 +74,7 @@ contract Seedom {
 
     modifier raiserOngoing() {
         require(charityHashedRandom != 0x0); // ensure charity seed
-        require(winner == address(0)); // ensure no winner
+        require(!raiserFinished()); // ensure not finished
         require(!cancelled); // we can't participate if raiser cancelled
         _;
     }
@@ -83,6 +84,7 @@ contract Seedom {
     address[] public participants;
     address[] public revealers;
     bytes32 charityHashedRandom;
+    bytes32 charityRandom;
     address winner;
     uint256 totalEntries;
     uint256 totalRevealed;
@@ -132,6 +134,7 @@ contract Seedom {
 
     function state() public view returns (
         bytes32 _charityHashedRandom,
+        bytes32 _charityRandom,
         address _winner,
         bytes32 _winnerRandom,
         bool _cancelled,
@@ -141,6 +144,7 @@ contract Seedom {
         uint256 _totalRevealed
     ) {
         _charityHashedRandom = charityHashedRandom;
+        _charityRandom = charityRandom;
         _winner = winner;
         _winnerRandom = participantsMapping[winner]._random;
         _cancelled = cancelled;
@@ -150,10 +154,14 @@ contract Seedom {
         _totalRevealed = totalRevealed;
     }
 
+    function raiserFinished() internal view returns (bool) {
+        return ((winner != address(0)) && (charityRandom != 0x0));
+    }
+
     // Returns the balance of a charity, winner, owner, or participant.
     function balance() public view returns (uint256) {
-        // check for winner, cancelled, or invalid
-        if (winner != address(0)) {
+        // check for raiser ended normally
+        if (raiserFinished()) {
             // winner, get split
             uint256 _split;
             // determine split based on sender
@@ -190,7 +198,7 @@ contract Seedom {
     // random, which is kept secret and revealed by the charity in end().
     function seed(bytes32 _charityHashedRandom) public onlyCharity {
         require(now < raiser._revealTime); // before the reveal
-        require(winner == address(0)); // no winner
+        require(!raiserFinished()); // ensure raiser not finished
         require(!cancelled); // cannot seed cancelled raiser
         require(charityHashedRandom == 0x0); // safety check
         require(_charityHashedRandom != 0x0); // hashed random cannot be zero
@@ -292,26 +300,25 @@ contract Seedom {
     function end(bytes32 _charityRandom) public raiserOngoing onlyCharity {
         require(now >= raiser._endTime); // end can occur only after ent time
         require(charityHashedRandom == keccak256(_charityRandom, msg.sender)); // verify charity's hashed random
-
+        
+        // save this random to storage
+        charityRandom = _charityRandom;
         uint256[] memory _cumulatives = new uint256[](revealers.length);
         // calculate crowdsourced random & entry index from this random
-        bytes32 _crowdsourcedRandom = crowdsourceRandom(_charityRandom, _cumulatives);
+        bytes32 _crowdsourcedRandom = crowdsourceRandom(_cumulatives);
         uint256 _entryIndex = uint256(_crowdsourcedRandom) % totalRevealed;
         // find and set winner, get the participant
         winner = findWinner(_entryIndex, _cumulatives);
         Participant memory _participant = participantsMapping[winner];
         // send out win event
-        Win(winner, _participant._random);
+        Win(winner, _participant._random, _charityRandom);
     }
 
     // Using all of the revealed random values, including the charity's final random,
     // deterministically generate a universal random by XORing them together. This procedure
     // will also set up a discrete cumulative density function (CDF) using the number of entries
     // for each participant.
-    function crowdsourceRandom(
-        bytes32 _charityRandom,
-        uint256[] memory _cumulatives) internal view returns (bytes32)
-    {
+    function crowdsourceRandom(uint256[] memory _cumulatives) internal view returns (bytes32) {
         uint256 _cumulative = 0;
         bytes32 _crowdsourcedRandom = 0;
         address _revealerAddress;
@@ -334,7 +341,7 @@ contract Seedom {
         }
 
         // the charity's initial random has the ultimate randomization effect
-        return _crowdsourcedRandom ^ _charityRandom;
+        return _crowdsourcedRandom ^ charityRandom;
     }
 
     // Finds the winning supporter revealer address amongst the participants who revealed their
@@ -388,7 +395,7 @@ contract Seedom {
     // has not cancelled and a winning supporter has not been chosen, this function becomes open to
     // everyone as a final safeguard.
     function cancel() public {
-        require(winner == address(0)); // if someone won, we've already sent the money out
+        require(!raiserFinished()); // ensure the raiser didn't end normally
         require(!cancelled); // we can't cancel more than once
         // open cancellation to community if past expire time
         if ((msg.sender != raiser._owner) && (msg.sender != raiser._charity)) {
@@ -407,8 +414,8 @@ contract Seedom {
         // check for a balance
         uint256 _balance = balance();
         require (_balance > 0); // can only withdraw a balance
-        // check for winner, cancelled, or invalid
-        if (winner != address(0)) {
+        // check for raiser ended normally
+        if (raiserFinished()) {
 
             // determine split based on sender
             if (msg.sender == raiser._charity) {

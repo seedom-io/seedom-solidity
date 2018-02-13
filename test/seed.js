@@ -27,6 +27,8 @@ suite('seed', (state) => {
 
         const actualState = await seedom.state({ from: env.owner });
         assert.equal(actualState.charityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
+        assert.equal(actualState.winner, 0, "winner not zero");
+        assert.equal(actualState.charityRandom, 0, "charity random not zero");
 
     });
 

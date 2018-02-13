@@ -9,8 +9,11 @@ suite('end', (state) => {
 
         const { env } = state;
 
+        const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
+        assert.equalIgnoreCase(actualState.charityRandom, env.charityRandom, "charity random does not match");
+
         let foundWinner = false;
-        const winner = env.winner.toLowerCase();
+        const winner = actualState.winner.toLowerCase();
         for (let participant of env.participants) {
             if (participant.address.toLowerCase() === winner) {
                 foundWinner = true;

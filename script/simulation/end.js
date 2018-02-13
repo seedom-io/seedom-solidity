@@ -13,8 +13,4 @@ module.exports.run = async (state) => {
 
     await end.run(state);
 
-    const actualState = await (await state.interfaces.seedom).state({ from: env.owner });
-    // set the winner
-    env.winner = actualState.winner;
-
 }
