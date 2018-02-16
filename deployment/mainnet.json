@@ -1,2 +1,15 @@
 {
+    "addresses": {
+        "0x2F8c8FCB351520A3B28971a017E1231Baa6bAf01": "seedom"
+    },
+    "releases": {
+        "seedom": [
+            {
+                "deployed": 1518758687,
+                "address": "0x2F8c8FCB351520A3B28971a017E1231Baa6bAf01",
+                "transactionHash": "0xdcdfcd9d991cdd89af6741a25e7e949e32795bf053bd84859237632818caadf2",
+                "hash": "3b89bb6b605cca910e242b4501bb85517a67d110c2752dc884b6d4c47b7511e1"
+            }
+        ]
+    }
 }
