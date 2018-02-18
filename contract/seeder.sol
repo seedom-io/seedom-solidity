@@ -39,16 +39,20 @@ contract Seeder {
         CharityAdd(charities.length - 1);
     }
 
-    function getCharities() public view returns(bytes32[], address[]) {
-        bytes32[] memory charityNames = new bytes32[](charities.length);
-        address[] memory charityAddresses = new address[](charities.length);
-        for (uint256 _charityId = 0; _charityId < charities.length; _charityId++) {
+    function getCharities() public view returns(bytes32[], address[], bool[]) {
+        uint256 totalCharities = charities.length;
+        bytes32[] memory charityNames = new bytes32[](totalCharities);
+        address[] memory charityAddresses = new address[](totalCharities);
+        bool[] memory charityVote = new bool[](totalCharities);
+
+        for (uint256 _charityId = 0; _charityId < totalCharities; _charityId++) {
             Charity storage _charity = charities[_charityId];
             charityNames[_charityId] = _charity._name;
             charityAddresses[_charityId] = _charity._address;
+            charityVote[_charityId] = _charity._votes[msg.sender] > 0;
         }
 
-        return (charityNames, charityAddresses);
+        return (charityNames, charityAddresses, charityVote);
     }
 
     function vote(uint256 _charityId, uint256 _score) public isOpen {
