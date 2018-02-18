@@ -118,6 +118,13 @@ module.exports.getValues = (obj, options) => {
                     value = option.parser(value);
                 }
 
+                // parse json
+                if (typeof value === 'string') {
+                    if (value.startsWith('[') || value.startsWith('{')) {
+                        value = JSON.parse(value);
+                    }
+                }
+
                 result[option.name] = value;
             }
 
