@@ -383,6 +383,8 @@ const getReturn = (web3Return) => {
         for (let name in web3Return) {
             if (name.startsWith('_')) {
                 result[name.substr(1)] = web3Return[name];
+            } else {
+                result[name] = web3Return[name];
             }
         }
 

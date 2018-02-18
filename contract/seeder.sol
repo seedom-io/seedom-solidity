@@ -7,7 +7,7 @@ contract Seeder {
     event CharityPass(uint256 indexed _charityId);
 
     struct Charity {
-        string _name;
+        bytes32 _name;
         address _address;
         uint256 _totalScores;
         uint256 _totalVotes;
@@ -15,7 +15,7 @@ contract Seeder {
     }
 
     modifier isOpen() {
-        require((startTime >= now) && (now <= endTime) && (passedCharityId == 0));
+        require((now <= endTime) && (passedCharityId == 0));
         _;
     }
 
@@ -25,20 +25,30 @@ contract Seeder {
     }
 
     address owner;
-    uint256 public startTime;
     uint256 public endTime;
     uint256 public passedCharityId;
-    Charity[] public charities;
+    Charity[] charities;
 
     function Seeder(uint256 _endTime) public {
         owner = msg.sender;
-        startTime = now;
         endTime = _endTime;
     }
 
-    function addCharity(string _name, address _address) public isOpen {
+    function addCharity(bytes32 _name, address _address) public isOpen {
         charities.push(Charity(_name, _address, 0, 0));
         CharityAdd(charities.length - 1);
+    }
+
+    function getCharities() public view returns(bytes32[], address[]) {
+        bytes32[] memory charityNames = new bytes32[](charities.length);
+        address[] memory charityAddresses = new address[](charities.length);
+        for (uint256 _charityId = 0; _charityId < charities.length; _charityId++) {
+            Charity storage _charity = charities[_charityId];
+            charityNames[_charityId] = _charity._name;
+            charityAddresses[_charityId] = _charity._address;
+        }
+
+        return (charityNames, charityAddresses);
     }
 
     function vote(uint256 _charityId, uint256 _score) public isOpen {
