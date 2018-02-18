@@ -1,8 +1,9 @@
 pragma solidity ^0.4.19;
 
+import "seedom.sol";
+
 contract Seeder {
 
-    event CharityAdd(uint256 indexed _charityId);
     event VoterCast(address indexed _address, uint256 indexed _charityId, uint256 _score);
     event CharityPass(uint256 indexed _charityId);
 
@@ -28,15 +29,25 @@ contract Seeder {
     uint256 public endTime;
     uint256 public passedCharityId;
     Charity[] charities;
+    Seedom seedom;
 
-    function Seeder(uint256 _endTime) public {
+    function Seeder(
+        bytes32[] _charityNames,
+        address[] _charityAddresses,
+        address _seedomAddress,
+        uint256 _endTime
+    ) public {
+        require(_charityNames.length == _charityAddresses.length);
         owner = msg.sender;
         endTime = _endTime;
-    }
-
-    function addCharity(bytes32 _name, address _address) public isOpen {
-        charities.push(Charity(_name, _address, 0, 0));
-        CharityAdd(charities.length - 1);
+        // set seedom
+        seedom = Seedom(_seedomAddress);
+        // seed the charities
+        for (uint256 _charityId = 0; _charityId < _charityNames.length; _charityId++) {
+            bytes32 _charityName = _charityNames[_charityId];
+            address _charityAddress = _charityAddresses[_charityId];
+            charities.push(Charity(_charityName, _charityAddress, 0, 0));
+        }
     }
 
     function getCharities() public view returns(bytes32[], address[], uint256[], uint256[]) {
@@ -70,6 +81,13 @@ contract Seeder {
     }
 
     function vote(uint256 _charityId, uint256 _score) public isOpen {
+
+        uint256 _entries;
+        bytes32 _hashedRandom;
+        bytes32 _random;
+        ( _entries, _hashedRandom, _random ) = seedom.participantsMapping(msg.sender);
+        require(_entries > 0);
+
         Charity storage _charity = charities[_charityId];
         uint256 _vote = _charity._votes[msg.sender];
 

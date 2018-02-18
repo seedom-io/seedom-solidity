@@ -130,6 +130,7 @@ contract Seedom {
             _destructTime,
             _maxParticipants
         );
+
     }
 
     function state() public view returns (
