@@ -80,27 +80,32 @@ contract Seeder {
         return voterScores;
     }
 
-    function vote(uint256 _charityId, uint256 _score) public isOpen {
-
+    function canVote() public view isOpen returns (bool) {
         uint256 _entries;
         bytes32 _hashedRandom;
         bytes32 _random;
+        // confirm with Seedom that this user has participated with entries
         ( _entries, _hashedRandom, _random ) = seedom.participantsMapping(msg.sender);
-        require(_entries > 0);
+        return (_entries > 0);
+    }
+
+    function vote(uint256 _charityId, uint256 _score) public isOpen {
+        require(canVote());
 
         Charity storage _charity = charities[_charityId];
         uint256 _vote = _charity._votes[msg.sender];
 
         if (_score > 0) {
             // undo any previous score
-            _charity._totalScores = _charity._totalScores - _vote;
+            _charity._totalScores -= _vote;
             // handle new vote
-            _charity._totalScores = _charity._totalScores + _score;
+            _charity._totalScores += _score;
         } else {
             // handle vote delete
-            _charity._totalScores = _charity._totalScores - _vote;
+            _charity._totalScores +=  _vote;
         }
 
+        _charity._totalVotes++;
         _charity._votes[msg.sender] = _score;
         VoterCast(msg.sender, _charityId, _score);
     }
