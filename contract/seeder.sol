@@ -105,8 +105,6 @@ contract Seeder {
         } else {
             // handle vote delete
             _charity._totalScores +=  _vote;
-            // delete vote
-            _charity._totalVotes++;
             // dec votes
             _charity._totalVotes--;
         }
