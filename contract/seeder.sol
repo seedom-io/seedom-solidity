@@ -100,12 +100,18 @@ contract Seeder {
             _charity._totalScores -= _vote;
             // handle new vote
             _charity._totalScores += _score;
+            // inc votes
+            _charity._totalVotes++;
         } else {
             // handle vote delete
             _charity._totalScores +=  _vote;
+            // delete vote
+            _charity._totalVotes++;
+            // dec votes
+            _charity._totalVotes--;
         }
 
-        _charity._totalVotes++;
+        
         _charity._votes[msg.sender] = _score;
         VoterCast(msg.sender, _charityId, _score);
     }
