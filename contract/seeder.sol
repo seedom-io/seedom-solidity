@@ -39,20 +39,34 @@ contract Seeder {
         CharityAdd(charities.length - 1);
     }
 
-    function getCharities() public view returns(bytes32[], address[], bool[]) {
+    function getCharities() public view returns(bytes32[], address[], uint256[], uint256[]) {
         uint256 totalCharities = charities.length;
-        bytes32[] memory charityNames = new bytes32[](totalCharities);
-        address[] memory charityAddresses = new address[](totalCharities);
-        bool[] memory charityVote = new bool[](totalCharities);
+        bytes32[] memory names = new bytes32[](totalCharities);
+        address[] memory addresses = new address[](totalCharities);
+        uint256[] memory totalScores = new uint256[](totalCharities);
+        uint256[] memory totalVotes = new uint256[](totalCharities);
 
         for (uint256 _charityId = 0; _charityId < totalCharities; _charityId++) {
             Charity storage _charity = charities[_charityId];
-            charityNames[_charityId] = _charity._name;
-            charityAddresses[_charityId] = _charity._address;
-            charityVote[_charityId] = _charity._votes[msg.sender] > 0;
+            names[_charityId] = _charity._name;
+            addresses[_charityId] = _charity._address;
+            totalScores[_charityId] = _charity._totalScores;
+            totalVotes[_charityId] = _charity._totalVotes;
         }
 
-        return (charityNames, charityAddresses, charityVote);
+        return (names, addresses, totalScores, totalVotes);
+    }
+
+    function getVotes() public view returns(uint256[]) {
+        uint256 totalCharities = charities.length;
+        uint256[] memory voterScores = new uint256[](totalCharities);
+
+        for (uint256 _charityId = 0; _charityId < totalCharities; _charityId++) {
+            Charity storage _charity = charities[_charityId];
+            voterScores[_charityId] = _charity._votes[msg.sender];
+        }
+
+        return voterScores;
     }
 
     function vote(uint256 _charityId, uint256 _score) public isOpen {
