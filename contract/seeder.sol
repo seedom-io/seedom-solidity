@@ -75,14 +75,15 @@ contract Seeder {
 
         if (_score > 0) {
             // undo any previous score
-            _charity._totalScores = _charity._totalScores - _vote;
+            _charity._totalScores -= _vote;
             // handle new vote
-            _charity._totalScores = _charity._totalScores + _score;
+            _charity._totalScores += _score;
         } else {
             // handle vote delete
-            _charity._totalScores = _charity._totalScores - _vote;
+            _charity._totalScores +=  _vote;
         }
 
+        _charity._totalVotes++;
         _charity._votes[msg.sender] = _score;
         VoterCast(msg.sender, _charityId, _score);
     }
