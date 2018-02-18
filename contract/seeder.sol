@@ -2,6 +2,10 @@ pragma solidity ^0.4.19;
 
 contract Seeder {
 
+    event CharityAdd(uint256 indexed _charityId);
+    event VoterCast(address indexed _address, uint256 indexed _charityId, uint256 _score);
+    event CharityPass(uint256 indexed _charityId);
+
     struct Charity {
         string _name;
         address _address;
@@ -25,10 +29,6 @@ contract Seeder {
     uint256 public endTime;
     uint256 public passedCharityId;
     Charity[] public charities;
-
-    event CharityAdd(uint256 indexed _charityId);
-    event VoterCast(address indexed _address, uint256 indexed _charityId, uint256 _score);
-    event CharityPass(uint256 indexed _charityId);
 
     function Seeder(uint256 _endTime) public {
         owner = msg.sender;
