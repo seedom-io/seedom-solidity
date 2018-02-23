@@ -95,21 +95,20 @@ contract Seeder {
         Charity storage _charity = charities[_charityId];
         uint256 _vote = _charity._votes[msg.sender];
 
-        if (_score > 0) {
-            // undo any previous score
+        if (_vote > 0) {
+            // undo a previous score
             _charity._totalScores -= _vote;
-            // handle new vote
-            _charity._totalScores += _score;
-            // inc votes
-            _charity._totalVotes++;
-        } else {
-            // handle vote delete
-            _charity._totalScores -=  _vote;
             // dec votes
             _charity._totalVotes--;
         }
 
-        
+        if (_score > 0) {
+            // handle new vote
+            _charity._totalScores += _score;
+            // inc votes
+            _charity._totalVotes++;
+        }
+
         _charity._votes[msg.sender] = _score;
         VoterCast(msg.sender, _charityId, _score);
     }
