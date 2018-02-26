@@ -12,17 +12,16 @@ module.exports.run = async (state) => {
     const { env } = state;
     const seedom = await state.interfaces.seedom;
 
-    const raise = env.participateRaise ? env.participateRaise : 0;
+    const raise = env.participateRaise ? env.participateRaise : 10000;
     
     env.participants = [];
     for (let i = 0; i < env.participantsCount; i++) {
 
         const address = state.accountAddresses[i + 2];
-        const random = h.randomHex();
-        const hashedRandom = h.hashRandom(random, address);
+        const message = h.messageHex();
 
         const receipt = await seedom.participate({
-            hashedRandom
+            message
         }, { from: address, value: raise, transact: true });
 
         cli.info(`created participant ${address} with ${raise} wei`);
@@ -30,8 +29,7 @@ module.exports.run = async (state) => {
         // save actual participant
         env.participants.push({
             address,
-            random,
-            hashedRandom,
+            message,
             participateReceipt: receipt
         });
 

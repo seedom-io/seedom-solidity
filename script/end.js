@@ -2,23 +2,21 @@ const h = require('./helper');
 
 module.exports.options = [
     ['to'],
-    ['charity', true],
-    ['charityRandomString']
+    ['owner', true],
+    ['ownerMessageString']
 ];
 
 module.exports.run = async (state) => {
 
     const { env } = state;
 
-    env.charityRandom = env.charityRandom ? env.charityRandom : (
-        env.charityRandomString ? h.hexRandom(env.charityRandomString) : h.randomHex()
-    );
+    env.ownerMessage = env.ownerMessage ? env.ownerMessage : h.hexMessage(env.ownerMessageString);
 
     const to = env.to ? env.to : 'seedom';
 
-    // only the charity can end the ether-raiser
+    // only the owner can end the ether-raiser
     env.endReceipt = await (await state.interfaces[to]).end({
-        charityRandom: env.charityRandom
-    }, { from: env.charity, transact: true });
+        message: env.ownerMessage
+    }, { from: env.owner, transact: true });
 
 }

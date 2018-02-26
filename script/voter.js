@@ -13,7 +13,7 @@ module.exports.run = async (state) => {
     env.charityNames = [];
     env.charityAddresses = [];
     for (const charityNameString of env.charityNameStrings) {
-        env.charityNames.push(h.hexRandom(charityNameString));
+        env.charityNames.push(h.hexMessage(charityNameString));
         env.charityAddresses.push("0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34");
     }
     

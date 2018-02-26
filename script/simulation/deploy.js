@@ -1,4 +1,5 @@
 const ch = require('../../chronicle/helper');
+const h = require('../helper');
 
 module.exports.run = async (state) => {
 
@@ -9,6 +10,8 @@ module.exports.run = async (state) => {
     env.charitySplit = 600;
     env.winnerSplit = 350;
     env.ownerSplit = 50;
+    env.ownerMessage = h.messageHex();
+    env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
     env.participantsCount = state.accountAddresses.length - 3;
     env.maxParticipants = env.participantsCount;
@@ -16,15 +19,12 @@ module.exports.run = async (state) => {
     const now = ch.timestamp();
     // FIXME: triple the parity send delay to get overall transaction duration
     const transactionDuration = Math.round((state.network.sendDelay / 1000) * 2);
-    // deploy phase has two initial transactions: deploy and seed
+    // participation phase has two initial transactions: deploy and seed
     // and then two transactions per participant: participate and raise
-    const deployDuration = (transactionDuration * 2) + (env.participantsCount * transactionDuration * 2);
-    env.revealTime = now + deployDuration;
-    // reveal phase has max one transactions per participant: reveal
-    const revealDuration = env.participantsCount * transactionDuration;
-    env.endTime = env.revealTime + revealDuration;
-    // end phase has one of only two possible transactions: end or cancel
-    const endDuration = transactionDuration;
+    const participationDuration = (transactionDuration * 2) + (env.participantsCount * transactionDuration * 2);
+    env.endTime = now + participationDuration;
+    // end phase has (if not cancelled) two transactions: (charity) reveal and (owner) end
+    const endDuration = transactionDuration * 2;
     env.expireTime = env.endTime + endDuration;
     // expire phase has only one possible transaction: cancel
     const expireDuration = transactionDuration;
@@ -36,8 +36,8 @@ module.exports.run = async (state) => {
         charitySplit: env.charitySplit,
         winnerSplit: env.winnerSplit,
         ownerSplit: env.ownerSplit,
+        ownerSecret: env.ownerSecret,
         valuePerEntry: env.valuePerEntry,
-        revealTime: env.revealTime,
         endTime: env.endTime,
         expireTime: env.expireTime,
         destructTime: env.destructTime,

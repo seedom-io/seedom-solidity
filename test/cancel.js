@@ -86,12 +86,12 @@ suite('cancel', (state) => {
         await testCancelSuccess(state.env.charity);
     });
 
-    test("should cancel (by owner) after revelation", async () => {
+    test("should cancel (by owner) after reveal", async () => {
         await reveal.run(state);
         await testCancelSuccess(state.env.owner);
     });
 
-    test("should cancel (by charity) after revelation", async () => {
+    test("should cancel (by charity) after reveal", async () => {
         await reveal.run(state);
         await testCancelSuccess(state.env.charity);
     });

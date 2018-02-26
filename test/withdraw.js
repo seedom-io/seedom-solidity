@@ -66,7 +66,7 @@ suite('withdraw', (state) => {
         for (let participant of env.participants) {
             const participateGasUsed = participant.participateReceipt.gasUsed;
             const participateTransactionCost = await sh.getTransactionCost(participateGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(participateTransactionCost);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(participateTransactionCost.plus(10000));
         }
 
         // raise
@@ -77,16 +77,14 @@ suite('withdraw', (state) => {
         }
 
         // reveal
-        for (let participant of env.participants) {
-            const revealGasUsed = participant.revealReceipt.gasUsed;
-            const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(revealTransactionCost);
-        }
+        const revealGasUsed = env.revealReceipt.gasUsed;
+        const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
+        initialBalances[env.charity] = initialBalances[env.charity].minus(revealTransactionCost);
 
         // end
         const endGasUsed = env.endReceipt.gasUsed;
         const endTransactionCost = await sh.getTransactionCost(endGasUsed, state.web3);
-        initialBalances[env.charity] = initialBalances[env.charity].minus(endTransactionCost);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(endTransactionCost);
         
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
@@ -111,9 +109,9 @@ suite('withdraw', (state) => {
         const seedom = await state.interfaces.seedom;
 
         // calculate expected rewards
-        const charityReward = 10 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
-        const winnerReward = 10 * env.participantsCount * env.valuePerEntry * env.winnerSplit / 1000;
-        const ownerReward = 10 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
+        const charityReward = 20 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
+        const winnerReward = 20 * env.participantsCount * env.valuePerEntry * env.winnerSplit / 1000;
+        const ownerReward = 20 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
 
         // get state
         const actualState = await seedom.state({ from: env.owner });
@@ -177,26 +175,26 @@ suite('withdraw', (state) => {
 
             // check pre-balance
             let actualParticipantBalance = await seedom.balance({ from: participant.address });
-            assert.equal(actualParticipantBalance, 10000, "participant pre-balance incorrect");
+            assert.equal(actualParticipantBalance, 20000, "participant pre-balance incorrect");
 
             // verify pre-participant
-            let actualParticipant = await seedom.participantsMapping({
+            let actualParticipant = await seedom.participants({
                 address: participant.address
             }, { from: participant.address });
-            assert.equal(actualParticipant.entries, 10, "participant pre-entries incorrect");
+            assert.equal(actualParticipant.entries, 20, "participant pre-entries incorrect");
 
             // issue withdraw and update local balance
             const withdrawReceipt = await seedom.withdraw({ from: participant.address, transact: true });
             const withdrawGasUsed = withdrawReceipt.gasUsed;
             const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(10000); 
+            initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(20000); 
 
             // check post-balance
             actualParticipantBalance = await seedom.balance({ from: participant.address });
             assert.equal(actualParticipantBalance, 0, "participant pre-balance incorrect");
 
             // verify pre-participant
-            actualParticipant = await seedom.participantsMapping({
+            actualParticipant = await seedom.participants({
                 address: participant.address
             }, { from: participant.address });
             assert.equal(actualParticipant.entries, 0, "participant post-entries incorrect");
