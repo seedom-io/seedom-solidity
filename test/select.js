@@ -1,14 +1,14 @@
-const end = require('../script/simulation/end');
+const select = require('../script/simulation/select');
 const reveal = require('../script/simulation/reveal');
 const raise = require('../script/simulation/raise');
 const ch = require('../chronicle/helper');
 const cli = require('../chronicle/cli');
 
-suite('end', (state) => {
+suite('select', (state) => {
 
-    test("should choose a winner after charity reveal and owner end", async () => {
+    test("should select a participant after charity reveal and owner select", async () => {
 
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
@@ -17,32 +17,32 @@ suite('end', (state) => {
         assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
         assert.equalIgnoreCase(actualState.charityMessage, env.charityMessage, "charity message does not match");
         assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.notEqual(actualState.winner, 0, "winner zero");
-        assert.notEqual(actualState.winnerMessage, 0, "winner message zero");
-        assert.isNotOk(actualState.winnerWithdrawn, 0, "charity not withdrawn");
+        assert.notEqual(actualState.selected, 0, "selected zero");
+        assert.notEqual(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
         assert.equalIgnoreCase(actualState.ownerMessage, env.ownerMessage, "owner message does not match");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries incorrect");
 
-        let foundWinner = false;
-        let winnerMessage;
-        const winner = actualState.winner.toLowerCase();
+        let foundSelected = false;
+        let selectedMessage;
+        const selected = actualState.selected.toLowerCase();
         for (let participant of env.participants) {
-            if (participant.address.toLowerCase() === winner) {
-                foundWinner = true;
-                winnerMessage = participant.message;
+            if (participant.address.toLowerCase() === selected) {
+                foundSelected = true;
+                selectedMessage = participant.message;
                 break;
             }
         }
 
-        assert.isOk(foundWinner, "one of the participants should have won");
-        assert.equalIgnoreCase(actualState.winnerMessage, winnerMessage, "winner message incorrect");
+        assert.isOk(foundSelected, "one of the participants should have won");
+        assert.equalIgnoreCase(actualState.selectedMessage, selectedMessage, "selected message incorrect");
 
     });
 
-    test("should reject multiple ends from owner after charity reveal", async () => {
+    test("should reject multiple selects from owner after charity reveal", async () => {
         
         await reveal.run(state);
 
@@ -50,20 +50,20 @@ suite('end', (state) => {
         const seedom = await state.interfaces.seedom;
 
         await assert.isFulfilled(
-            seedom.end({
+            seedom.select({
                 message: env.ownerMessage
             }, { from: env.owner, transact: true })
         );
 
         await assert.isRejected(
-            seedom.end({
+            seedom.select({
                 message: env.ownerMessage
             }, { from: env.owner, transact: true })
         );
 
     });
 
-    test("should reject end before charity reveal", async () => {
+    test("should reject select before charity reveal", async () => {
         
         await raise.run(state);
 
@@ -72,7 +72,7 @@ suite('end', (state) => {
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).end({
+            (await state.interfaces.seedom).select({
                 message: env.ownerMessage
             }, { from: env.owner, transact: true })
         );

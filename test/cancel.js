@@ -6,7 +6,7 @@ const seed = require('../script/simulation/seed');
 const participate = require('../script/simulation/participate');
 const raise = require('../script/simulation/raise');
 const reveal = require('../script/simulation/reveal');
-const end = require('../script/simulation/end');
+const select = require('../script/simulation/select');
 
 suite('cancel', (state) => {
 
@@ -96,18 +96,18 @@ suite('cancel', (state) => {
         await testCancelSuccess(state.env.charity);
     });
 
-    test("should reject cancel (from owner) after end", async () => {
-        await end.run(state);
+    test("should reject cancel (from owner) after select", async () => {
+        await select.run(state);
         await testCancelFail(state.env.owner);
     });
 
-    test("should reject cancel (from charity) after end", async () => {
-        await end.run(state);
+    test("should reject cancel (from charity) after select", async () => {
+        await select.run(state);
         await testCancelFail(state.env.charity);
     });
 
-    test("should reject cancel (from participant) after end", async () => {
-        await end.run(state);
+    test("should reject cancel (from participant) after select", async () => {
+        await select.run(state);
         const participant = state.accountAddresses[2];
         await testCancelFail(participant);
     });

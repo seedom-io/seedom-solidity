@@ -46,9 +46,9 @@ suite('participate', (state) => {
         assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
         assert.equal(actualState.charityMessage, 0, "charity message zero");
         assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.winner, 0, "winner zero");
-        assert.equal(actualState.winnerMessage, 0, "winner message zero");
-        assert.isNotOk(actualState.winnerWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -96,9 +96,9 @@ suite('participate', (state) => {
         assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
         assert.equal(actualState.charityMessage, 0, "charity message zero");
         assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.winner, 0, "winner zero");
-        assert.equal(actualState.winnerMessage, 0, "winner message zero");
-        assert.isNotOk(actualState.winnerWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -140,7 +140,7 @@ suite('participate', (state) => {
 
     });
 
-    test("should reject participation after end", async () => {
+    test("should reject participation after select", async () => {
 
         await seed.run(state);
 

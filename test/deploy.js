@@ -18,7 +18,7 @@ suite('deploy', (state) => {
         assert.equalIgnoreCase(actualRaiser.owner, env.owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
         assert.equal(actualRaiser.charitySplit, env.charitySplit, "charity split does not match");
-        assert.equal(actualRaiser.winnerSplit, env.winnerSplit, "winner split does not match");
+        assert.equal(actualRaiser.selectedSplit, env.selectedSplit, "selected split does not match");
         assert.equal(actualRaiser.ownerSplit, env.ownerSplit, "owner split does not match");
         assert.equal(actualRaiser.ownerSecret, env.ownerSecret, "owner secret does not match");
         assert.equal(actualRaiser.valuePerEntry, env.valuePerEntry, "wei per entry does not match");
@@ -33,9 +33,9 @@ suite('deploy', (state) => {
         assert.equal(actualState.charitySecret, 0, "charity secret zero");
         assert.equal(actualState.charityMessage, 0, "charity message zero");
         assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.winner, 0, "winner zero");
-        assert.equal(actualState.winnerMessage, 0, "winner message zero");
-        assert.isNotOk(actualState.winnerWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -50,7 +50,7 @@ suite('deploy', (state) => {
         
         const charity = state.accountAddresses[1];
         const charitySplit = 500;
-        const winnerSplit = 500;
+        const selectedSplit = 500;
         const owner = state.accountAddresses[0];
         const ownerSplit = 0;
         const ownerMessage = sh.messageHex();
@@ -66,7 +66,7 @@ suite('deploy', (state) => {
         seedom = await seedom.deploy({
             charity,
             charitySplit,
-            winnerSplit,
+            selectedSplit,
             ownerSplit,
             ownerSecret,
             valuePerEntry,
@@ -82,7 +82,7 @@ suite('deploy', (state) => {
         assert.equalIgnoreCase(actualRaiser.owner, owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, charity, "charity does not match");
         assert.equal(actualRaiser.charitySplit, charitySplit, "charity split does not match");
-        assert.equal(actualRaiser.winnerSplit, winnerSplit, "winner split does not match");
+        assert.equal(actualRaiser.selectedSplit, selectedSplit, "selected split does not match");
         assert.equal(actualRaiser.ownerSplit, ownerSplit, "owner split does not match");
         assert.equal(actualRaiser.ownerSecret, ownerSecret, "owner secret does not match");
         assert.equal(actualRaiser.valuePerEntry, valuePerEntry, "wei per entry does not match");
@@ -98,7 +98,7 @@ suite('deploy', (state) => {
 
         const charity = state.accountAddresses[1];
         const charitySplit = 600;
-        const winnerSplit = 350;
+        const selectedSplit = 350;
         const owner = state.accountAddresses[0];
         const ownerSplit = 50;
         const ownerMessage = sh.messageHex();
@@ -112,15 +112,15 @@ suite('deploy', (state) => {
         const maxParticipants = 5;
         
         const testData = [
-            {charity: 0, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 0, winnerSplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, maxParticipants}
+            {charity: 0, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 0, selectedSplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, maxParticipants}
         ];
         
         for (let testArgs of testData) {
@@ -148,10 +148,10 @@ suite('deploy', (state) => {
         const valuePerEntry = 1000;
         
         const testData = [
-            {charity, charitySplit: 20, winnerSplit: 30, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 200, winnerSplit: 350, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 601, winnerSplit: 200, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 6000, winnerSplit: 2000, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants}
+            {charity, charitySplit: 20, selectedSplit: 30, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 200, selectedSplit: 350, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 601, selectedSplit: 200, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 6000, selectedSplit: 2000, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants}
         ];
         
         for (let testArgs of testData) {
@@ -168,7 +168,7 @@ suite('deploy', (state) => {
 
         const charity = state.accountAddresses[1];
         const charitySplit = 600;
-        const winnerSplit = 350;
+        const selectedSplit = 350;
         const ownerSplit = 50;
         const valuePerEntry = 1000;
         const owner = state.accountAddresses[0];
@@ -187,39 +187,39 @@ suite('deploy', (state) => {
 
         const testData = [
             // old dates
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: oldEndTime,
                 expireTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: oldExpireTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: oldDestructTime,
                 maxParticipants},
             // equal dates
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: endTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: expireTime,
                 maxParticipants},
             // out of order dates
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: expireTime,
                 expireTime: endTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: destructTime,
                 destructTime: expireTime,

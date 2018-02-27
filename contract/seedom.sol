@@ -19,9 +19,13 @@ contract Seedom {
         uint256 _refund
     );
 
-    event Win(
-        address _winner,
-        bytes32 _winnerMessage,
+    event Revelation(
+        bytes32 _charityMessage
+    );
+
+    event Selection(
+        address _selected,
+        bytes32 _selectedMessage,
         bytes32 _charityMessage,
         bytes32 _ownerMessage
     );
@@ -35,7 +39,7 @@ contract Seedom {
     struct Raiser {
         address _charity;
         uint256 _charitySplit;
-        uint256 _winnerSplit;
+        uint256 _selectedSplit;
         address _owner;
         uint256 _ownerSplit;
         bytes32 _ownerSecret;
@@ -51,8 +55,8 @@ contract Seedom {
         bytes32 _charitySecret;
         bytes32 _charityMessage;
         bool _charityWithdrawn;
-        address _winner;
-        bool _winnerWithdrawn;
+        address _selected;
+        bool _selectedWithdrawn;
         bytes32 _ownerMessage;
         bool _ownerWithdrawn;
         bool _cancelled;
@@ -107,7 +111,7 @@ contract Seedom {
     function Seedom(
         address _charity,
         uint256 _charitySplit,
-        uint256 _winnerSplit,
+        uint256 _selectedSplit,
         uint256 _ownerSplit,
         bytes32 _ownerSecret,
         uint256 _valuePerEntry,
@@ -118,8 +122,8 @@ contract Seedom {
     ) public {
         require(_charity != 0x0);
         require(_charitySplit != 0);
-        require(_winnerSplit != 0);
-        require(_charitySplit + _winnerSplit + _ownerSplit == 1000);
+        require(_selectedSplit != 0);
+        require(_charitySplit + _selectedSplit + _ownerSplit == 1000);
         require(_ownerSecret != 0x0);
         require(_valuePerEntry != 0);
         require(_endTime > now); // participation phase
@@ -130,7 +134,7 @@ contract Seedom {
         raiser = Raiser(
             _charity,
             _charitySplit,
-            _winnerSplit,
+            _selectedSplit,
             msg.sender,
             _ownerSplit,
             _ownerSecret,
@@ -148,9 +152,9 @@ contract Seedom {
         bytes32 _charitySecret,
         bytes32 _charityMessage,
         bool _charityWithdrawn,
-        address _winner,
-        bytes32 _winnerMessage,
-        bool _winnerWithdrawn,
+        address _selected,
+        bytes32 _selectedMessage,
+        bool _selectedWithdrawn,
         bytes32 _ownerMessage,
         bool _ownerWithdrawn,
         bool _cancelled,
@@ -160,9 +164,9 @@ contract Seedom {
         _charitySecret = _state._charitySecret;
         _charityMessage = _state._charityMessage;
         _charityWithdrawn = _state._charityWithdrawn;
-        _winner = _state._winner;
-        _winnerMessage = participants[_winner]._message;
-        _winnerWithdrawn = _state._winnerWithdrawn;
+        _selected = _state._selected;
+        _selectedMessage = participants[_selected]._message;
+        _selectedWithdrawn = _state._selectedWithdrawn;
         _ownerMessage = _state._ownerMessage;
         _ownerWithdrawn = _state._ownerWithdrawn;
         _cancelled = _state._cancelled;
@@ -170,11 +174,11 @@ contract Seedom {
         _totalEntries = _state._totalEntries;
     }
 
-    // Returns the balance of a charity, winner, owner, or participant.
+    // Returns the balance of a charity, selected, owner, or participant.
     function balance() public view returns (uint256) {
         // check for raiser ended normally
-        if (_state._winner != address(0)) {
-            // winner, get split
+        if (_state._selected != address(0)) {
+            // selected, get split
             uint256 _split;
             // determine split based on sender
             if (msg.sender == raiser._charity) {
@@ -182,11 +186,11 @@ contract Seedom {
                     return 0;
                 }
                 _split = raiser._charitySplit;
-            } else if (msg.sender == _state._winner) {
-                if (_state._winnerWithdrawn) {
+            } else if (msg.sender == _state._selected) {
+                if (_state._selectedWithdrawn) {
                     return 0;
                 }
-                _split = raiser._winnerSplit;
+                _split = raiser._selectedSplit;
             } else if (msg.sender == raiser._owner) {
                 if (_state._ownerWithdrawn) {
                     return 0;
@@ -220,7 +224,7 @@ contract Seedom {
         Seed(_secret);
     }
 
-    // Participate in this raiser by contributing messageness to the global selection of a winner.
+    // Participate in this raiser by contributing messageness to the global selection of a selected.
     // Send a secret value N using the following formula: sha3(N, address). Do not forget
     // your message value as this will be required during the message revealation phase to confirm
     // your entries. After participation, send wei to the callback function to receive additional
@@ -292,6 +296,9 @@ contract Seedom {
 
         // save revealed charity message
         _state._charityMessage = _message;
+
+        // send reveal event
+        Revelation(_message);
     }
 
     function _decode(bytes32 _secret, bytes32 _message) internal view returns (bool) {
@@ -301,7 +308,7 @@ contract Seedom {
     // Ends this raiser and chooses a winning supporter. All of the revealed messages and the
     // charity's final revealed message will be used to deterministically generate a universal
     // message value. This method can only be performed by the charity after the end time.
-    function end(bytes32 _message) public endPhase onlyOwner {
+    function select(bytes32 _message) public endPhase onlyOwner {
         require(!_state._cancelled); // raiser not cancelled
         require(_state._charityMessage != 0x0); // charity must have revealed
         require(_state._ownerMessage == 0x0); // cannot have ended already
@@ -315,13 +322,13 @@ contract Seedom {
         bytes32 _universalMessage = _participantsMessage ^ _state._charityMessage ^ _message;
         // calculate entry index from universal message and total entries
         uint256 _entryIndex = uint256(_universalMessage) % _state._totalEntries;
-        // find and set winner, get the participant
-        uint256 _winnerParticipantIndex = _findWinnerParticipantIndex(_entryIndex, _entryCumulatives);
-        _state._winner = participantAddresses[_winnerParticipantIndex];
-        Participant memory _participant = participants[_state._winner];
+        // find and set selected, get the participant
+        uint256 _selectedParticipantIndex = _findSelectedParticipantIndex(_entryIndex, _entryCumulatives);
+        _state._selected = participantAddresses[_selectedParticipantIndex];
+        Participant memory _participant = participants[_state._selected];
 
-        // send out win event
-        Win(_state._winner, _participant._message, _state._charityMessage, _message);
+        // send out select event
+        Selection(_state._selected, _participant._message, _state._charityMessage, _message);
     }
 
     // Using all of the revealed message values, including the charity's final message,
@@ -353,11 +360,11 @@ contract Seedom {
     }
 
     // Finds the winning supporter revealer address amongst the participants who revealed their
-    // message number to the contract. The winner index is a crowdsourced message number that is
+    // message number to the contract. The selected index is a crowdsourced message number that is
     // chosen between 0 and the sum of the weights (total entries). A binary search is then
     // performed amongst the revealers to find a revealer that falls in the following interval:
-    // (revealer cumulative entries <= winner index < next revealer cumulative entries)
-    function _findWinnerParticipantIndex(
+    // (revealer cumulative entries <= selected index < next revealer cumulative entries)
+    function _findSelectedParticipantIndex(
         uint256 _entryCumulative,
         uint256[] memory _entryCumulatives
     ) internal view returns (uint256)  {
@@ -369,7 +376,7 @@ contract Seedom {
         uint256 _rightParticipantIndex = participantAddresses.length - 1;
         // loop until winning participant found
         while (true) {
-            // the winner is the last participant! (edge case)
+            // the selected is the last participant! (edge case)
             if (_leftParticipantIndex == _rightParticipantIndex) {
                 return _leftParticipantIndex;
             }
@@ -383,13 +390,13 @@ contract Seedom {
             // binary search
             if (_entryCumulative >= _midEntryCumulative) {
                 if (_entryCumulative < _nextEntryCumulative) {
-                    // we are in range, winner found!
+                    // we are in range, selected found!
                     return _midParticipantIndex;
                 }
-                // winner is greater, move right
+                // selected is greater, move right
                 _leftParticipantIndex = _nextParticipantIndex;
             } else {
-                // winner is less, move left
+                // selected is less, move left
                 _rightParticipantIndex = _midParticipantIndex;
             }
         }
@@ -402,7 +409,7 @@ contract Seedom {
     // everyone as a final safeguard.
     function cancel() public {
         require(!_state._cancelled); // raiser not already cancelled
-        require(_state._winner == address(0)); // winner must not have been chosen
+        require(_state._selected == address(0)); // selected must not have been chosen
         // open cancellation to community if past expire time (but before destruct time)
         if ((msg.sender != raiser._owner) && (msg.sender != raiser._charity)) {
             require((now >= raiser._expireTime) && (now < raiser._destructTime));
@@ -422,13 +429,13 @@ contract Seedom {
         uint256 _balance = balance();
         require (_balance > 0); // can only withdraw a balance
         // check for raiser ended normally
-        if (_state._winner != address(0)) {
+        if (_state._selected != address(0)) {
 
             // determine split based on sender
             if (msg.sender == raiser._charity) {
                 _state._charityWithdrawn = true;
-            } else if (msg.sender == _state._winner) {
-                _state._winnerWithdrawn = true;
+            } else if (msg.sender == _state._selected) {
+                _state._selectedWithdrawn = true;
             } else if (msg.sender == raiser._owner) {
                 _state._ownerWithdrawn = true;
             } else {
@@ -442,7 +449,7 @@ contract Seedom {
             _participant._entries = 0;
 
         } else {
-            // no winner and not cancelled
+            // no selected and not cancelled
             revert();
         }
 

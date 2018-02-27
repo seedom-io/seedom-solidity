@@ -8,7 +8,7 @@ module.exports.run = async (state) => {
     env.owner = state.accountAddresses[0];
     env.charity = state.accountAddresses[1];
     env.charitySplit = 600;
-    env.winnerSplit = 350;
+    env.selectedSplit = 350;
     env.ownerSplit = 50;
     env.ownerMessage = h.messageHex();
     env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
@@ -23,7 +23,7 @@ module.exports.run = async (state) => {
     // and then two transactions per participant: participate and raise
     const participationDuration = (transactionDuration * 2) + (env.participantsCount * transactionDuration * 2);
     env.endTime = now + participationDuration;
-    // end phase has (if not cancelled) two transactions: (charity) reveal and (owner) end
+    // end phase has (if not cancelled) two transactions: (charity) reveal and (owner) select
     const endDuration = transactionDuration * 2;
     env.expireTime = env.endTime + endDuration;
     // expire phase has only one possible transaction: cancel
@@ -34,7 +34,7 @@ module.exports.run = async (state) => {
     env.seedom = await (await state.interfaces.seedom).deploy({
         charity: env.charity,
         charitySplit: env.charitySplit,
-        winnerSplit: env.winnerSplit,
+        selectedSplit: env.selectedSplit,
         ownerSplit: env.ownerSplit,
         ownerSecret: env.ownerSecret,
         valuePerEntry: env.valuePerEntry,

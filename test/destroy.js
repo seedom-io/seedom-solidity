@@ -3,7 +3,7 @@ const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
 const network = require('../chronicle/network');
 const raise = require('../script/simulation/raise');
-const end = require('../script/simulation/end');
+const select = require('../script/simulation/select');
 const BigNumber = require('bignumber.js');
 
 suite('destroy', (state) => {
@@ -53,8 +53,7 @@ suite('destroy', (state) => {
 
     test("should reject destroy (by owner) after expire", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
@@ -67,8 +66,7 @@ suite('destroy', (state) => {
 
     test("should reject destroy (by charity) after destruct", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
@@ -81,8 +79,7 @@ suite('destroy', (state) => {
 
     test("should reject destroy (by participant) after destruct", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
