@@ -81,11 +81,8 @@ contract Seeder {
     }
 
     function canVote() public view isOpen returns (bool) {
-        uint256 _entries;
-        bytes32 _hashedRandom;
-        bytes32 _random;
         // confirm with Seedom that this user has participated with entries
-        ( _entries, _hashedRandom, _random ) = seedom.participantsMapping(msg.sender);
+        var ( _entries, ) = seedom.participants(msg.sender);
         return (_entries > 0);
     }
 

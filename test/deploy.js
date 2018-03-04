@@ -1,3 +1,4 @@
+const sh = require('../script/helper');
 const ch = require('../chronicle/helper');
 const cli = require('../chronicle/cli');
 const deploy = require('../script/simulation/deploy');
@@ -17,11 +18,11 @@ suite('deploy', (state) => {
         assert.equalIgnoreCase(actualRaiser.owner, env.owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
         assert.equal(actualRaiser.charitySplit, env.charitySplit, "charity split does not match");
-        assert.equal(actualRaiser.winnerSplit, env.winnerSplit, "winner split does not match");
-        assert.equal(actualRaiser.ownerSplit, env.ownerSplit, "validOwner split does not match");
+        assert.equal(actualRaiser.selectedSplit, env.selectedSplit, "selected split does not match");
+        assert.equal(actualRaiser.ownerSplit, env.ownerSplit, "owner split does not match");
+        assert.equal(actualRaiser.ownerSecret, env.ownerSecret, "owner secret does not match");
         assert.equal(actualRaiser.valuePerEntry, env.valuePerEntry, "wei per entry does not match");
         assert.isAtMost(deployTimeDifference, 2, "deploy time delta too high");
-        assert.equal(actualRaiser.revealTime, env.revealTime, "reveal time does not match");
         assert.equal(actualRaiser.endTime, env.endTime, "end time does not match");
         assert.equal(actualRaiser.expireTime, env.expireTime, "expire time does not match");
         assert.equal(actualRaiser.destructTime, env.destructTime, "destruct time does not match");
@@ -29,15 +30,17 @@ suite('deploy', (state) => {
 
         const actualState = await seedom.state({ from: env.owner });
 
-        assert.equal(actualState.charityHashedRandom, 0, "charity hashed random zero");
-        assert.equal(actualState.winner, 0, "winner zero");
-        assert.equal(actualState.winnerRandom, 0, "winner random zero");
-        assert.isNotOk(actualState.cancelled, "initially cancelled");
+        assert.equal(actualState.charitySecret, 0, "charity secret zero");
+        assert.equal(actualState.charityMessage, 0, "charity message zero");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, 0, "total participants zero");
         assert.equal(actualState.totalEntries, 0, "total entries zero");
-        assert.equal(actualState.totalRevealers, 0, "total revealers zero");
-        assert.equal(actualState.totalRevealed, 0, "total revealed zero");
-        assert.equal(actualState.charityRandom, 0, "charity random zero");
     });
 
     test("should deploy properly with no owner split and no max participants", async () => {
@@ -45,27 +48,28 @@ suite('deploy', (state) => {
         const { env } = state;
         let seedom = await state.interfaces.seedom;
         
-        const now = ch.timestamp();
-        const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
+        const charitySplit = 500;
+        const selectedSplit = 500;
+        const owner = state.accountAddresses[0];
+        const ownerSplit = 0;
+        const ownerMessage = sh.messageHex();
+        const ownerSecret = sh.hashMessage(ownerMessage, owner);
+        const valuePerEntry = 1000;
         const phaseDuration = 5000;
-        const revealTime = now + phaseDuration;
-        const endTime = revealTime + phaseDuration;
+        const now = ch.timestamp();
+        const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
-        const valuePerEntry = 1000;
-        const charitySplit = 500;
-        const winnerSplit = 500;
-        const ownerSplit = 0;
         const maxParticipants = 0;
 
         seedom = await seedom.deploy({
             charity,
             charitySplit,
-            winnerSplit,
+            selectedSplit,
             ownerSplit,
+            ownerSecret,
             valuePerEntry,
-            revealTime,
             endTime,
             expireTime,
             destructTime,
@@ -78,11 +82,11 @@ suite('deploy', (state) => {
         assert.equalIgnoreCase(actualRaiser.owner, owner, "owner does not match");
         assert.equalIgnoreCase(actualRaiser.charity, charity, "charity does not match");
         assert.equal(actualRaiser.charitySplit, charitySplit, "charity split does not match");
-        assert.equal(actualRaiser.winnerSplit, winnerSplit, "winner split does not match");
-        assert.equal(actualRaiser.ownerSplit, ownerSplit, "validOwner split does not match");
+        assert.equal(actualRaiser.selectedSplit, selectedSplit, "selected split does not match");
+        assert.equal(actualRaiser.ownerSplit, ownerSplit, "owner split does not match");
+        assert.equal(actualRaiser.ownerSecret, ownerSecret, "owner secret does not match");
         assert.equal(actualRaiser.valuePerEntry, valuePerEntry, "wei per entry does not match");
         assert.isAtMost(deployTimeDifference, 2, "deploy time delta too high");
-        assert.equal(actualRaiser.revealTime, revealTime, "reveal time does not match");
         assert.equal(actualRaiser.endTime, endTime, "end time does not match");
         assert.equal(actualRaiser.expireTime, expireTime, "expire time does not match");
         assert.equal(actualRaiser.destructTime, destructTime, "destruct time does not match");
@@ -92,34 +96,36 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with zeroed data", async () => {
 
-        const now = ch.timestamp();
-        const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
         const charitySplit = 600;
-        const winnerSplit = 350;
+        const selectedSplit = 350;
+        const owner = state.accountAddresses[0];
         const ownerSplit = 50;
+        const ownerMessage = sh.messageHex();
+        const ownerSecret = sh.hashMessage(ownerMessage, owner);
         const valuePerEntry = 1000;
         const phaseDuration = 5000;
-        const revealTime = now + phaseDuration;
-        const endTime = revealTime + phaseDuration;
+        const now = ch.timestamp();
+        const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
         const maxParticipants = 5;
         
         const testData = [
-            {charity: 0, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 0, winnerSplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit: 0, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit: 0, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry: 0, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime: 0, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime: 0, expireTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime: 0, destructTime, maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry, revealTime, endTime, expireTime, destructTime: 0, maxParticipants}
+            {charity: 0, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 0, selectedSplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, maxParticipants},
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, maxParticipants}
         ];
         
         for (let testArgs of testData) {
             cli.json(testArgs);
+            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.seedom).deploy(testArgs, { from: owner })
             );
@@ -129,26 +135,28 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with splits that don't add to 1000", async () => {
 
-        const now = ch.timestamp();
-        const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
+        const owner = state.accountAddresses[0];
+        const ownerMessage = sh.messageHex();
+        const ownerSecret = sh.hashMessage(ownerMessage, owner);
         const phaseDuration = 5000;
-        const revealTime = now + phaseDuration;
-        const endTime = revealTime + phaseDuration;
+        const now = ch.timestamp();
+        const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
         const maxParticipants = 5;
         const valuePerEntry = 1000;
         
         const testData = [
-            {charity, charitySplit: 20, winnerSplit: 30, ownerSplit: 50, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 200, winnerSplit: 350, ownerSplit: 500, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 601, winnerSplit: 200, ownerSplit: 200, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants},
-            {charity, charitySplit: 6000, winnerSplit: 2000, ownerSplit: 2000, valuePerEntry, revealTime, endTime, expireTime, destructTime, maxParticipants}
+            {charity, charitySplit: 20, selectedSplit: 30, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 200, selectedSplit: 350, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 601, selectedSplit: 200, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants},
+            {charity, charitySplit: 6000, selectedSplit: 2000, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, maxParticipants}
         ];
         
         for (let testArgs of testData) {
             cli.json(testArgs);
+            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.seedom).deploy(testArgs, { from: owner })
             );
@@ -158,84 +166,60 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with invalid dates", async () => {
 
-        const now = ch.timestamp();
-        const owner = state.accountAddresses[0];
         const charity = state.accountAddresses[1];
+        const charitySplit = 600;
+        const selectedSplit = 350;
+        const ownerSplit = 50;
+        const valuePerEntry = 1000;
+        const owner = state.accountAddresses[0];
+        const ownerMessage = sh.messageHex();
+        const ownerSecret = sh.hashMessage(ownerMessage, owner);
         const phaseDuration = 5000;
-        const revealTime = now + phaseDuration;
-        const endTime = revealTime + phaseDuration;
+        const now = ch.timestamp();
+        const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
-        const oldRevealTime = now - phaseDuration * 4;
-        const oldEndTime = oldRevealTime + phaseDuration;
+        const oldEndTime = now - phaseDuration * 3;
         const oldExpireTime = oldEndTime + phaseDuration;
         const oldDestructTime = oldExpireTime + phaseDuration;
         const maxParticipants = 5;
-        const charitySplit = 600;
-        const winnerSplit = 350;
-        const ownerSplit = 50;
-        const valuePerEntry = 1000;
+        
 
         const testData = [
             // old dates
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime: oldRevealTime,
-                endTime,
-                expireTime,
-                destructTime,
-                maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: oldEndTime,
                 expireTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: oldExpireTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: oldDestructTime,
                 maxParticipants},
             // equal dates
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
-                endTime: revealTime,
-                expireTime,
-                destructTime,
-                maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: endTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: expireTime,
                 maxParticipants},
             // out of order dates
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime: endTime,
-                endTime: revealTime,
-                expireTime,
-                destructTime,
-                maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: expireTime,
                 expireTime: endTime,
                 destructTime,
                 maxParticipants},
-            {charity, charitySplit, winnerSplit, ownerSplit, valuePerEntry,
-                revealTime,
+            {charity, charitySplit, selectedSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: destructTime,
                 destructTime: expireTime,
@@ -244,6 +228,7 @@ suite('deploy', (state) => {
 
         for (let testArgs of testData) {
             cli.json(testArgs);
+            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.seedom).deploy(testArgs, { from: owner })
             );

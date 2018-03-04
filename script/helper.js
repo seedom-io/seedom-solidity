@@ -3,26 +3,26 @@ const cli = require('../chronicle/cli');
 const BigNumber = require('bignumber.js');
 const keccak256 = require('js-sha3').keccak256;
 
-module.exports.randomHex = () => {
+module.exports.messageHex = () => {
     const buffer = Buffer.alloc(32);
     crypto.randomFillSync(buffer, 0, 32);
     return `0x${buffer.toString('hex')}`;
 };
 
-module.exports.hexRandom = (random) => {
+module.exports.hexMessage = (message) => {
     const buffer = Buffer.alloc(32);
-    buffer.write(random);
+    buffer.write(message);
     return `0x${buffer.toString('hex')}`;
 };
 
-module.exports.hashRandom = (randomHex, participant) => {
+module.exports.hashMessage = (messageHex, participant) => {
 
     const hasher = new keccak256.create(256);
 
     // remove 0x
-    randomHex = randomHex.substr(2);
-    const randomBuffer = new Buffer(randomHex, 'hex');
-    hasher.update(randomBuffer);
+    messageHex = messageHex.substr(2);
+    const messageBuffer = new Buffer(messageHex, 'hex');
+    hasher.update(messageBuffer);
 
     // remove 0x
     const participantHex = participant.substr(2);

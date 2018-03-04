@@ -23,20 +23,20 @@ suite('raise', (state) => {
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await seedom.participantsMapping({
+            const actualParticipant = await seedom.participants({
                 address: participant.address
             }, { from: participant.address });
     
-            assert.equal(actualParticipant.entries, 10, "entries should be correct");
-            assert.equal(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
-            assert.equal(actualParticipant.random, 0, "random should be zero");
+            assert.equal(actualParticipant.entries, 20, "entries should be correct");
+            assert.equalIgnoreCase(actualParticipant.message, participant.message, "message should be correct");
 
             // check address balances
             const participateTransactionCost = await sh.getTransactionCost(participant.participateReceipt.gasUsed, state.web3);
             const participationBalance = initialBalances[participant.address].minus(participateTransactionCost);
             const raiseTransactionCost = await sh.getTransactionCost(participant.raiseReceipt.gasUsed, state.web3);
-            // participant should be refunded 500 (partial entry) in transaction for a net loss of 10000
-            const raiseBalance = participationBalance.minus(raiseTransactionCost).minus(10000);
+            // participant should be refunded 500 (partial entry) in transaction for a net loss of
+            // 20000 (participation entries + raise entries)
+            const raiseBalance = participationBalance.minus(raiseTransactionCost).minus(20000);
             const finalBalance = await sh.getBalance(participant.address, state.web3);
             assert.equal(finalBalance.toString(), raiseBalance.toString(), "balance not expected for " + participant.address);
 
@@ -48,11 +48,18 @@ suite('raise', (state) => {
 
         // confirm state
         const actualState = await seedom.state({ from: env.owner });
-        const totalEntries = env.participantsCount * 10;
-        assert.equal(actualState.totalEntries, totalEntries, "total entries should be correct");
-        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
+
+        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
+        assert.equal(actualState.charityMessage, 0, "charity message zero");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries incorrect");
 
         // check balance()s
         const actualCharityReward = await seedom.balance({ from: env.charity });
@@ -79,18 +86,24 @@ suite('raise', (state) => {
 
         const actualState = await seedom.state({ from: env.owner });
 
-        assert.equal(actualState.totalEntries, 0, "total entries should be zero");
-        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
-        assert.equal(actualState.totalParticipants, 0, "total participants should be zero");
-        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
+        assert.equal(actualState.charityMessage, 0, "charity message zero");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
+        assert.equal(actualState.totalParticipants, 0, "total participants not zero");
+        assert.equal(actualState.totalEntries, 0, "total entries not zero");
 
-        const actualParticipant = await seedom.participantsMapping({
+        const actualParticipant = await seedom.participants({
             participant
         }, { from: participant });
 
         assert.equal(actualParticipant.entries, 0, "entries should be zero");
-        assert.equal(actualParticipant.hashedRandom, 0, "hashed random should be zero");
-        assert.equal(actualParticipant.random, 0, "random should be zero");
+        assert.equal(actualParticipant.message, 0, "message should be zero");
 
     });
 
@@ -109,18 +122,25 @@ suite('raise', (state) => {
         );
 
         const actualState = await seedom.state({ from: env.owner });
-        assert.equal(actualState.totalEntries, 0, "total entries should be zero");
-        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
+        
+        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
+        assert.equal(actualState.charityMessage, 0, "charity message zero");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
 
-        const actualParticipant = await seedom.participantsMapping({
+        const actualParticipant = await seedom.participants({
             address: participant.address
         }, { from: participant.address });
 
-        assert.equal(actualParticipant.entries, 0, "entries should be zero");
-        assert.equal(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
-        assert.equal(actualParticipant.random, 0, "random should be zero");
+        assert.equal(actualParticipant.entries, 10, "entries should be correct");
+        assert.equalIgnoreCase(actualParticipant.message, participant.message, "message should match");
 
     });
 
@@ -139,18 +159,25 @@ suite('raise', (state) => {
         );
 
         const actualState = await seedom.state({ from: env.owner });
-        assert.equal(actualState.totalEntries, 0, "total entries should be zero");
-        assert.equal(actualState.totalRevealed, 0, "total revealed not zero");
+        
+        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
+        assert.equal(actualState.charityMessage, 0, "charity message zero");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalRevealers, 0, "total revealers not zero");
+        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
 
-        const actualParticipant = await seedom.participantsMapping({
+        const actualParticipant = await seedom.participants({
             address: participant.address
         }, { from: participant.address });
 
-        assert.equal(actualParticipant.entries, 0, "entries should be zero");
-        assert.equal(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
-        assert.equal(actualParticipant.random, 0, "random should be zero");
+        assert.equal(actualParticipant.entries, 10, "entries should be correct");
+        assert.equalIgnoreCase(actualParticipant.message, participant.message, "message should match");
 
     });
 

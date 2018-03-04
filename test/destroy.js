@@ -3,7 +3,7 @@ const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
 const network = require('../chronicle/network');
 const raise = require('../script/simulation/raise');
-const end = require('../script/simulation/end');
+const select = require('../script/simulation/select');
 const BigNumber = require('bignumber.js');
 
 suite('destroy', (state) => {
@@ -24,7 +24,7 @@ suite('destroy', (state) => {
         const initialContractBalance = await sh.getBalance(contractAddress, state.web3);
 
         // ensure expected initial contract balance
-        const expectedInitialContractBalance = new BigNumber(10 * env.participantsCount * env.valuePerEntry);
+        const expectedInitialContractBalance = new BigNumber(20 * env.participantsCount * env.valuePerEntry);
         assert.equal(initialContractBalance.toString(), expectedInitialContractBalance.toString(), "initial contract balance does not match expected");
 
         const now = ch.timestamp();
@@ -53,8 +53,7 @@ suite('destroy', (state) => {
 
     test("should reject destroy (by owner) after expire", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
@@ -67,8 +66,7 @@ suite('destroy', (state) => {
 
     test("should reject destroy (by charity) after destruct", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
@@ -81,8 +79,7 @@ suite('destroy', (state) => {
 
     test("should reject destroy (by participant) after destruct", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 

@@ -16,33 +16,65 @@ suite('seed', (state) => {
         const actualRaiser = await seedom.raiser({ from: env.owner });
         assert.equalIgnoreCase(actualRaiser.charity, env.charity, "charity does not match");
 
-        const charityRandom = sh.randomHex();
-        const charityHashedRandom = sh.hashRandom(charityRandom, env.charity);
+        const charityMessage = sh.messageHex();
+        const charitySecret = sh.hashMessage(charityMessage, env.charity);
 
         await assert.isFulfilled(
             seedom.seed({
-                charityHashedRandom
+                secret: charitySecret
             }, { from: env.charity, transact: true })
         );
 
         const actualState = await seedom.state({ from: env.owner });
-        assert.equal(actualState.charityHashedRandom, charityHashedRandom, "charity's hashed random does not match");
-        assert.equal(actualState.winner, 0, "winner not zero");
-        assert.equal(actualState.charityRandom, 0, "charity random not zero");
+
+        assert.equal(actualState.charitySecret, charitySecret, "charity secret does not match");
+        assert.equal(actualState.charityMessage, 0, "charity message zero");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
+        assert.equal(actualState.totalParticipants, 0, "total participants zero");
+        assert.equal(actualState.totalEntries, 0, "total entries zero");
 
     });
 
-    test("should reject seed from owner", async () => {
+    test("should reject multiple valid seeds from charity", async () => {
         
         await deploy.run(state);
 
         const { env } = state;
-        const charityRandom = sh.randomHex();
-        const charityHashedRandom = sh.hashRandom(charityRandom, env.charity);
+        const seedom = await state.interfaces.seedom;
+        const charityMessage = sh.messageHex();
+        const charitySecret = sh.hashMessage(charityMessage, env.charity);
+
+        await assert.isFulfilled(
+            seedom.seed({
+                secret: charitySecret
+            }, { from: env.charity, transact: true })
+        );
+
+        await assert.isRejected(
+            seedom.seed({
+                secret: charitySecret
+            }, { from: env.charity, transact: true })
+        );
+
+    });
+
+    test("should reject valid seed from owner", async () => {
+        
+        await deploy.run(state);
+
+        const { env } = state;
+        const charityMessage = sh.messageHex();
+        const charitySecret = sh.hashMessage(charityMessage, env.charity);
 
         await assert.isRejected(
             (await state.interfaces.seedom).seed({
-                charityHashedRandom
+                secret: charitySecret
             }, { from: env.owner, transact: true })
         );
 
@@ -53,13 +85,13 @@ suite('seed', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const charityRandom = sh.randomHex();
-        const charityHashedRandom = sh.hashRandom(charityRandom, env.charity);
+        const charityMessage = sh.messageHex();
+        const charitySecret = sh.hashMessage(charityMessage, env.charity);
         const participant = state.accountAddresses[2];
 
         await assert.isRejected(
             (await state.interfaces.seedom).seed({
-                charityHashedRandom
+                secret: charitySecret
             }, { from: participant, transact: true })
         );
 

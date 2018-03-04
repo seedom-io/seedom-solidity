@@ -4,7 +4,7 @@ const sh = require('../script/helper');
 const deploy = require('../script/simulation/deploy');
 const participate = require('../script/simulation/participate');
 const raise = require('../script/simulation/raise');
-const end = require('../script/simulation/end');
+const select = require('../script/simulation/select');
 const withdraw = require('../script/simulation/withdraw');
 
 suite('withdraw', (state) => {
@@ -47,8 +47,7 @@ suite('withdraw', (state) => {
             initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const { env } = state;
 
@@ -66,7 +65,7 @@ suite('withdraw', (state) => {
         for (let participant of env.participants) {
             const participateGasUsed = participant.participateReceipt.gasUsed;
             const participateTransactionCost = await sh.getTransactionCost(participateGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(participateTransactionCost);
+            initialBalances[participant.address] = initialBalances[participant.address].minus(participateTransactionCost.plus(10000));
         }
 
         // raise
@@ -77,16 +76,14 @@ suite('withdraw', (state) => {
         }
 
         // reveal
-        for (let participant of env.participants) {
-            const revealGasUsed = participant.revealReceipt.gasUsed;
-            const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(revealTransactionCost);
-        }
+        const revealGasUsed = env.revealReceipt.gasUsed;
+        const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
+        initialBalances[env.charity] = initialBalances[env.charity].minus(revealTransactionCost);
 
-        // end
-        const endGasUsed = env.endReceipt.gasUsed;
-        const endTransactionCost = await sh.getTransactionCost(endGasUsed, state.web3);
-        initialBalances[env.charity] = initialBalances[env.charity].minus(endTransactionCost);
+        // select
+        const selectGasUser = env.endReceipt.gasUsed;
+        const selectTransactionCost = await sh.getTransactionCost(selectGasUser, state.web3);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(selectTransactionCost);
         
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
@@ -98,8 +95,7 @@ suite('withdraw', (state) => {
 
     test("should have correct post-withdraw balances", async () => {
 
-        // first end
-        await end.run(state);
+        await select.run(state);
 
         const initialBalances = {};
         // get all initial balances
@@ -111,9 +107,9 @@ suite('withdraw', (state) => {
         const seedom = await state.interfaces.seedom;
 
         // calculate expected rewards
-        const charityReward = 10 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
-        const winnerReward = 10 * env.participantsCount * env.valuePerEntry * env.winnerSplit / 1000;
-        const ownerReward = 10 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
+        const charityReward = 20 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
+        const selectedReward = 20 * env.participantsCount * env.valuePerEntry * env.selectedSplit / 1000;
+        const ownerReward = 20 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
 
         // get state
         const actualState = await seedom.state({ from: env.owner });
@@ -121,14 +117,14 @@ suite('withdraw', (state) => {
         // check balances
         const actualCharityReward = await seedom.balance({ from: env.charity });
         assert.equal(actualCharityReward, charityReward, "charity reward balance incorrect");
-        const actualWinnerReward = await seedom.balance({ from: actualState.winner });
-        assert.equal(actualWinnerReward, winnerReward, "winner reward balance incorrect");
+        const actualSelectedReward = await seedom.balance({ from: actualState.selected });
+        assert.equal(actualSelectedReward, selectedReward, "selected reward balance incorrect");
         const actualOwnerReward = await seedom.balance({ from: env.owner });
         assert.equal(actualOwnerReward, ownerReward, "owner reward balance incorrect");
 
         // issue withdraws
         const charityWithdrawReceipt = await seedom.withdraw({ from: env.charity, transact: true });
-        const winnerWithdrawReceipt = await seedom.withdraw({ from: actualState.winner, transact: true });
+        const selectedWithdrawReceipt = await seedom.withdraw({ from: actualState.selected, transact: true });
         const ownerWithdrawReceipt = await seedom.withdraw({ from: env.owner, transact: true });
 
         // verify owner balance
@@ -141,11 +137,11 @@ suite('withdraw', (state) => {
         const charityWithdrawTransactionCost = await sh.getTransactionCost(charityWithdrawGasUsed, state.web3);
         initialBalances[env.charity] = initialBalances[env.charity].minus(charityWithdrawTransactionCost).plus(charityReward);
 
-        // verify winner balance
-        const winnerWithdrawGasUsed = winnerWithdrawReceipt.gasUsed;
-        const winnerWithdrawTransactionCost = await sh.getTransactionCost(winnerWithdrawGasUsed, state.web3);
-        const winner = actualState.winner.toLowerCase();
-        initialBalances[winner] = initialBalances[winner].minus(winnerWithdrawTransactionCost).plus(winnerReward);
+        // verify selected balance
+        const selectedWithdrawGasUsed = selectedWithdrawReceipt.gasUsed;
+        const selectedWithdrawTransactionCost = await sh.getTransactionCost(selectedWithdrawGasUsed, state.web3);
+        const selected = actualState.selected.toLowerCase();
+        initialBalances[selected] = initialBalances[selected].minus(selectedWithdrawTransactionCost).plus(selectedReward);
 
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
@@ -177,26 +173,26 @@ suite('withdraw', (state) => {
 
             // check pre-balance
             let actualParticipantBalance = await seedom.balance({ from: participant.address });
-            assert.equal(actualParticipantBalance, 10000, "participant pre-balance incorrect");
+            assert.equal(actualParticipantBalance, 20000, "participant pre-balance incorrect");
 
             // verify pre-participant
-            let actualParticipant = await seedom.participantsMapping({
+            let actualParticipant = await seedom.participants({
                 address: participant.address
             }, { from: participant.address });
-            assert.equal(actualParticipant.entries, 10, "participant pre-entries incorrect");
+            assert.equal(actualParticipant.entries, 20, "participant pre-entries incorrect");
 
             // issue withdraw and update local balance
             const withdrawReceipt = await seedom.withdraw({ from: participant.address, transact: true });
             const withdrawGasUsed = withdrawReceipt.gasUsed;
             const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
-            initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(10000); 
+            initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(20000); 
 
             // check post-balance
             actualParticipantBalance = await seedom.balance({ from: participant.address });
             assert.equal(actualParticipantBalance, 0, "participant pre-balance incorrect");
 
             // verify pre-participant
-            actualParticipant = await seedom.participantsMapping({
+            actualParticipant = await seedom.participants({
                 address: participant.address
             }, { from: participant.address });
             assert.equal(actualParticipant.entries, 0, "participant post-entries incorrect");
@@ -247,16 +243,16 @@ suite('withdraw', (state) => {
 
     });
 
-    test("should reject multiple withdraw attempts (by charity) after end", async () => {
+    test("should reject multiple withdraw attempts (by charity) after select", async () => {
         
         const { env } = state;
 
         // set charity lowest so it can
         // have a chance at withdrawing twice
         env.charitySplit = 100
-        env.winnerSplit = 450;
+        env.selectedSplit = 450;
         env.ownerSplit = 450;
-        await end.run(state);
+        await select.run(state);
         
         const seedom = await state.interfaces.seedom;
 
@@ -269,16 +265,16 @@ suite('withdraw', (state) => {
 
     });
 
-    test("should reject multiple withdraw attempts (by winner) after end", async () => {
+    test("should reject multiple withdraw attempts (by selected) after select", async () => {
         
         const { env } = state;
 
-        // set winner lowest so it can
+        // set selected lowest so it can
         // have a chance at withdrawing twice
-        env.winnerSplit = 100;
+        env.selectedSplit = 100;
         env.charitySplit = 100
         env.ownerSplit = 450;
-        await end.run(state);
+        await select.run(state);
         
         const seedom = await state.interfaces.seedom;
 
@@ -286,24 +282,24 @@ suite('withdraw', (state) => {
         const actualState = await seedom.state({ from: env.owner });
 
         await assert.isFulfilled(
-            seedom.withdraw({ from: actualState.winner, transact: true })
+            seedom.withdraw({ from: actualState.selected, transact: true })
         );
         await assert.isRejected(
-            seedom.withdraw({ from: actualState.winner, transact: true })
+            seedom.withdraw({ from: actualState.selected, transact: true })
         );
 
     });
 
-    test("should reject multiple withdraw attempts (by owner) after end", async () => {
+    test("should reject multiple withdraw attempts (by owner) after select", async () => {
         
         const { env } = state;
 
-        // set winner lowest so it can
+        // set selected lowest so it can
         // have a chance at withdrawing twice
         env.ownerSplit = 100;
-        env.winnerSplit = 450;
+        env.selectedSplit = 450;
         env.charitySplit = 450;
-        await end.run(state);
+        await select.run(state);
         
         const seedom = await state.interfaces.seedom;
 

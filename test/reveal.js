@@ -1,171 +1,119 @@
 const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
-const deploy = require('../script/simulation/deploy');
-const seed = require('../script/simulation/seed');
-const participate = require('../script/simulation/participate');
+const parity = require('../chronicle/parity');
 const raise = require('../script/simulation/raise');
-const reveal = require('../script/simulation/reveal');
+const network = require('../chronicle/network');
 
 suite('reveal', (state) => {
 
-    test("should allow revelation after participation", async () => {
+    test("should reveal properly from charity", async () => {
 
-        // first reveal
-        await reveal.run(state);
+        await raise.run(state);
 
         const { env } = state;
         const seedom = await state.interfaces.seedom;
 
-        for (let participant of env.participants) {
+        const now = ch.timestamp();
+        await cli.progress("waiting for end phase", env.endTime - now);
 
-            const actualParticipant = await seedom.participantsMapping({
-                address: participant.address
-            }, { from: participant.address });
+        await assert.isFulfilled(
+            seedom.reveal({
+                message: env.charityMessage
+            }, { from: env.charity, transact: true })
+        );
 
-            assert.equal(actualParticipant.entries, 10, "entries should be correct");
-            assert.equalIgnoreCase(actualParticipant.hashedRandom, participant.hashedRandom, "hashed random does not match");
-            assert.equal(state.web3.utils.toHex(actualParticipant.random), participant.random, "random should be set");
-
-            // check balance()s
-            const actualParticipantBalance = await seedom.balance({ from: participant.address });
-            assert.equal(actualParticipantBalance, 0, "participant balance not zero");
-
-        }
-
-        // check state
         const actualState = await seedom.state({ from: env.owner });
-        const totalEntries = env.participantsCount * 10;
-        assert.equal(actualState.totalEntries, totalEntries, "total entries should be correct");
-        assert.equal(actualState.totalRevealed, totalEntries, "total revealed not correct");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalRevealers, env.participantsCount, "total revealers incorrect");
 
-        // check balance()s
-        const actualCharityReward = await seedom.balance({ from: env.charity });
-        assert.equal(actualCharityReward, 0, "charity reward balance not zero");
-        const actualOwnerReward = await seedom.balance({ from: env.owner });
-        assert.equal(actualOwnerReward, 0, "owner reward balance not zero");
-
-    });
-
-    test("should reject random revelations of zero", async () => {
-
-        // first seed
-        await seed.run(state);
-
-        const { env } = state;
-        const seedom = await state.interfaces.seedom;
-
-        const participant = state.accountAddresses[2];
-        const random = '0';
-        const hashedRandom = sh.hashRandom(random, participant);
-        
-        await assert.isFulfilled(
-            seedom.participate({
-                hashedRandom
-            }, { from: participant, value: 10000, transact: true })
-        );
-
-        now = ch.timestamp();
-        await cli.progress("waiting for reveal phase", env.revealTime - now);
-
-        await assert.isRejected(
-            seedom.reveal({
-                random: '0x00000000000000000000000000000000000000000000000000000000000000'
-            }, { from: participant, value: 10000, transact: true })
-        );
+        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
+        assert.equalIgnoreCase(actualState.charityMessage, env.charityMessage, "charity message does not match");
+        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.selected, 0, "selected zero");
+        assert.equal(actualState.selectedMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.ownerMessage, 0, "owner message zero");
+        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.cancelled, "not cancelled");
+        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants zero");
+        assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries zero");
 
     });
 
-    test("should reject multiple revelations from same address", async () => {
+    test("should reject multiple valid reveals from charity", async () => {
         
-        // first raise
         await raise.run(state);
-        
+
         const { env } = state;
         const seedom = await state.interfaces.seedom;
 
-        const participant = env.participants[0];
         const now = ch.timestamp();
-        await cli.progress("waiting for reveal phase", env.revealTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isFulfilled(
             seedom.reveal({
-                random: participant.random
-            }, { from: participant.address, transact: true })
+                message: env.charityMessage
+            }, { from: env.charity, transact: true })
         );
 
         await assert.isRejected(
             seedom.reveal({
-                random: participant.random
-            }, { from: participant.address, transact: true })
+                message: env.charityMessage
+            }, { from: env.charity, transact: true })
         );
 
     });
 
-    test("should reject revelations without raising", async () => {
+    test("should reject invalid reveal from charity", async () => {
         
-        // first participate
-        await participate.run(state);
-
-        const { env } = state;
-        
-        const participant = env.participants[0];
-        const now = ch.timestamp();
-        await cli.progress("waiting for reveal phase", env.revealTime - now);
-
-        await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
-                random: participant.random
-            }, { from: participant.address, transact: true })
-        );
-
-    });
-
-    test("should reject incorrect randoms", async () => {
-        
-        // first raise
         await raise.run(state);
-        
+
         const { env } = state;
-        
-        const participant = env.participants[0];
-        const now = ch.timestamp();
-        await cli.progress("waiting for reveal phase", env.revealTime - now);
-
-        const incorrectRandom = sh.randomHex();
-        await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
-                random: incorrectRandom
-            }, { from: participant.address, transact: true })
-        );
-
-    });
-
-    test("should reject revelations before and after revelation period", async () => {
-
-        // first raise
-        await raise.run(state);
-        
-        const { env } = state;
-        const seedom = await state.interfaces.seedom;
-
-        const participant = env.participants[0];
-
-        await assert.isRejected(
-            seedom.reveal({
-                random: participant.random
-            }, { from: participant.address, transact: true })
-        );
+        // generate a new random message
+        const charityMessage = sh.messageHex();
+        const charitySecret = sh.hashMessage(charityMessage, env.charity);
 
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            seedom.reveal({
-                random: participant.random
-            }, { from: participant.address, transact: true })
+            (await state.interfaces.seedom).reveal({
+                message: charityMessage
+            }, { from: env.charity, transact: true })
+        );
+
+    });
+
+    test("should reject valid reveal from owner", async () => {
+        
+        await raise.run(state);
+
+        const { env } = state;
+
+        const now = ch.timestamp();
+        await cli.progress("waiting for end phase", env.endTime - now);
+
+        await assert.isRejected(
+            (await state.interfaces.seedom).reveal({
+                message: env.charityMessage
+            }, { from: env.owner, transact: true })
+        );
+
+    });
+
+    test("should reject valid reveal from participant", async () => {
+        
+        await raise.run(state);
+
+        const { env } = state;
+        const participant = state.accountAddresses[2];
+
+        const now = ch.timestamp();
+        await cli.progress("waiting for end phase", env.endTime - now);
+
+        await assert.isRejected(
+            (await state.interfaces.seedom).seed({
+                message: env.charityMessage
+            }, { from: participant, transact: true })
         );
 
     });
