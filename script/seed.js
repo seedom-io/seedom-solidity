@@ -15,6 +15,7 @@ module.exports.run = async (state) => {
     );
     
     env.charitySecret = h.hashMessage(env.charityMessage, env.charity);
+    
     const to = env.to ? env.to : 'seedom';
 
     env.seedReceipt = await (await state.interfaces[to]).seed({

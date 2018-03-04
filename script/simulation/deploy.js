@@ -1,5 +1,6 @@
 const ch = require('../../chronicle/helper');
 const h = require('../helper');
+const deploy = require('../deploy');
 
 module.exports.run = async (state) => {
 
@@ -30,23 +31,6 @@ module.exports.run = async (state) => {
     const expireDuration = transactionDuration;
     env.destructTime = env.expireTime + expireDuration;
 
-    // deploy seedom
-    env.seedom = await (await state.interfaces.seedom).deploy({
-        charity: env.charity,
-        charitySplit: env.charitySplit,
-        selectedSplit: env.selectedSplit,
-        ownerSplit: env.ownerSplit,
-        ownerSecret: env.ownerSecret,
-        valuePerEntry: env.valuePerEntry,
-        endTime: env.endTime,
-        expireTime: env.expireTime,
-        destructTime: env.destructTime,
-        maxParticipants: env.maxParticipants
-    }, {
-        from: env.owner
-    });
-
-    // save receipt
-    env.deployReceipt = env.seedom.receipt;
+    await deploy.run(state);
     
 };
