@@ -27,7 +27,7 @@ module.exports.run = async (state) => {
     env.ownerSecret = env.ownerSecret ? env.ownerSecret : h.hexMessage(env.ownerMessageString);
 
     // deploy seedom
-    env.seedom = await (await state.interfaces.seedom).deploy({
+    const seedom = await (await state.interfaces.seedom).deploy({
         charity: env.charity,
         charitySplit: env.charitySplit,
         selectedSplit: env.selectedSplit,
@@ -43,6 +43,17 @@ module.exports.run = async (state) => {
     });
 
     // save receipt
-    env.deployReceipt = env.seedom.receipt;
+    env.seedomReceipt = seedom.receipt;
+
+    // deploy suggest
+    const suggest = await (await state.interfaces.suggest).deploy({
+        endTime: env.endTime,
+        seedomAddress: seedom.receipt.contractAddress
+    }, {
+        from: env.owner
+    });
+
+    // save receipt
+    env.suggestReceipt = suggest.receipt;
 
 }

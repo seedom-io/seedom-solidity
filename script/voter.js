@@ -22,8 +22,6 @@ module.exports.run = async (state) => {
     const seeder = await state.interfaces.seeder;
 
     env.seederReceipt = await seeder.deploy({
-        charityNames: env.charityNames,
-        charityAddresses: env.charityAddresses,
         endTime: env.endTime,
         seedomAddress: seedom.receipt.contractAddress
     }, {

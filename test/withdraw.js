@@ -51,10 +51,10 @@ suite('withdraw', (state) => {
 
         const { env } = state;
 
-        // deploy
-        const deployGasUsed = env.deployReceipt.gasUsed;
-        const deployTransactionCost = await sh.getTransactionCost(deployGasUsed, state.web3);
-        initialBalances[env.owner] = initialBalances[env.owner].minus(deployTransactionCost);
+        // seedom
+        const seedomGasUsed = env.seedomReceipt.gasUsed;
+        const seedomTransactionCost = await sh.getTransactionCost(seedomGasUsed, state.web3);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(seedomTransactionCost);
 
         // seed
         const seedGasUsed = env.seedReceipt.gasUsed;

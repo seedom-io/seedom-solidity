@@ -4,10 +4,11 @@ import "seedom.sol";
 
 contract Suggest {
 
-    event Vote(address indexed _address, uint256 indexed _charityId, uint256 _score);
+    event Vote(address indexed _address, uint256 indexed _charityIndex, uint256 _score);
 
     struct Charity {
         bytes32 _name;
+        address _creator;
         uint256 _totalScores;
         uint256 _totalVotes;
         mapping (address => uint256) _votes;
@@ -44,11 +45,11 @@ contract Suggest {
         uint256[] memory totalScores = new uint256[](totalCharities);
         uint256[] memory totalVotes = new uint256[](totalCharities);
 
-        for (uint256 _charityId = 0; _charityId < totalCharities; _charityId++) {
-            Charity storage _charity = charities[_charityId];
-            names[_charityId] = _charity._name;
-            totalScores[_charityId] = _charity._totalScores;
-            totalVotes[_charityId] = _charity._totalVotes;
+        for (uint256 _charityIndex = 0; _charityIndex < totalCharities; _charityIndex++) {
+            Charity storage _charity = charities[_charityIndex];
+            names[_charityIndex] = _charity._name;
+            totalScores[_charityIndex] = _charity._totalScores;
+            totalVotes[_charityIndex] = _charity._totalVotes;
         }
 
         return (names, totalScores, totalVotes);
@@ -56,34 +57,66 @@ contract Suggest {
 
     function getVotes() public view returns(uint256[]) {
         uint256 totalCharities = charities.length;
-        uint256[] memory voterScores = new uint256[](totalCharities);
-
-        for (uint256 _charityId = 0; _charityId < totalCharities; _charityId++) {
-            Charity storage _charity = charities[_charityId];
-            voterScores[_charityId] = _charity._votes[msg.sender];
+        uint256[] memory scores = new uint256[](totalCharities);
+        for (uint256 _charityIndex = 0; _charityIndex < totalCharities; _charityIndex++) {
+            Charity storage _charity = charities[_charityIndex];
+            scores[_charityIndex] = _charity._votes[msg.sender];
         }
 
-        return voterScores;
+        return scores;
     }
 
-    function hasRight() public view isOpen returns (bool) {
-        // confirm with Seedom that this user has participated with entries
+    function hasRight(
+        uint256 _forCharityIndex,
+        bytes32 _forCharityName
+    ) public view isOpen returns (bool) {
+        // first confirm with Seedom that this user has participated with entries
         var ( _entries, ) = seedom.participants(msg.sender);
-        return (_entries > 0);
+        if (_entries == 0) {
+            return false;
+        }
+
+        // see if votes and suggestions exist elsewhere
+        for (uint256 _charityIndex = 0; _charityIndex < charities.length; _charityIndex++) {
+            Charity storage _charity = charities[_charityIndex];
+            // if we already have this name, deny
+            if (_charity._name == _forCharityName) {
+                return false;
+            }
+            // skip charity checking right for
+            if (_charityIndex == _forCharityIndex) {
+                continue;
+            }
+            // if the user is a suggester of another charity, deny
+            if (_charity._creator == msg.sender) {
+                return false;
+            }
+            uint256 score = _charity._votes[msg.sender];
+            // if the user has voted elsewhere, deny
+            if (score > 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    function add(bytes32 _charityName, uint256 _score) public {
-        require(hasRight());
-        Charity memory _newCharity = Charity(_charityName, _score, 1);
+    function addCharity(bytes32 _charityName, uint256 _score) public {
+        require(_charityName != 0x0);
+        // use next index that doesn't exist
+        require(hasRight(charities.length, _charityName));
+        // create new charity
+        Charity memory _newCharity = Charity(_charityName, msg.sender, _score, 1);
         charities.push(_newCharity);
+        // pull it from storage to update mapping
         Charity storage _charity = charities[charities.length - 1];
         _charity._votes[msg.sender] = _score;
         Vote(msg.sender, charities.length - 1, _score);
     }
 
-    function vote(uint256 _charityId, uint256 _score) public isOpen {
-        require(hasRight());
-        Charity storage _charity = charities[_charityId];
+    function vote(uint256 _charityIndex, uint256 _score) public isOpen {
+        require(hasRight(_charityIndex, 0x0));
+        Charity storage _charity = charities[_charityIndex];
         uint256 _vote = _charity._votes[msg.sender];
 
         // undo a previous score
@@ -98,8 +131,9 @@ contract Suggest {
             _charity._totalVotes++;
         }
 
+        // set voter score
         _charity._votes[msg.sender] = _score;
-        Vote(msg.sender, _charityId, _score);
+        Vote(msg.sender, _charityIndex, _score);
     }
 
 }
