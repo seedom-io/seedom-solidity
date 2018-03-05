@@ -47,7 +47,6 @@ module.exports.run = async (state) => {
 
     // deploy suggest
     const suggest = await (await state.interfaces.suggest).deploy({
-        endTime: env.endTime,
         seedomAddress: seedom.receipt.contractAddress
     }, {
         from: env.owner

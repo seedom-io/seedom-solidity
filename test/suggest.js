@@ -4,7 +4,7 @@ const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
 const seed = require('../script/simulation/seed');
 const participate = require('../script/simulation/participate');
-const network = require('../chronicle/network');
+const select = require('../script/simulation/select');
 
 suite('suggest', (state) => {
 
@@ -13,13 +13,12 @@ suite('suggest', (state) => {
         await seed.run(state);
 
         const { env } = state;
-        const suggest = await state.interfaces.suggest;
         const charityName = sh.hexMessage("TEST CHARITY");
         const participant = state.accountAddresses[2];
         const score = 10;
 
         await assert.isRejected(
-            suggest.addCharity({
+            (await state.interfaces.suggest).addCharity({
                 charityName,
                 score
             }, { from: participant, transact: true })
@@ -32,8 +31,26 @@ suite('suggest', (state) => {
         await participate.run(state);
 
         const { env } = state;
-        const suggest = await state.interfaces.suggest;
         const charityName = sh.hexMessage("");
+        const participant = state.accountAddresses[2];
+        const score = 10;
+
+        await assert.isRejected(
+            (await state.interfaces.suggest).addCharity({
+                charityName,
+                score
+            }, { from: participant, transact: true })
+        );
+
+    });
+
+    test("should reject add charity and destroy after end", async () => {
+
+        await select.run(state);
+
+        const { env } = state;
+        const suggest = await state.interfaces.suggest;
+        const charityName = sh.hexMessage("TEST CHARITY1");
         const participant = state.accountAddresses[2];
         const score = 10;
 
@@ -42,6 +59,31 @@ suite('suggest', (state) => {
                 charityName,
                 score
             }, { from: participant, transact: true })
+        );
+
+        await assert.isRejected(
+            suggest.destroy({ from: env.owner, transact: true })
+        );
+
+    });
+
+    test("should allow destroy from owner and reject from participant after destruct time", async () => {
+
+        await select.run(state);
+
+        const { env } = state;
+        const now = ch.timestamp();
+        await cli.progress("waiting for destruct time", env.destructTime - now);
+
+        const suggest = await state.interfaces.suggest;
+        const participant = state.accountAddresses[2];
+
+        await assert.isRejected(
+            suggest.destroy({ from: participant, transact: true })
+        );
+
+        await assert.isFulfilled(
+            suggest.destroy({ from: env.owner, transact: true })
         );
 
     });

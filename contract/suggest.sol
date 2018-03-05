@@ -14,29 +14,34 @@ contract Suggest {
         mapping (address => uint256) _votes;
     }
 
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
     modifier isOpen() {
         require(now < endTime);
         _;
     }
 
-    modifier isEnded() {
-        require(now >= endTime);
+    modifier canDestruct() {
+        require(now >= destructTime);
         _;
     }
 
     address owner;
     uint256 public endTime;
+    uint256 public destructTime;
     Charity[] charities;
     Seedom seedom;
 
     function Suggest(
-        uint256 _endTime,
         address _seedomAddress
     ) public {
-        require(_endTime > now);
         owner = msg.sender;
-        endTime = _endTime;
         seedom = Seedom(_seedomAddress);
+        // set end and destruct times from seedom
+        ( , , , , , , , , endTime, , destructTime, ) = seedom.raiser();
     }
 
     function getCharities() public view returns(bytes32[], uint256[], uint256[]) {
@@ -75,7 +80,6 @@ contract Suggest {
         if (_entries == 0) {
             return false;
         }
-
         // see if votes and suggestions exist elsewhere
         for (uint256 _charityIndex = 0; _charityIndex < charities.length; _charityIndex++) {
             Charity storage _charity = charities[_charityIndex];
@@ -101,7 +105,7 @@ contract Suggest {
         return true;
     }
 
-    function addCharity(bytes32 _charityName, uint256 _score) public {
+    function addCharity(bytes32 _charityName, uint256 _score) public isOpen {
         require(_charityName != 0x0);
         // use next index that doesn't exist
         require(hasRight(charities.length, _charityName));
@@ -134,6 +138,10 @@ contract Suggest {
         // set voter score
         _charity._votes[msg.sender] = _score;
         Vote(msg.sender, _charityIndex, _score);
+    }
+
+    function destroy() public canDestruct onlyOwner {
+        selfdestruct(msg.sender);
     }
 
 }
