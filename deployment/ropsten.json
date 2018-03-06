@@ -5,10 +5,18 @@
         "0xBC8AE73A0D0b7158dd0C3B2dFCd6ae908271929b": "seedom",
         "0x7542eA016832c2B30395a93E7e2c4EbA4284d734": "seedom",
         "0xae6504caFc09bFbDbF751C4292371D114d2b459e": "seedom",
-        "0xBD18f290D6cC51dBEE083A2a4b493e7278AC2B38": "seedom"
+        "0xBD18f290D6cC51dBEE083A2a4b493e7278AC2B38": "seedom",
+        "0x0D74c068a1141e8aC60a30e6b6e5dF5A518c4210": "seedom",
+        "0x8B54B2118CB2D695977B007Aa76337a06038c0e9": "suggest"
     },
     "releases": {
         "seedom": [
+            {
+                "deployed": 1520305893,
+                "address": "0x0D74c068a1141e8aC60a30e6b6e5dF5A518c4210",
+                "transactionHash": "0x724b4586cfdd229031b91f20fb50a6174150ab7f52af20f48487e77bcacbf49a",
+                "hash": "413b760834cadd484737496414dae9cbbbb984b555881487740e651a6b16f76b"
+            },
             {
                 "deployed": 1519349585,
                 "address": "0xBD18f290D6cC51dBEE083A2a4b493e7278AC2B38",
@@ -44,6 +52,14 @@
                 "address": "0x2c2Be9BB48D7f99A9E0456ee08Ba2AdAfF15A69c",
                 "transactionHash": "0x535049beb8210a0be8f75907abe2044e2903bf5623c75f0b4ce970f1f5b514f1",
                 "hash": "928f0fe61c4b51619c5bd89dc60cd9c500ba825ff12019e3e3e848cfe384d12e"
+            }
+        ],
+        "suggest": [
+            {
+                "deployed": 1520305964,
+                "address": "0x8B54B2118CB2D695977B007Aa76337a06038c0e9",
+                "transactionHash": "0x66099aeb180987d69262590bc8c411f4e09921686a60ee089c4ce70089634784",
+                "hash": "c47a8a67f1204fb67dcf1ced7faabd65dc14760363e30398bfb15bd6f7ce3d4a"
             }
         ]
     }
