@@ -30,15 +30,18 @@ contract Suggest {
     }
 
     address owner;
+    uint256 public maxScore;
     uint256 public endTime;
     uint256 public destructTime;
     Charity[] charities;
     Seedom seedom;
 
     function Suggest(
+        uint256 _maxScore,
         address _seedomAddress
     ) public {
         owner = msg.sender;
+        maxScore = _maxScore;
         seedom = Seedom(_seedomAddress);
         // set end and destruct times from seedom
         ( , , , , , , , , endTime, , destructTime, ) = seedom.raiser();
@@ -107,6 +110,7 @@ contract Suggest {
 
     function addCharity(bytes32 _charityName, uint256 _score) public isOpen {
         require(_charityName != 0x0);
+        require(_score <= maxScore);
         // use next index that doesn't exist
         require(hasRight(charities.length, _charityName));
         // create new charity
@@ -119,6 +123,7 @@ contract Suggest {
     }
 
     function vote(uint256 _charityIndex, uint256 _score) public isOpen {
+        require(_score <= maxScore);
         require(hasRight(_charityIndex, 0x0));
         Charity storage _charity = charities[_charityIndex];
         uint256 _vote = _charity._votes[msg.sender];

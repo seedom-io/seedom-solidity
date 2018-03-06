@@ -16,6 +16,7 @@ module.exports.run = async (state) => {
     env.valuePerEntry = 1000;
     env.participantsCount = state.accountAddresses.length - 3;
     env.maxParticipants = env.participantsCount;
+    env.maxScore = 10;
 
     const now = ch.timestamp();
     // FIXME: triple the parity send delay to get overall transaction duration

@@ -44,6 +44,24 @@ suite('suggest', (state) => {
 
     });
 
+    test("should reject add charity score above max after participation", async () => {
+
+        await participate.run(state);
+
+        const { env } = state;
+        const charityName = sh.hexMessage("TEST CHARITY1");
+        const participant = state.accountAddresses[2];
+        const score = 15;
+
+        await assert.isRejected(
+            (await state.interfaces.suggest).addCharity({
+                charityName,
+                score
+            }, { from: participant, transact: true })
+        );
+
+    });
+
     test("should reject add charity and destroy after end", async () => {
 
         await select.run(state);
@@ -88,6 +106,35 @@ suite('suggest', (state) => {
 
     });
 
+    test("should reject vote score above max after participation", async () => {
+
+        await participate.run(state);
+
+        const { env } = state;
+        const suggest = await state.interfaces.suggest;
+        const charityName = sh.hexMessage("TEST CHARITY1");
+        const participant1 = state.accountAddresses[2];
+        const score1 = 10;
+
+        await assert.isFulfilled(
+            suggest.addCharity({
+                charityName,
+                score: score1
+            }, { from: participant1, transact: true })
+        );
+
+        const participant2 = state.accountAddresses[3];
+        const score2 = 15;
+
+        await assert.isRejected(
+            suggest.vote({
+                charityIndex: 0,
+                score: score2
+            }, { from: participant2, transact: true })
+        );
+
+    });
+
     test("should reject duplicate charities after participation", async () => {
 
         await participate.run(state);
@@ -127,7 +174,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({
@@ -175,7 +222,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({
@@ -247,7 +294,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({
@@ -309,7 +356,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({
@@ -352,7 +399,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({
@@ -414,7 +461,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({
@@ -506,7 +553,7 @@ suite('suggest', (state) => {
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
-        const score2 = 15;
+        const score2 = 6;
 
         await assert.isFulfilled(
             suggest.addCharity({

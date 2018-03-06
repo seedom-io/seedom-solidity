@@ -11,7 +11,8 @@ module.exports.options = [
     ['endTime', true],
     ['expireTime', true],
     ['destructTime', true],
-    ['maxParticipants', true]
+    ['maxParticipants', true],
+    ['maxScore', true]
 ];
 
 module.exports.run = async (state) => {
@@ -47,6 +48,7 @@ module.exports.run = async (state) => {
 
     // deploy suggest
     const suggest = await (await state.interfaces.suggest).deploy({
+        maxScore: env.maxScore,
         seedomAddress: seedom.receipt.contractAddress
     }, {
         from: env.owner
