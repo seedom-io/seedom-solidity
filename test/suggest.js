@@ -508,12 +508,12 @@ suite('suggest', (state) => {
         assert.equal(actualCharities.totalVotes[1], 0, "charity total votes wrong");
 
         let actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1.charityIndexes.length, 0, "charity indexes length wrong");
-        assert.equal(actualVotes1.scores.length, 0, "scores length wrong");
+        assert.equal(actualVotes1.charityIndexes[0], 0, "charity index wrong");
+        assert.equal(actualVotes1.scores[0], 0, "charity score wrong");
 
         let actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes2.charityIndexes.length, 0, "charity indexes length wrong");
-        assert.equal(actualVotes2.scores.length, 0, "scores length wrong");
+        assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong");
+        assert.equal(actualVotes2.scores[0], 0, "charity score wrong");
 
         const score3 = 5;
         const score4 = 7;
@@ -614,6 +614,60 @@ suite('suggest', (state) => {
         actualVotes2 = await suggest.getVotes({ from: participant2 });
         assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong");
         assert.equal(actualVotes2.scores[0], score2, "charity score wrong");
+
+    });
+
+    test("should allow a new charity, a de-vote, and reject a new charity and other votes", async () => {
+
+        await participate.run(state);
+
+        const { env } = state;
+        const suggest = await state.interfaces.suggest;
+        const charityName1 = sh.hexMessage("TEST CHARITY1");
+        const charityName2 = sh.hexMessage("TEST CHARITY2");
+        const charityName3 = sh.hexMessage("TEST CHARITY3");
+        const participant1 = state.accountAddresses[2];
+        const participant2 = state.accountAddresses[3];
+        const score = 10;
+
+        await assert.isFulfilled(
+            suggest.voteSuggest({
+                charityName: charityName1,
+                score
+            }, { from: participant1, transact: true })
+        );
+
+        await assert.isFulfilled(
+            suggest.voteSuggest({
+                charityName: charityName2,
+                score
+            }, { from: participant2, transact: true })
+        );
+
+        await assert.isFulfilled(
+            suggest.voteCharity({
+                charityIndex: 0,
+                score: 0
+            }, { from: participant1, transact: true })
+        );
+
+        let actualVotes = await suggest.getVotes({ from: participant1 });
+        assert.equal(actualVotes.charityIndexes[0], 0, "charity index wrong");
+        assert.equal(actualVotes.scores[0], 0, "charity score wrong");
+
+        await assert.isRejected(
+            suggest.voteSuggest({
+                charityName: charityName3,
+                score
+            }, { from: participant1, transact: true })
+        );
+
+        await assert.isRejected(
+            suggest.voteCharity({
+                charityIndex: 1,
+                score
+            }, { from: participant1, transact: true })
+        );
 
     });
 

@@ -137,24 +137,47 @@ contract Suggest {
 
         Vote[] storage _votes = votes[msg.sender];
         Charity storage _charity = charities[_charityIndex];
-        // delete existing charity vote
+        // find an existing vote
         for (uint256 _voteIndex = 0; _voteIndex < _votes.length; _voteIndex++) {
-            Vote storage _existingVote = _votes[_voteIndex];
-            if (_existingVote._charityIndex == _charityIndex) {
-                _charity._totalScores -= _existingVote._score;
-                _charity._totalVotes -= 1;
-                removeVote(_votes, _voteIndex);
+            if (_votes[_voteIndex]._charityIndex == _charityIndex) {
                 break;
             }
         }
 
-        // cast new vote
-        if (_score > 0) {
-            require(canVote());
+        // remove existing vote from charity totals
+        if (_voteIndex != _votes.length) {
+            uint256 _existingScore = _votes[_voteIndex]._score;
+            // only update totals if we have a score
+            if (_existingScore > 0) {
+                 _charity._totalScores -= _existingScore;
+                _charity._totalVotes -= 1;
+            }
+        }
+        
+        // delete vote or cast new vote
+        if (_score == 0) {
+
+            if (_charity._suggestor == msg.sender) {
+                _votes[_voteIndex]._score = 0;
+            } else {
+                removeVote(_votes, _voteIndex);
+            }
+
+        } else {
+            
+            // update existing vote or create a new one
+            if (_voteIndex != _votes.length) {
+                _votes[_voteIndex]._score = _score;
+            } else {
+                require(_votes.length == 0);
+                Vote memory _newVote = Vote(_charityIndex, _score);
+                _votes.push(_newVote);
+            }
+
+            // add new vote to charity totals
             _charity._totalScores += _score;
             _charity._totalVotes += 1;
-            Vote memory _newVote = Vote(_charityIndex, _score);
-            votes[msg.sender].push(_newVote);
+
         }
 
         Cast(msg.sender, _charityIndex, _score);
