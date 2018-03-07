@@ -4,148 +4,167 @@ import "seedom.sol";
 
 contract Suggest {
 
-    event Vote(address indexed _address, uint256 indexed _charityIndex, uint256 _score);
+    event Cast(address indexed _address, uint256 indexed _charityIndex, uint256 _score);
 
     struct Charity {
         bytes32 _name;
-        address _creator;
+        address _suggestor;
         uint256 _totalScores;
         uint256 _totalVotes;
-        mapping (address => uint256) _votes;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    struct Vote {
+        uint256 _charityIndex;
+        uint256 _score;
     }
 
-    modifier isOpen() {
-        require(now < endTime);
-        _;
-    }
-
-    modifier canDestruct() {
-        require(now >= destructTime);
-        _;
-    }
-
-    address owner;
-    uint256 public maxScore;
-    uint256 public endTime;
-    uint256 public destructTime;
-    Charity[] charities;
+    uint256 maxScore;
     Seedom seedom;
+    Charity[] charities;
+    mapping (address => Vote[]) votes;
 
     function Suggest(
         uint256 _maxScore,
         address _seedomAddress
     ) public {
-        owner = msg.sender;
         maxScore = _maxScore;
         seedom = Seedom(_seedomAddress);
-        // set end and destruct times from seedom
-        ( , , , , , , , , endTime, , destructTime, ) = seedom.raiser();
     }
 
-    function getCharities() public view returns(bytes32[], uint256[], uint256[]) {
+    function getCharities() public view returns (
+        bytes32[] _names,
+        address[] _suggestors,
+        uint256[] _totalScores,
+        uint256[] _totalVotes
+    ) {
         uint256 totalCharities = charities.length;
-        bytes32[] memory names = new bytes32[](totalCharities);
-        uint256[] memory totalScores = new uint256[](totalCharities);
-        uint256[] memory totalVotes = new uint256[](totalCharities);
-
+        _names = new bytes32[](totalCharities);
+        _suggestors = new address[](totalCharities);
+        _totalScores = new uint256[](totalCharities);
+        _totalVotes = new uint256[](totalCharities);
+        // first pass to get fundamentals
         for (uint256 _charityIndex = 0; _charityIndex < totalCharities; _charityIndex++) {
             Charity storage _charity = charities[_charityIndex];
-            names[_charityIndex] = _charity._name;
-            totalScores[_charityIndex] = _charity._totalScores;
-            totalVotes[_charityIndex] = _charity._totalVotes;
+            _names[_charityIndex] = _charity._name;
+            _suggestors[_charityIndex] = _charity._suggestor;
+            _totalScores[_charityIndex] = _charity._totalScores;
+            _totalVotes[_charityIndex] = _charity._totalVotes;
         }
 
-        return (names, totalScores, totalVotes);
+        return (
+            _names,
+            _suggestors,
+            _totalScores,
+            _totalVotes
+        );
     }
 
-    function getVotes() public view returns(uint256[]) {
-        uint256 totalCharities = charities.length;
-        uint256[] memory scores = new uint256[](totalCharities);
-        for (uint256 _charityIndex = 0; _charityIndex < totalCharities; _charityIndex++) {
-            Charity storage _charity = charities[_charityIndex];
-            scores[_charityIndex] = _charity._votes[msg.sender];
+    function getVotes() public view returns (
+        uint256[] _charityIndexes,
+        uint256[] _scores
+    ) {
+        Vote[] storage _votes = votes[msg.sender];
+        uint256 totalVotes = _votes.length;
+        _charityIndexes = new uint256[](totalVotes);
+        _scores = new uint256[](totalVotes);
+        // first pass to get fundamentals
+        for (uint256 _voteIndex = 0; _voteIndex < totalVotes; _voteIndex++) {
+            Vote storage _vote = _votes[_voteIndex];
+            _charityIndexes[_voteIndex] = _vote._charityIndex;
+            _scores[_voteIndex] = _vote._score;
         }
 
-        return scores;
+        return (
+            _charityIndexes,
+            _scores
+        );
     }
 
-    function hasRight(
-        uint256 _forCharityIndex,
-        bytes32 _forCharityName
-    ) public view isOpen returns (bool) {
-        // first confirm with Seedom that this user has participated with entries
+    function hasRight() public view returns (bool) {
+        // get end time from seedom
+        var ( , , , , , , , , _endTime, , , ) = seedom.raiser();
+        if (now >= _endTime) {
+            return false;
+        }
+
+        // ensure raiser not cancelled
+        var ( , , , , , , , , _cancelled, , ) = seedom.state();
+        if (_cancelled) {
+            return false;
+        }
+
+        // confirm user has participated with entries
         var ( _entries, ) = seedom.participants(msg.sender);
         if (_entries == 0) {
             return false;
-        }
-        // see if votes and suggestions exist elsewhere
-        for (uint256 _charityIndex = 0; _charityIndex < charities.length; _charityIndex++) {
-            Charity storage _charity = charities[_charityIndex];
-            // if we already have this name, deny
-            if (_charity._name == _forCharityName) {
-                return false;
-            }
-            // skip charity checking right for
-            if (_charityIndex == _forCharityIndex) {
-                continue;
-            }
-            // if the user is a suggester of another charity, deny
-            if (_charity._creator == msg.sender) {
-                return false;
-            }
-            uint256 score = _charity._votes[msg.sender];
-            // if the user has voted elsewhere, deny
-            if (score > 0) {
-                return false;
-            }
         }
 
         return true;
     }
 
-    function addCharity(bytes32 _charityName, uint256 _score) public isOpen {
+    function canVote() public view returns (bool) {
+        return votes[msg.sender].length == 0;
+    }
+
+    function voteSuggest(bytes32 _charityName, uint256 _score) public {
         require(_charityName != 0x0);
         require(_score <= maxScore);
-        // use next index that doesn't exist
-        require(hasRight(charities.length, _charityName));
+        require(hasRight());
+        require(canVote());
+
+        // make sure charity doesn't exist
+        for (uint256 _charityIndex = 0; _charityIndex < charities.length; _charityIndex++) {
+            Charity storage _charity = charities[_charityIndex];
+            if (_charity._name == _charityName) {
+                revert();
+            }
+        }
+
+        uint256 _newCharityIndex = charities.length;
         // create new charity
         Charity memory _newCharity = Charity(_charityName, msg.sender, _score, 1);
         charities.push(_newCharity);
-        // pull it from storage to update mapping
-        Charity storage _charity = charities[charities.length - 1];
-        _charity._votes[msg.sender] = _score;
-        Vote(msg.sender, charities.length - 1, _score);
+        // update total votes
+        Vote memory _newVote = Vote(_newCharityIndex, _score);
+        votes[msg.sender].push(_newVote);
+
+        Cast(msg.sender, _newCharityIndex, _score);
     }
 
-    function vote(uint256 _charityIndex, uint256 _score) public isOpen {
+    function voteCharity(uint256 _charityIndex, uint256 _score) public {
         require(_score <= maxScore);
-        require(hasRight(_charityIndex, 0x0));
+        require(hasRight());
+
+        Vote[] storage _votes = votes[msg.sender];
         Charity storage _charity = charities[_charityIndex];
-        uint256 _vote = _charity._votes[msg.sender];
-
-        // undo a previous score
-        if (_vote > 0) {
-            _charity._totalScores -= _vote;
-            _charity._totalVotes--;
+        // delete existing charity vote
+        for (uint256 _voteIndex = 0; _voteIndex < _votes.length; _voteIndex++) {
+            Vote storage _existingVote = _votes[_voteIndex];
+            if (_existingVote._charityIndex == _charityIndex) {
+                _charity._totalScores -= _existingVote._score;
+                _charity._totalVotes -= 1;
+                delete _votes[_voteIndex];
+                break;
+            }
         }
 
-        // handle new vote
+        // cast new vote
         if (_score > 0) {
+            require(canVote());
             _charity._totalScores += _score;
-            _charity._totalVotes++;
+            _charity._totalVotes += 1;
+            Vote memory _newVote = Vote(_charityIndex, _score);
+            votes[msg.sender].push(_newVote);
         }
 
-        // set voter score
-        _charity._votes[msg.sender] = _score;
-        Vote(msg.sender, _charityIndex, _score);
+        Cast(msg.sender, _charityIndex, _score);
     }
 
-    function destroy() public canDestruct onlyOwner {
+    function destroy() public {
+        // get destruct time from seedom
+        var ( , , , _owner, , , , , , , _destructTime, ) = seedom.raiser();
+        require (_owner == msg.sender);
+        require (now >= _destructTime);
         selfdestruct(msg.sender);
     }
 
