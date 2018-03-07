@@ -8,7 +8,7 @@ const select = require('../script/simulation/select');
 
 suite('suggest', (state) => {
 
-    /*test("should reject add charity before participation", async () => {
+    test("should reject add charity before participation", async () => {
 
         await seed.run(state);
 
@@ -258,22 +258,22 @@ suite('suggest', (state) => {
         );
 
         const actualCharities = await suggest.getCharities({ from: participant1 });
-        assert.equal(actualCharities[0][0], charityName1, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][0], participant1, "charity suggestor wrong");
-        assert.equal(actualCharities[2][0], score1 + score3, "charity score wrong");
-        assert.equal(actualCharities[3][0], 2, "charity total votes wrong");
-        assert.equal(actualCharities[0][1], charityName2, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][1], participant2, "charity suggestor wrong");
-        assert.equal(actualCharities[2][1], score2 + score4, "charity score wrong");
-        assert.equal(actualCharities[3][1], 2, "charity total votes wrong");
+        assert.equal(actualCharities.names[0], charityName1, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[0], participant1, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[0], score1 + score3, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[0], 2, "charity total votes wrong");
+        assert.equal(actualCharities.names[1], charityName2, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[1], participant2, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[1], score2 + score4, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[1], 2, "charity total votes wrong");
 
         const actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong (1)");
-        assert.equal(actualVotes1[1][0], score1, "charity score wrong (1)");
+        assert.equal(actualVotes1.charityIndexes[0], 0, "charity index wrong (1)");
+        assert.equal(actualVotes1.scores[0], score1, "charity score wrong (1)");
 
         const actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes2[0][0], 1, "charity index wrong (2)");
-        assert.equal(actualVotes2[1][0], score2, "charity score wrong (2)");
+        assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong (2)");
+        assert.equal(actualVotes2.scores[0], score2, "charity score wrong (2)");
 
         const actualVotes3 = await suggest.getVotes({ from: participant3 });
         assert.equal(actualVotes3[0][0], 0, "charity index wrong (3)");
@@ -313,22 +313,22 @@ suite('suggest', (state) => {
         );
 
         const actualCharities = await suggest.getCharities({ from: participant1 });
-        assert.equal(actualCharities[0][0], charityName1, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][0], participant1, "charity suggestor wrong");
-        assert.equal(actualCharities[2][0], score1, "charity score wrong");
-        assert.equal(actualCharities[3][0], 1, "charity total votes wrong");
-        assert.equal(actualCharities[0][1], charityName2, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][1], participant2, "charity suggestor wrong");
-        assert.equal(actualCharities[2][1], score2, "charity score wrong");
-        assert.equal(actualCharities[3][1], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[0], charityName1, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[0], participant1, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[0], score1, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[0], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[1], charityName2, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[1], participant2, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[1], score2, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[1], 1, "charity total votes wrong");
 
         const actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong");
-        assert.equal(actualVotes1[1][0], score1, "charity score wrong");
+        assert.equal(actualVotes1.charityIndexes[0], 0, "charity index wrong");
+        assert.equal(actualVotes1.scores[0], score1, "charity score wrong");
 
         const actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes2[0][0], 1, "charity index wrong");
-        assert.equal(actualVotes2[1][0], score2, "charity score wrong");
+        assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong");
+        assert.equal(actualVotes2.scores[0], score2, "charity score wrong");
 
         const charityName3 = sh.hexMessage("TEST CHARITY3");
         const charityName4 = sh.hexMessage("TEST CHARITY4");
@@ -390,7 +390,7 @@ suite('suggest', (state) => {
             }, { from: participant2, transact: true })
         );
 
-    });*/
+    });
 
     test("should allow new charities after participation and allow re-votes", async () => {
 
@@ -437,22 +437,22 @@ suite('suggest', (state) => {
         );
 
         const actualCharities = await suggest.getCharities({ from: participant1 });
-        assert.equal(actualCharities[0][0], charityName1, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][0], participant1, "charity suggestor wrong");
-        assert.equal(actualCharities[2][0], score3, "charity score wrong");
-        assert.equal(actualCharities[3][0], 1, "charity total votes wrong");
-        assert.equal(actualCharities[0][1], charityName2, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][1], participant2, "charity suggestor wrong");
-        assert.equal(actualCharities[2][1], score4, "charity score wrong");
-        assert.equal(actualCharities[3][1], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[0], charityName1, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[0], participant1, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[0], score3, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[0], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[1], charityName2, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[1], participant2, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[1], score4, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[1], 1, "charity total votes wrong");
 
         const actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong");
-        assert.equal(actualVotes1[1][0], score3, "charity score wrong");
+        assert.equal(actualVotes1.charityIndexes[0], 0, "charity index wrong");
+        assert.equal(actualVotes1.scores[0], score3, "charity score wrong");
 
         const actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes2[0][0], 1, "charity index wrong");
-        assert.equal(actualVotes2[1][0], score4, "charity score wrong");
+        assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong");
+        assert.equal(actualVotes2.scores[0], score4, "charity score wrong");
 
     });
 
@@ -498,22 +498,22 @@ suite('suggest', (state) => {
         );
 
         let actualCharities = await suggest.getCharities({ from: participant1 });
-        assert.equal(actualCharities[0][0], charityName1, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][0], participant1, "charity suggestor wrong");
-        assert.equal(actualCharities[2][0], 0, "charity score wrong");
-        assert.equal(actualCharities[3][0], 0, "charity total votes wrong");
-        assert.equal(actualCharities[0][1], charityName2, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][1], participant2, "charity suggestor wrong");
-        assert.equal(actualCharities[1][1], 0, "charity score wrong");
-        assert.equal(actualCharities[2][1], 0, "charity total votes wrong");
+        assert.equal(actualCharities.names[0], charityName1, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[0], participant1, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[0], 0, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[0], 0, "charity total votes wrong");
+        assert.equal(actualCharities.names[1], charityName2, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[1], participant2, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[1], 0, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[1], 0, "charity total votes wrong");
 
         let actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong");
-        assert.equal(actualVotes1[1][0], 0, "charity score wrong");
+        assert.equal(actualVotes1.charityIndexes.length, 0, "charity indexes length wrong");
+        assert.equal(actualVotes1.scores.length, 0, "scores length wrong");
 
         let actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes1[0][0], 1, "charity index wrong");
-        assert.equal(actualVotes1[1][0], 0, "charity score wrong");
+        assert.equal(actualVotes2.charityIndexes.length, 0, "charity indexes length wrong");
+        assert.equal(actualVotes2.scores.length, 0, "scores length wrong");
 
         const score3 = 5;
         const score4 = 7;
@@ -533,22 +533,22 @@ suite('suggest', (state) => {
         );
 
         actualCharities = await suggest.getCharities({ from: participant1 });
-        assert.equal(actualCharities[0][0], charityName1, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][0], participant1, "charity suggestor wrong");
-        assert.equal(actualCharities[2][0], score3, "charity score wrong");
-        assert.equal(actualCharities[3][0], 1, "charity total votes wrong");
-        assert.equal(actualCharities[0][1], charityName2, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][1], participant2, "charity suggestor wrong");
-        assert.equal(actualCharities[2][1], score4, "charity score wrong");
-        assert.equal(actualCharities[3][1], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[0], charityName1, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[0], participant1, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[0], score3, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[0], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[1], charityName2, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[1], participant2, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[1], score4, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[1], 1, "charity total votes wrong");
 
         actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong");
-        assert.equal(actualVotes1[1][0], score3, "charity score wrong");
+        assert.equal(actualVotes1.charityIndexes[0], 0, "charity index wrong");
+        assert.equal(actualVotes1.scores[0], score3, "charity score wrong");
 
         actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes1[0][0], 1, "charity index wrong");
-        assert.equal(actualVotes1[1][0], score4, "charity score wrong");
+        assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong");
+        assert.equal(actualVotes2.scores[0], score4, "charity score wrong");
 
     });
 
@@ -586,6 +586,10 @@ suite('suggest', (state) => {
             }, { from: participant2, transact: true })
         );
 
+        let actualVotes2 = await suggest.getVotes({ from: participant2 });
+        assert.equal(actualVotes2.charityIndexes.length, 0, "charity indexes length wrong");
+        assert.equal(actualVotes2.scores.length, 0, "scores length wrong");
+
         await assert.isFulfilled(
             suggest.voteSuggest({
                 charityName: charityName2,
@@ -594,22 +598,22 @@ suite('suggest', (state) => {
         );
 
         let actualCharities = await suggest.getCharities({ from: participant1 });
-        assert.equal(actualCharities[0][0], charityName1, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][0], participant1, "charity suggestor wrong");
-        assert.equal(actualCharities[2][0], score1, "charity score wrong");
-        assert.equal(actualCharities[3][0], 1, "charity total votes wrong");
-        assert.equal(actualCharities[4][1], charityName2, "charity name wrong");
-        assert.equalIgnoreCase(actualCharities[1][1], participant2, "charity suggestor wrong");
-        assert.equal(actualCharities[2][1], score2, "charity score wrong");
-        assert.equal(actualCharities[3][1], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[0], charityName1, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[0], participant1, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[0], score1, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[0], 1, "charity total votes wrong");
+        assert.equal(actualCharities.names[1], charityName2, "charity name wrong");
+        assert.equalIgnoreCase(actualCharities.suggestors[1], participant2, "charity suggestor wrong");
+        assert.equal(actualCharities.totalScores[1], score2, "charity score wrong");
+        assert.equal(actualCharities.totalVotes[1], 1, "charity total votes wrong");
 
         let actualVotes1 = await suggest.getVotes({ from: participant1 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong");
-        assert.equal(actualVotes1[1][0], score1, "charity score wrong");
+        assert.equal(actualVotes1.charityIndexes[0], 0, "charity index wrong");
+        assert.equal(actualVotes1.scores[0], score1, "charity score wrong");
 
-        let actualVotes2 = await suggest.getVotes({ from: participant2 });
-        assert.equal(actualVotes1[0][0], 0, "charity index wrong");
-        assert.equal(actualVotes1[1][0], score2, "charity score wrong");
+        actualVotes2 = await suggest.getVotes({ from: participant2 });
+        assert.equal(actualVotes2.charityIndexes[0], 1, "charity index wrong");
+        assert.equal(actualVotes2.scores[0], score2, "charity score wrong");
 
     });
 

@@ -143,7 +143,7 @@ contract Suggest {
             if (_existingVote._charityIndex == _charityIndex) {
                 _charity._totalScores -= _existingVote._score;
                 _charity._totalVotes -= 1;
-                delete _votes[_voteIndex];
+                removeVote(_votes, _voteIndex);
                 break;
             }
         }
@@ -158,6 +158,17 @@ contract Suggest {
         }
 
         Cast(msg.sender, _charityIndex, _score);
+    }
+
+    function removeVote(
+         Vote[] storage _votes,
+         uint256 _index
+    ) internal {
+        // if we have more than one vote, move last vote to deleted's spot
+        if (_votes.length > 1) {
+            _votes[_index] = _votes[_votes.length - 1];
+        }
+        _votes.length--;
     }
 
     function destroy() public {
