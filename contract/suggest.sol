@@ -4,11 +4,22 @@ import "seedom.sol";
 
 contract Suggest {
 
-    event Cast(address indexed _address, uint256 indexed _charityIndex, uint256 _score);
+    event CastSuggest(
+        address indexed _caster,
+        uint256 indexed _charityIndex,
+        bytes32 _charityName,
+        uint256 _score
+    );
+
+    event CastCharity(
+        address indexed _caster,
+        uint256 indexed _charityIndex,
+        uint256 _score
+    );
 
     struct Charity {
         bytes32 _name;
-        address _suggestor;
+        address _caster;
         uint256 _totalScores;
         uint256 _totalVotes;
     }
@@ -20,8 +31,8 @@ contract Suggest {
 
     uint256 maxScore;
     Seedom seedom;
-    Charity[] charities;
-    mapping (address => Vote[]) votes;
+    Charity[] _charities;
+    mapping (address => Vote[]) _votes;
 
     function Suggest(
         uint256 _maxScore,
@@ -31,47 +42,61 @@ contract Suggest {
         seedom = Seedom(_seedomAddress);
     }
 
-    function getCharities() public view returns (
+    function status() public view returns (
+        uint256 _maxScore,
+        bool _hasRight,
+        bool _canVote
+    ) {
+        _maxScore = maxScore;
+        _hasRight = hasRight();
+        _canVote = canVote();
+    }
+
+    function charities() public view returns (
         bytes32[] _names,
-        address[] _suggestors,
+        address[] _casters,
         uint256[] _totalScores,
         uint256[] _totalVotes
     ) {
-        uint256 totalCharities = charities.length;
+        uint256 totalCharities = _charities.length;
         _names = new bytes32[](totalCharities);
-        _suggestors = new address[](totalCharities);
+        _casters = new address[](totalCharities);
         _totalScores = new uint256[](totalCharities);
         _totalVotes = new uint256[](totalCharities);
-        // first pass to get fundamentals
+
         for (uint256 _charityIndex = 0; _charityIndex < totalCharities; _charityIndex++) {
-            Charity storage _charity = charities[_charityIndex];
+            Charity storage _charity = _charities[_charityIndex];
             _names[_charityIndex] = _charity._name;
-            _suggestors[_charityIndex] = _charity._suggestor;
+            _casters[_charityIndex] = _charity._caster;
             _totalScores[_charityIndex] = _charity._totalScores;
             _totalVotes[_charityIndex] = _charity._totalVotes;
         }
 
         return (
             _names,
-            _suggestors,
+            _casters,
             _totalScores,
             _totalVotes
         );
     }
 
-    function getVotes() public view returns (
+    function votes() public view returns (
         uint256[] _charityIndexes,
         uint256[] _scores
     ) {
-        Vote[] storage _votes = votes[msg.sender];
-        uint256 totalVotes = _votes.length;
-        _charityIndexes = new uint256[](totalVotes);
-        _scores = new uint256[](totalVotes);
-        // first pass to get fundamentals
-        for (uint256 _voteIndex = 0; _voteIndex < totalVotes; _voteIndex++) {
-            Vote storage _vote = _votes[_voteIndex];
-            _charityIndexes[_voteIndex] = _vote._charityIndex;
-            _scores[_voteIndex] = _vote._score;
+        Vote[] storage _casterVotes = _votes[msg.sender];
+        uint256 _totalSenderVotes = _casterVotes.length;
+        _charityIndexes = new uint256[](_totalSenderVotes);
+        _scores = new uint256[](_totalSenderVotes);
+
+        for (
+            uint256 _casterVoteIndex = 0;
+            _casterVoteIndex < _totalSenderVotes;
+            _casterVoteIndex++
+        ) {
+            Vote storage _casterVote = _casterVotes[_casterVoteIndex];
+            _charityIndexes[_casterVoteIndex] = _casterVote._charityIndex;
+            _scores[_casterVoteIndex] = _casterVote._score;
         }
 
         return (
@@ -86,13 +111,11 @@ contract Suggest {
         if (now >= _endTime) {
             return false;
         }
-
         // ensure raiser not cancelled
         var ( , , , , , , , , _cancelled, , ) = seedom.state();
         if (_cancelled) {
             return false;
         }
-
         // confirm user has participated with entries
         var ( _entries, ) = seedom.participants(msg.sender);
         if (_entries == 0) {
@@ -103,7 +126,7 @@ contract Suggest {
     }
 
     function canVote() public view returns (bool) {
-        return votes[msg.sender].length == 0;
+        return _votes[msg.sender].length == 0;
     }
 
     function voteSuggest(bytes32 _charityName, uint256 _score) public {
@@ -113,43 +136,47 @@ contract Suggest {
         require(canVote());
 
         // make sure charity doesn't exist
-        for (uint256 _charityIndex = 0; _charityIndex < charities.length; _charityIndex++) {
-            Charity storage _charity = charities[_charityIndex];
+        for (uint256 _charityIndex = 0; _charityIndex < _charities.length; _charityIndex++) {
+            Charity storage _charity = _charities[_charityIndex];
             if (_charity._name == _charityName) {
                 revert();
             }
         }
 
-        uint256 _newCharityIndex = charities.length;
+        uint256 _newCharityIndex = _charities.length;
         // create new charity
         Charity memory _newCharity = Charity(_charityName, msg.sender, _score, 1);
-        charities.push(_newCharity);
+        _charities.push(_newCharity);
         // update total votes
         Vote memory _newVote = Vote(_newCharityIndex, _score);
-        votes[msg.sender].push(_newVote);
+        _votes[msg.sender].push(_newVote);
 
-        Cast(msg.sender, _newCharityIndex, _score);
+        CastSuggest(msg.sender, _newCharityIndex, _charityName, _score);
     }
 
     function voteCharity(uint256 _charityIndex, uint256 _score) public {
         require(_score <= maxScore);
         require(hasRight());
 
-        Vote[] storage _votes = votes[msg.sender];
-        Charity storage _charity = charities[_charityIndex];
-        // find an existing vote
-        for (uint256 _voteIndex = 0; _voteIndex < _votes.length; _voteIndex++) {
-            if (_votes[_voteIndex]._charityIndex == _charityIndex) {
+        Vote[] storage _casterVotes = _votes[msg.sender];
+        Charity storage _charity = _charities[_charityIndex];
+        // find an existing sender vote
+        for (
+            uint256 _casterVoteIndex = 0;
+            _casterVoteIndex < _casterVotes.length;
+            _casterVoteIndex++
+        ) {
+            if (_casterVotes[_casterVoteIndex]._charityIndex == _charityIndex) {
                 break;
             }
         }
 
         // remove existing vote from charity totals
-        if (_voteIndex != _votes.length) {
-            uint256 _existingScore = _votes[_voteIndex]._score;
+        if (_casterVoteIndex != _casterVotes.length) {
+            uint256 _existingScore = _casterVotes[_casterVoteIndex]._score;
             // only update totals if we have a score
             if (_existingScore > 0) {
-                 _charity._totalScores -= _existingScore;
+                _charity._totalScores -= _existingScore;
                 _charity._totalVotes -= 1;
             }
         }
@@ -157,21 +184,24 @@ contract Suggest {
         // delete vote or cast new vote
         if (_score == 0) {
 
-            if (_charity._suggestor == msg.sender) {
-                _votes[_voteIndex]._score = 0;
+            if (_charity._caster == msg.sender) {
+                _casterVotes[_casterVoteIndex]._score = 0;
             } else {
-                removeVote(_votes, _voteIndex);
+                if (_casterVotes.length > 1) {
+                    _casterVotes[_casterVoteIndex] = _casterVotes[_casterVotes.length - 1];
+                }
+                _casterVotes.length--;
             }
 
         } else {
             
             // update existing vote or create a new one
-            if (_voteIndex != _votes.length) {
-                _votes[_voteIndex]._score = _score;
+            if (_casterVoteIndex != _casterVotes.length) {
+                _casterVotes[_casterVoteIndex]._score = _score;
             } else {
-                require(_votes.length == 0);
+                require(_casterVotes.length == 0);
                 Vote memory _newVote = Vote(_charityIndex, _score);
-                _votes.push(_newVote);
+                _casterVotes.push(_newVote);
             }
 
             // add new vote to charity totals
@@ -180,18 +210,7 @@ contract Suggest {
 
         }
 
-        Cast(msg.sender, _charityIndex, _score);
-    }
-
-    function removeVote(
-         Vote[] storage _votes,
-         uint256 _index
-    ) internal {
-        // if we have more than one vote, move last vote to deleted's spot
-        if (_votes.length > 1) {
-            _votes[_index] = _votes[_votes.length - 1];
-        }
-        _votes.length--;
+        CastCharity(msg.sender, _charityIndex, _score);
     }
 
     function destroy() public {
