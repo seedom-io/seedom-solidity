@@ -18,7 +18,7 @@ suite('suggest', (state) => {
         const score = 10;
 
         await assert.isRejected(
-            (await state.interfaces.suggest).voteSuggest({
+            (await state.interfaces.suggest).voteName({
                 charityName,
                 score
             }, { from: participant, transact: true })
@@ -36,7 +36,7 @@ suite('suggest', (state) => {
         const score = 10;
 
         await assert.isRejected(
-            (await state.interfaces.suggest).voteSuggest({
+            (await state.interfaces.suggest).voteName({
                 charityName,
                 score
             }, { from: participant, transact: true })
@@ -54,7 +54,7 @@ suite('suggest', (state) => {
         const score = 15;
 
         await assert.isRejected(
-            (await state.interfaces.suggest).voteSuggest({
+            (await state.interfaces.suggest).voteName({
                 charityName,
                 score
             }, { from: participant, transact: true })
@@ -73,7 +73,7 @@ suite('suggest', (state) => {
         const score = 10;
 
         await assert.isRejected(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName,
                 score
             }, { from: participant, transact: true })
@@ -117,7 +117,7 @@ suite('suggest', (state) => {
         const score1 = 10;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName,
                 score: score1
             }, { from: participant1, transact: true })
@@ -127,7 +127,7 @@ suite('suggest', (state) => {
         const score2 = 15;
 
         await assert.isRejected(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: score2
             }, { from: participant2, transact: true })
@@ -146,7 +146,7 @@ suite('suggest', (state) => {
         const score = 10;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName,
                 score: score
             }, { from: participant1, transact: true })
@@ -155,7 +155,7 @@ suite('suggest', (state) => {
         const participant2 = state.accountAddresses[3];
 
         await assert.isRejected(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName,
                 score: score
             }, { from: participant2, transact: true })
@@ -177,14 +177,14 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
@@ -196,14 +196,14 @@ suite('suggest', (state) => {
         const score4 = 7;
 
         await assert.isRejected(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 2,
                 score: score3
             }, { from: participant3, transact: true })
         );
 
         await assert.isRejected(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 3,
                 score: score4
             }, { from: participant4, transact: true })
@@ -225,14 +225,14 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
@@ -244,14 +244,14 @@ suite('suggest', (state) => {
         const score4 = 7;
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: score3
             }, { from: participant3, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 1,
                 score: score4
             }, { from: participant4, transact: true })
@@ -299,14 +299,14 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
@@ -334,14 +334,14 @@ suite('suggest', (state) => {
         const charityName4 = sh.hexMessage("TEST CHARITY4");
 
         await assert.isRejected(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName3,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isRejected(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName4,
                 score: score2
             }, { from: participant2, transact: true })
@@ -363,28 +363,28 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
         );
 
         await assert.isRejected(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isRejected(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: score2
             }, { from: participant2, transact: true })
@@ -406,14 +406,14 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
@@ -423,14 +423,14 @@ suite('suggest', (state) => {
         const score4 = 7;
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: score3
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 1,
                 score: score4
             }, { from: participant2, transact: true })
@@ -470,28 +470,28 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: 0
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 1,
                 score: 0
             }, { from: participant2, transact: true })
@@ -519,14 +519,14 @@ suite('suggest', (state) => {
         const score4 = 7;
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: score3
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 1,
                 score: score4
             }, { from: participant2, transact: true })
@@ -566,21 +566,21 @@ suite('suggest', (state) => {
         const score2 = 6;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score: score1
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: score2
             }, { from: participant2, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: 0
             }, { from: participant2, transact: true })
@@ -591,7 +591,7 @@ suite('suggest', (state) => {
         assert.equal(actualVotes2.scores.length, 0, "scores length wrong");
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score: score2
             }, { from: participant2, transact: true })
@@ -631,21 +631,21 @@ suite('suggest', (state) => {
         const score = 10;
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName1,
                 score
             }, { from: participant1, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName2,
                 score
             }, { from: participant2, transact: true })
         );
 
         await assert.isFulfilled(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 0,
                 score: 0
             }, { from: participant1, transact: true })
@@ -656,14 +656,14 @@ suite('suggest', (state) => {
         assert.equal(actualVotes.scores[0], 0, "charity score wrong");
 
         await assert.isRejected(
-            suggest.voteSuggest({
+            suggest.voteName({
                 charityName: charityName3,
                 score
             }, { from: participant1, transact: true })
         );
 
         await assert.isRejected(
-            suggest.voteCharity({
+            suggest.voteIndex({
                 charityIndex: 1,
                 score
             }, { from: participant1, transact: true })

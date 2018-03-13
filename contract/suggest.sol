@@ -129,7 +129,7 @@ contract Suggest {
         return _votes[msg.sender].length == 0;
     }
 
-    function voteSuggest(bytes32 _charityName, uint256 _score) public {
+    function voteName(bytes32 _charityName, uint256 _score) public {
         require(_charityName != 0x0);
         require(_score <= maxScore);
         require(hasRight());
@@ -154,7 +154,7 @@ contract Suggest {
         CastSuggest(msg.sender, _newCharityIndex, _charityName, _score);
     }
 
-    function voteCharity(uint256 _charityIndex, uint256 _score) public {
+    function voteIndex(uint256 _charityIndex, uint256 _score) public {
         require(_score <= maxScore);
         require(hasRight());
 

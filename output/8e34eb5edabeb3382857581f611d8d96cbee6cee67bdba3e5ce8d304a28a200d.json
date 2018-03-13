@@ -79,7 +79,7 @@
                     "type": "uint256"
                 }
             ],
-            "name": "voteSuggest",
+            "name": "voteName",
             "outputs": [],
             "payable": false,
             "stateMutability": "nonpayable",
@@ -97,7 +97,7 @@
                     "type": "uint256"
                 }
             ],
-            "name": "voteCharity",
+            "name": "voteIndex",
             "outputs": [],
             "payable": false,
             "stateMutability": "nonpayable",
@@ -174,11 +174,11 @@
         "canVote": [],
         "getCharities": [],
         "destroy": [],
-        "voteSuggest": [
+        "voteName": [
             "_charityName",
             "_score"
         ],
-        "voteCharity": [
+        "voteIndex": [
             "_charityIndex",
             "_score"
         ],
