@@ -4,14 +4,14 @@ import "seedom.sol";
 
 contract Suggest {
 
-    event CastSuggest(
+    event CastName(
         address indexed _caster,
         uint256 indexed _charityIndex,
         bytes32 _charityName,
         uint256 _score
     );
 
-    event CastCharity(
+    event CastIndex(
         address indexed _caster,
         uint256 indexed _charityIndex,
         uint256 _score
@@ -45,11 +45,11 @@ contract Suggest {
     function status() public view returns (
         uint256 _maxScore,
         bool _hasRight,
-        bool _canVote
+        bool _hasVoted
     ) {
         _maxScore = maxScore;
         _hasRight = hasRight();
-        _canVote = canVote();
+        _hasVoted = _votes[msg.sender].length > 0;
     }
 
     function charities() public view returns (
@@ -125,15 +125,11 @@ contract Suggest {
         return true;
     }
 
-    function canVote() public view returns (bool) {
-        return _votes[msg.sender].length == 0;
-    }
-
     function voteName(bytes32 _charityName, uint256 _score) public {
         require(_charityName != 0x0);
         require(_score <= maxScore);
+        require(_votes[msg.sender].length == 0);
         require(hasRight());
-        require(canVote());
 
         // make sure charity doesn't exist
         for (uint256 _charityIndex = 0; _charityIndex < _charities.length; _charityIndex++) {
@@ -151,7 +147,7 @@ contract Suggest {
         Vote memory _newVote = Vote(_newCharityIndex, _score);
         _votes[msg.sender].push(_newVote);
 
-        CastSuggest(msg.sender, _newCharityIndex, _charityName, _score);
+        CastName(msg.sender, _newCharityIndex, _charityName, _score);
     }
 
     function voteIndex(uint256 _charityIndex, uint256 _score) public {
@@ -210,7 +206,7 @@ contract Suggest {
 
         }
 
-        CastCharity(msg.sender, _charityIndex, _score);
+        CastIndex(msg.sender, _charityIndex, _score);
     }
 
     function destroy() public {
