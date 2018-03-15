@@ -14,7 +14,10 @@ contract Suggest {
     event CastIndex(
         address indexed _caster,
         uint256 indexed _charityIndex,
-        uint256 _score
+        uint256 _score,
+        uint256 _totalScores,
+        uint256 _totalVotes,
+        bool _hasVoted
     );
 
     struct Charity {
@@ -206,7 +209,14 @@ contract Suggest {
 
         }
 
-        CastIndex(msg.sender, _charityIndex, _score);
+        CastIndex(
+            msg.sender,
+            _charityIndex,
+            _score,
+            _charity._totalScores,
+            _charity._totalVotes,
+            _casterVotes.length > 0
+        );
     }
 
     function destroy() public {
