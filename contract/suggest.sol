@@ -6,18 +6,18 @@ contract Suggest {
 
     event CastName(
         address indexed _caster,
+        uint256 _score,
         uint256 indexed _charityIndex,
-        bytes32 _charityName,
-        uint256 _score
+        bytes32 _charityName
     );
 
     event CastIndex(
         address indexed _caster,
-        uint256 indexed _charityIndex,
         uint256 _score,
-        uint256 _totalScores,
         uint256 _totalVotes,
-        bool _hasVoted
+        uint256 indexed _charityIndex,
+        uint256 _charityTotalScores,
+        uint256 _charityTotalVotes
     );
 
     struct Charity {
@@ -45,14 +45,14 @@ contract Suggest {
         seedom = Seedom(_seedomAddress);
     }
 
-    function status() public view returns (
+    function caster() public view returns (
         uint256 _maxScore,
-        bool _hasRight,
-        bool _hasVoted
+        uint256 _maxVotes,
+        uint256 _totalVotes
     ) {
         _maxScore = maxScore;
-        _hasRight = hasRight();
-        _hasVoted = _votes[msg.sender].length > 0;
+        _maxVotes = maxVotes();
+        _totalVotes = _votes[msg.sender].length;
     }
 
     function charities() public view returns (
@@ -108,31 +108,30 @@ contract Suggest {
         );
     }
 
-    function hasRight() public view returns (bool) {
+    function maxVotes() public view returns (uint256) {
         // get end time from seedom
         var ( , , , , , , , , _endTime, , , ) = seedom.raiser();
         if (now >= _endTime) {
-            return false;
+            return 0;
         }
         // ensure raiser not cancelled
         var ( , , , , , , , , _cancelled, , ) = seedom.state();
         if (_cancelled) {
-            return false;
+            return 0;
         }
         // confirm user has participated with entries
         var ( _entries, ) = seedom.participants(msg.sender);
         if (_entries == 0) {
-            return false;
+            return 0;
         }
 
-        return true;
+        return 1;
     }
 
     function voteName(bytes32 _charityName, uint256 _score) public {
         require(_charityName != 0x0);
         require(_score <= maxScore);
-        require(_votes[msg.sender].length == 0);
-        require(hasRight());
+        require(_votes[msg.sender].length != maxVotes());
 
         // make sure charity doesn't exist
         for (uint256 _charityIndex = 0; _charityIndex < _charities.length; _charityIndex++) {
@@ -150,12 +149,17 @@ contract Suggest {
         Vote memory _newVote = Vote(_newCharityIndex, _score);
         _votes[msg.sender].push(_newVote);
 
-        CastName(msg.sender, _newCharityIndex, _charityName, _score);
+        CastName(
+            msg.sender,
+            _score,
+            _newCharityIndex,
+            _charityName
+        );
     }
 
     function voteIndex(uint256 _charityIndex, uint256 _score) public {
         require(_score <= maxScore);
-        require(hasRight());
+        require(maxVotes() > 0);
 
         Vote[] storage _casterVotes = _votes[msg.sender];
         Charity storage _charity = _charities[_charityIndex];
@@ -211,11 +215,11 @@ contract Suggest {
 
         CastIndex(
             msg.sender,
-            _charityIndex,
             _score,
+            _casterVotes.length,
+            _charityIndex,
             _charity._totalScores,
-            _charity._totalVotes,
-            _casterVotes.length > 0
+            _charity._totalVotes
         );
     }
 
