@@ -2,7 +2,7 @@ pragma solidity ^0.4.19;
 
 import "seedom.sol";
 
-contract Suggest {
+contract Polling {
 
     event CastName(
         address indexed _caster,
@@ -37,7 +37,7 @@ contract Suggest {
     Charity[] _charities;
     mapping (address => Vote[]) _votes;
 
-    function Suggest(
+    function Polling(
         uint256 _maxScore,
         address _seedomAddress
     ) public {

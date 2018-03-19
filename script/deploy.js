@@ -46,8 +46,8 @@ module.exports.run = async (state) => {
     // save receipt
     env.seedomReceipt = seedom.receipt;
 
-    // deploy suggest
-    const suggest = await (await state.interfaces.suggest).deploy({
+    // deploy polling
+    const polling = await (await state.interfaces.polling).deploy({
         maxScore: env.maxScore,
         seedomAddress: seedom.receipt.contractAddress
     }, {
@@ -55,6 +55,6 @@ module.exports.run = async (state) => {
     });
 
     // save receipt
-    env.suggestReceipt = suggest.receipt;
+    env.pollingReceipt = polling.receipt;
 
 }
