@@ -3,7 +3,7 @@ pragma solidity ^0.4.19;
 contract Seedom {
 
     event Seed(
-        bytes32 _charitySecret
+        bytes32 _npoSecret
     );
 
     event Participation(
@@ -20,13 +20,13 @@ contract Seedom {
     );
 
     event Revelation(
-        bytes32 _charityMessage
+        bytes32 _npoMessage
     );
 
     event Selection(
-        address _selected,
-        bytes32 _selectedMessage,
-        bytes32 _charityMessage,
+        address _participant,
+        bytes32 _participantMessage,
+        bytes32 _npoMessage,
         bytes32 _ownerMessage
     );
 
@@ -36,10 +36,10 @@ contract Seedom {
         address _address
     );
 
-    struct Raiser {
-        address _charity;
-        uint256 _charitySplit;
-        uint256 _selectedSplit;
+    struct Fundraiser {
+        address _npo;
+        uint256 _npoSplit;
+        uint256 _participantSplit;
         address _owner;
         uint256 _ownerSplit;
         bytes32 _ownerSecret;
@@ -52,11 +52,11 @@ contract Seedom {
     }
 
     struct State {
-        bytes32 _charitySecret;
-        bytes32 _charityMessage;
-        bool _charityWithdrawn;
-        address _selected;
-        bool _selectedWithdrawn;
+        bytes32 _npoSecret;
+        bytes32 _npoMessage;
+        bool _npoWithdrawn;
+        address _participant;
+        bool _participantWithdrawn;
         bytes32 _ownerMessage;
         bool _ownerWithdrawn;
         bool _cancelled;
@@ -69,49 +69,49 @@ contract Seedom {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == raiser._owner);
+        require(msg.sender == fundraiser._owner);
         _;
     }
 
     modifier neverOwner() {
-        require(msg.sender != raiser._owner);
+        require(msg.sender != fundraiser._owner);
         _;
     }
 
     modifier onlyCharity() {
-        require(msg.sender == raiser._charity);
+        require(msg.sender == fundraiser._npo);
         _;
     }
 
     modifier neverCharity() {
-        require(msg.sender != raiser._charity);
+        require(msg.sender != fundraiser._npo);
         _;
     }
 
     modifier participationPhase() {
-        require(now < raiser._endTime);
+        require(now < fundraiser._endTime);
         _;
     }
 
     modifier endPhase() {
-        require((now >= raiser._endTime) && (now < raiser._expireTime));
+        require((now >= fundraiser._endTime) && (now < fundraiser._expireTime));
         _;
     }
 
     modifier destructionPhase() {
-        require(now >= raiser._destructTime);
+        require(now >= fundraiser._destructTime);
         _;
     }
     
-    Raiser public raiser;
+    Fundraiser public fundraiser;
     mapping(address => Participant) public participants;
     address[] public participantAddresses;
     State _state;
 
     function Seedom(
-        address _charity,
-        uint256 _charitySplit,
-        uint256 _selectedSplit,
+        address _npo,
+        uint256 _npoSplit,
+        uint256 _participantSplit,
         uint256 _ownerSplit,
         bytes32 _ownerSecret,
         uint256 _valuePerEntry,
@@ -120,21 +120,21 @@ contract Seedom {
         uint256 _destructTime,
         uint256 _maxParticipants
     ) public {
-        require(_charity != 0x0);
-        require(_charitySplit != 0);
-        require(_selectedSplit != 0);
-        require(_charitySplit + _selectedSplit + _ownerSplit == 1000);
+        require(_npo != 0x0);
+        require(_npoSplit != 0);
+        require(_participantSplit != 0);
+        require(_npoSplit + _participantSplit + _ownerSplit == 1000);
         require(_ownerSecret != 0x0);
         require(_valuePerEntry != 0);
         require(_endTime > now); // participation phase
         require(_expireTime > _endTime); // end phase
         require(_destructTime > _expireTime); // destruct phase
 
-        // set the raiser
-        raiser = Raiser(
-            _charity,
-            _charitySplit,
-            _selectedSplit,
+        // set the fundraiser
+        fundraiser = Fundraiser(
+            _npo,
+            _npoSplit,
+            _participantSplit,
             msg.sender,
             _ownerSplit,
             _ownerSecret,
@@ -149,24 +149,24 @@ contract Seedom {
     }
 
     function state() public view returns (
-        bytes32 _charitySecret,
-        bytes32 _charityMessage,
-        bool _charityWithdrawn,
-        address _selected,
-        bytes32 _selectedMessage,
-        bool _selectedWithdrawn,
+        bytes32 _npoSecret,
+        bytes32 _npoMessage,
+        bool _npoWithdrawn,
+        address _participant,
+        bytes32 _participantMessage,
+        bool _participantWithdrawn,
         bytes32 _ownerMessage,
         bool _ownerWithdrawn,
         bool _cancelled,
         uint256 _totalParticipants,
         uint256 _totalEntries
     ) {
-        _charitySecret = _state._charitySecret;
-        _charityMessage = _state._charityMessage;
-        _charityWithdrawn = _state._charityWithdrawn;
-        _selected = _state._selected;
-        _selectedMessage = participants[_selected]._message;
-        _selectedWithdrawn = _state._selectedWithdrawn;
+        _npoSecret = _state._npoSecret;
+        _npoMessage = _state._npoMessage;
+        _npoWithdrawn = _state._npoWithdrawn;
+        _participant = _state._participant;
+        _participantMessage = participants[_participant]._message;
+        _participantWithdrawn = _state._participantWithdrawn;
         _ownerMessage = _state._ownerMessage;
         _ownerWithdrawn = _state._ownerWithdrawn;
         _cancelled = _state._cancelled;
@@ -174,69 +174,69 @@ contract Seedom {
         _totalEntries = _state._totalEntries;
     }
 
-    // Returns the balance of a charity, selected, owner, or participant.
+    // Returns the balance of a npo, selected, owner, or participant.
     function balance() public view returns (uint256) {
-        // check for raiser ended normally
-        if (_state._selected != address(0)) {
+        // check for fundraiser ended normally
+        if (_state._participant != address(0)) {
             // selected, get split
             uint256 _split;
             // determine split based on sender
-            if (msg.sender == raiser._charity) {
-                if (_state._charityWithdrawn) {
+            if (msg.sender == fundraiser._npo) {
+                if (_state._npoWithdrawn) {
                     return 0;
                 }
-                _split = raiser._charitySplit;
-            } else if (msg.sender == _state._selected) {
-                if (_state._selectedWithdrawn) {
+                _split = fundraiser._npoSplit;
+            } else if (msg.sender == _state._participant) {
+                if (_state._participantWithdrawn) {
                     return 0;
                 }
-                _split = raiser._selectedSplit;
-            } else if (msg.sender == raiser._owner) {
+                _split = fundraiser._participantSplit;
+            } else if (msg.sender == fundraiser._owner) {
                 if (_state._ownerWithdrawn) {
                     return 0;
                 }
-                _split = raiser._ownerSplit;
+                _split = fundraiser._ownerSplit;
             } else {
                 return 0;
             }
             // multiply total entries by split % (non-revealed winnings are forfeited)
-            return _state._totalEntries * raiser._valuePerEntry * _split / 1000;
+            return _state._totalEntries * fundraiser._valuePerEntry * _split / 1000;
         } else if (_state._cancelled) {
             // value per entry times participant entries == balance
             Participant storage _participant = participants[msg.sender];
-            return _participant._entries * raiser._valuePerEntry;
+            return _participant._entries * fundraiser._valuePerEntry;
         }
 
         return 0;
     }
 
-    // Used by the charity to officially begin their raiser. The charity supplies the first hashed
-    // message, which is kept secret and revealed by the charity in end().
-    function seed(bytes32 _secret) public participationPhase onlyCharity {
-        require(!_state._cancelled); // raiser not cancelled
-        require(_state._charitySecret == 0x0); // charity has not seeded secret
+    // Used by the NPO to officially begin their fundraiser. The npo supplies the first hashed
+    // message, which is kept secret and revealed by the npo in end().
+    function begin(bytes32 _secret) public participationPhase onlyCharity {
+        require(!_state._cancelled); // fundraiser not cancelled
+        require(_state._npoSecret == 0x0); // npo has not seeded secret
         require(_secret != 0x0); // secret cannot be zero
 
-        // seed charity secret, starting the raiser
-        _state._charitySecret = _secret;
+        // seed npo secret, starting the fundraiser
+        _state._npoSecret = _secret;
 
         // broadcast seed
         Seed(_secret);
     }
 
-    // Participate in this raiser by contributing messageness to the global selection of a selected.
+    // Participate in this fundraiser by contributing messageness to the global selection of a selected.
     // Send a secret value N using the following formula: sha3(N, address). Do not forget
     // your message value as this will be required during the message revealation phase to confirm
     // your entries. After participation, send wei to the callback function to receive additional
     // entries. Participation is only permitted between seed() and the reveal time.
     function participate(bytes32 _message) public participationPhase neverCharity neverOwner payable {
-        require(!_state._cancelled); // raiser not cancelled
-        require(_state._charitySecret != 0x0); // charity has seeded secret
+        require(!_state._cancelled); // fundraiser not cancelled
+        require(_state._npoSecret != 0x0); // npo has seeded secret
         require(_message != 0x0); // message cannot be zero
         // check for no limit or under limit
         require(
-            (raiser._maxParticipants == 0)
-            || (participantAddresses.length < raiser._maxParticipants)
+            (fundraiser._maxParticipants == 0)
+            || (participantAddresses.length < fundraiser._maxParticipants)
         );
 
         // find and check for no existing participant
@@ -260,13 +260,13 @@ contract Seedom {
         uint256 _refund
     ) {
         // calculate the number of entries from the wei sent
-        _entries = msg.value / raiser._valuePerEntry;
+        _entries = msg.value / fundraiser._valuePerEntry;
         require(_entries >= 1); // ensure we have at least one entry
         // if we have any, update participant and total
         _participant._entries += _entries;
         _state._totalEntries += _entries;
         // calculate partial entry refund
-        _refund = msg.value % raiser._valuePerEntry;
+        _refund = msg.value % fundraiser._valuePerEntry;
         // refund any excess wei immediately (partial entry)
         if (_refund > 0) {
             msg.sender.transfer(_refund);
@@ -276,8 +276,8 @@ contract Seedom {
     // Fallback function that accepts wei for additional entries. This will always fail if
     // participate() is not called once with a secret.
     function () public participationPhase neverCharity neverOwner payable {
-        require(!_state._cancelled); // raiser not cancelled
-        require(_state._charitySecret != 0x0); // charity has seeded secret
+        require(!_state._cancelled); // fundraiser not cancelled
+        require(_state._npoSecret != 0x0); // npo has seeded secret
 
         // find existing participant
         Participant storage _participant = participants[msg.sender];
@@ -290,12 +290,12 @@ contract Seedom {
     }
 
     function reveal(bytes32 _message) public endPhase onlyCharity {
-        require(!_state._cancelled); // raiser not cancelled
-        require(_state._charityMessage == 0x0); // cannot have revealed already
-        require(_decode(_state._charitySecret, _message)); // check for valid message
+        require(!_state._cancelled); // fundraiser not cancelled
+        require(_state._npoMessage == 0x0); // cannot have revealed already
+        require(_decode(_state._npoSecret, _message)); // check for valid message
 
-        // save revealed charity message
-        _state._charityMessage = _message;
+        // save revealed npo message
+        _state._npoMessage = _message;
 
         // send reveal event
         Revelation(_message);
@@ -305,33 +305,33 @@ contract Seedom {
         return _secret == keccak256(_message, msg.sender);
     }
 
-    // Ends this raiser and chooses a winning supporter. All of the revealed messages and the
-    // charity's final revealed message will be used to deterministically generate a universal
-    // message value. This method can only be performed by the charity after the end time.
-    function select(bytes32 _message) public endPhase onlyOwner {
-        require(!_state._cancelled); // raiser not cancelled
-        require(_state._charityMessage != 0x0); // charity must have revealed
+    // Ends this fundraiser and selects a suparticipant to reward. All of the revealed messages and
+    // the npo's final revealed message will be used to deterministically generate a universal
+    // message value. This method can only be performed by the npo after the end time.
+    function end(bytes32 _message) public endPhase onlyOwner {
+        require(!_state._cancelled); // fundraiser not cancelled
+        require(_state._npoMessage != 0x0); // npo must have revealed
         require(_state._ownerMessage == 0x0); // cannot have ended already
-        require(_decode(raiser._ownerSecret, _message)); // check for valid message
+        require(_decode(fundraiser._ownerSecret, _message)); // check for valid message
 
         // save revealed owner message
         _state._ownerMessage = _message;
         // calculate entry cumulatives, participants message, and universal message
         uint256[] memory _entryCumulatives = new uint256[](participantAddresses.length);
         bytes32 _participantsMessage = _calculateParticipantsMessage(_entryCumulatives);
-        bytes32 _universalMessage = _participantsMessage ^ _state._charityMessage ^ _message;
+        bytes32 _universalMessage = _participantsMessage ^ _state._npoMessage ^ _message;
         // calculate entry index from universal message and total entries
         uint256 _entryIndex = uint256(_universalMessage) % _state._totalEntries;
         // find and set selected, get the participant
-        uint256 _selectedParticipantIndex = _findSelectedParticipantIndex(_entryIndex, _entryCumulatives);
-        _state._selected = participantAddresses[_selectedParticipantIndex];
-        Participant memory _participant = participants[_state._selected];
+        uint256 _participantParticipantIndex = _findSelectedParticipantIndex(_entryIndex, _entryCumulatives);
+        _state._participant = participantAddresses[_participantParticipantIndex];
+        Participant memory _participant = participants[_state._participant];
 
         // send out select event
-        Selection(_state._selected, _participant._message, _state._charityMessage, _message);
+        Selection(_state._participant, _participant._message, _state._npoMessage, _message);
     }
 
-    // Using all of the revealed message values, including the charity's final message,
+    // Using all of the revealed message values, including the npo's final message,
     // deterministically generate a universal message by XORing them together. This procedure
     // will also set up a discrete cumulative density function (CDF) using the number of entries
     // for each participant.
@@ -402,17 +402,17 @@ contract Seedom {
         }
     }
 
-    // Cancels a raiser early, before a winning supporter is chosen. All funds can be then be
+    // Cancels a fundraiser early, before a winning supporter is chosen. All funds can be then be
     // withdrawn using the withdraw() function. cancel() can only be executed by the owner or
-    // charity before a winning supporter is chosen. After the expire time, if the owner or charity
+    // npo before a winning supporter is chosen. After the expire time, if the owner or npo
     // has not cancelled and a winning supporter has not been chosen, this function becomes open to
     // everyone as a final safeguard.
     function cancel() public {
-        require(!_state._cancelled); // raiser not already cancelled
-        require(_state._selected == address(0)); // selected must not have been chosen
+        require(!_state._cancelled); // fundraiser not already cancelled
+        require(_state._participant == address(0)); // selected must not have been chosen
         // open cancellation to community if past expire time (but before destruct time)
-        if ((msg.sender != raiser._owner) && (msg.sender != raiser._charity)) {
-            require((now >= raiser._expireTime) && (now < raiser._destructTime));
+        if ((msg.sender != fundraiser._owner) && (msg.sender != fundraiser._npo)) {
+            require((now >= fundraiser._expireTime) && (now < fundraiser._destructTime));
         }
 
         // immediately set us to cancelled
@@ -428,15 +428,15 @@ contract Seedom {
         // check for a balance
         uint256 _balance = balance();
         require (_balance > 0); // can only withdraw a balance
-        // check for raiser ended normally
-        if (_state._selected != address(0)) {
+        // check for fundraiser ended normally
+        if (_state._participant != address(0)) {
 
             // determine split based on sender
-            if (msg.sender == raiser._charity) {
-                _state._charityWithdrawn = true;
-            } else if (msg.sender == _state._selected) {
-                _state._selectedWithdrawn = true;
-            } else if (msg.sender == raiser._owner) {
+            if (msg.sender == fundraiser._npo) {
+                _state._npoWithdrawn = true;
+            } else if (msg.sender == _state._participant) {
+                _state._participantWithdrawn = true;
+            } else if (msg.sender == fundraiser._owner) {
                 _state._ownerWithdrawn = true;
             } else {
                 revert();
