@@ -7,13 +7,13 @@ module.exports.run = async (state) => {
     await participate.run(state);
     
     const { env } = state;
-    const seedom = await state.interfaces.seedom;
+    const fundraiser = await state.interfaces.fundraiser;
 
     const raise = env.fallbackRaise ? env.fallbackRaise : 10500;
 
     for (let participant of env.participants) {
 
-        participant.raiseReceipt = await seedom.fallback({
+        participant.raiseReceipt = await fundraiser.fallback({
             from: participant.address, value: raise, transact: true
         });
 

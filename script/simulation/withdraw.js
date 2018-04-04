@@ -1,22 +1,22 @@
-const select = require('./select');
+const end = require('./end');
 
 module.exports.run = async (state) => {
 
     // run through select emulation
-    await select.run(state);
+    await end.run(state);
 
     const { env } = state;
-    const seedom = await state.interfaces.seedom;
+    const fundraiser = await state.interfaces.fundraiser;
 
-    env.charityWithdrawReceipt = await seedom.withdraw({
-        from: env.charity, transact: true
+    env.causeWithdrawReceipt = await fundraiser.withdraw({
+        from: env.cause, transact: true
     });
 
-    env.selectedWithdrawReceipt = await seedom.withdraw({
-        from: env.selected, transact: true
+    env.participantWithdrawReceipt = await fundraiser.withdraw({
+        from: env.participant, transact: true
     });
 
-    env.ownerWithdrawReceipt = await seedom.withdraw({
+    env.ownerWithdrawReceipt = await fundraiser.withdraw({
         from: env.owner, transact: true
     });
 

@@ -1,13 +1,13 @@
 const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
-const seed = require('../script/simulation/seed');
+const begin = require('../script/simulation/begin');
 const deploy = require('../script/simulation/deploy');
 const participate = require('../script/simulation/participate');
 
 suite('participate', (state) => {
 
-    test("should accept participants after seed", async () => {
+    test("should accept participants after begin", async () => {
 
         const initialBalances = {};
         // get all initial balances
@@ -18,12 +18,12 @@ suite('participate', (state) => {
         await participate.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await seedom.participants({
+            const actualParticipant = await fundraiser.participants({
                 address: participant.address
             }, { from: participant.address });
 
@@ -36,19 +36,19 @@ suite('participate', (state) => {
             assert.equal(finalBalance.toString(), participationBalance.toString(), "balance not expected for " + participant.address);
 
             // check balance()s
-            const actualParticipantBalance = await seedom.balance({ from: participant.address });
+            const actualParticipantBalance = await fundraiser.balance({ from: participant.address });
             assert.equal(actualParticipantBalance, 0, "participant balance not zero");
 
         }
 
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equal(actualState.charityMessage, 0, "charity message zero");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equal(actualState.causeMessage, 0, "cause message zero");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -57,7 +57,7 @@ suite('participate', (state) => {
 
     });
 
-    test("should accept and refund participants after seed", async () => {
+    test("should accept and refund participants after begin", async () => {
 
         const initialBalances = {};
         // get all initial balances
@@ -71,12 +71,12 @@ suite('participate', (state) => {
         env.participateRaise = 10500;
         await participate.run(state);
 
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await seedom.participants({
+            const actualParticipant = await fundraiser.participants({
                 address: participant.address
             }, { from: participant.address });
 
@@ -91,14 +91,14 @@ suite('participate', (state) => {
 
         }
 
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equal(actualState.charityMessage, 0, "charity message zero");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equal(actualState.causeMessage, 0, "cause message zero");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -117,14 +117,14 @@ suite('participate', (state) => {
         const message = sh.messageHex();
         
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            (await state.interfaces.fundraiser).participate({
                 message
             }, { from: participant, transact: true })
         );
 
     });
 
-    test("should fail participation without seed", async () => {
+    test("should fail participation without begin", async () => {
 
         await deploy.run(state);
 
@@ -133,7 +133,7 @@ suite('participate', (state) => {
         const message = sh.messageHex();
 
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            (await state.interfaces.fundraiser).participate({
                 message
             }, { from: participant, transact: true })
         );
@@ -142,7 +142,7 @@ suite('participate', (state) => {
 
     test("should reject participation after select", async () => {
 
-        await seed.run(state);
+        await begin.run(state);
 
         const { env } = state;
         const now = ch.timestamp();
@@ -152,45 +152,45 @@ suite('participate', (state) => {
         const message = sh.messageHex();
 
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            (await state.interfaces.fundraiser).participate({
                 message
             }, { from: participant, transact: true })
         );
 
     });
 
-    test("should fail owner participation after seed", async () => {
+    test("should fail owner participation after begin", async () => {
 
-        await seed.run(state);
+        await begin.run(state);
         
         const { env } = state;
         const message = sh.messageHex();
 
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            (await state.interfaces.fundraiser).participate({
                 message
             }, { from: env.owner, transact: true })
         );
 
     });
 
-    test("should reject multiple participation from same address after seed", async () => {
+    test("should reject multiple participation from same address after begin", async () => {
 
-        await seed.run(state);
+        await begin.run(state);
         
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
         const participant = state.accountAddresses[2];
         let message = sh.messageHex();
 
         await assert.isFulfilled(
-            seedom.participate({
+            fundraiser.participate({
                 message
             }, { from: participant, value: 10000, transact: true })
         );
 
         await assert.isRejected(
-            seedom.participate({
+            fundraiser.participate({
                 message
             }, { from: participant, value: 10000, transact: true })
         );
@@ -199,23 +199,23 @@ suite('participate', (state) => {
         message = sh.messageHex();
 
         await assert.isRejected(
-            seedom.participate({
+            fundraiser.participate({
                 message
             }, { from: participant, value: 10000, transact: true })
         );
 
     });
 
-    test("reject participation of zeroed message after seed", async () => {
+    test("reject participation of zeroed message after begin", async () => {
 
-        await seed.run(state);
+        await begin.run(state);
         
         const { env } = state;
         const participant = state.accountAddresses[2];
         const message = '0x0000000000000000000000000000000000000000000000000000000000000000';
         
         await assert.isRejected(
-            (await state.interfaces.seedom).participate({
+            (await state.interfaces.fundraiser).participate({
                 message
             }, { from: participant, transact: true })
         );

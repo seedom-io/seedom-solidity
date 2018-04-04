@@ -1,7 +1,7 @@
 const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
-const seed = require('../script/simulation/seed');
+const begin = require('../script/simulation/begin');
 const participate = require('../script/simulation/participate');
 const raise = require('../script/simulation/raise');
 
@@ -18,12 +18,12 @@ suite('raise', (state) => {
         await raise.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // validate every participant
         for (let participant of env.participants) {
 
-            const actualParticipant = await seedom.participants({
+            const actualParticipant = await fundraiser.participants({
                 address: participant.address
             }, { from: participant.address });
     
@@ -41,20 +41,20 @@ suite('raise', (state) => {
             assert.equal(finalBalance.toString(), raiseBalance.toString(), "balance not expected for " + participant.address);
 
             // check balance()s
-            const actualParticipantBalance = await seedom.balance({ from: participant.address });
+            const actualParticipantBalance = await fundraiser.balance({ from: participant.address });
             assert.equal(actualParticipantBalance, 0, "participant balance not zero");
 
         }
 
         // confirm state
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equal(actualState.charityMessage, 0, "charity message zero");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equal(actualState.causeMessage, 0, "cause message zero");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -62,43 +62,43 @@ suite('raise', (state) => {
         assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries incorrect");
 
         // check balance()s
-        const actualCharityReward = await seedom.balance({ from: env.charity });
-        assert.equal(actualCharityReward, 0, "charity reward balance not zero");
-        const actualOwnerReward = await seedom.balance({ from: env.owner });
+        const actualCauseReward = await fundraiser.balance({ from: env.cause });
+        assert.equal(actualCauseReward, 0, "cause reward balance not zero");
+        const actualOwnerReward = await fundraiser.balance({ from: env.owner });
         assert.equal(actualOwnerReward, 0, "owner reward balance not zero");
 
     });
 
     test("should reject raising without participation", async () => {
 
-        await seed.run(state);
+        await begin.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
         
         const participant = state.accountAddresses[2];
         // call fallback function
         await assert.isRejected(
-            seedom.fallback({
+            fundraiser.fallback({
                 from: participant, value: 10500, transact: true
             })
         );
 
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equal(actualState.charityMessage, 0, "charity message zero");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equal(actualState.causeMessage, 0, "cause message zero");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, 0, "total participants not zero");
         assert.equal(actualState.totalEntries, 0, "total entries not zero");
 
-        const actualParticipant = await seedom.participants({
+        const actualParticipant = await fundraiser.participants({
             participant
         }, { from: participant });
 
@@ -112,30 +112,30 @@ suite('raise', (state) => {
         await participate.run(state);
         
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
         const participant = env.participants[0];
         // call fallback function
         await assert.isRejected(
-            seedom.fallback({
+            fundraiser.fallback({
                 from: participant.address, value: 0, transact: true
             })
         );
 
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
         
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equal(actualState.charityMessage, 0, "charity message zero");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equal(actualState.causeMessage, 0, "cause message zero");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
 
-        const actualParticipant = await seedom.participants({
+        const actualParticipant = await fundraiser.participants({
             address: participant.address
         }, { from: participant.address });
 
@@ -149,30 +149,30 @@ suite('raise', (state) => {
         await participate.run(state);
         
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
         const participant = env.participants[0];
         // call fallback function
         await assert.isRejected(
-            seedom.fallback({
+            fundraiser.fallback({
                 from: participant.address, value: 500, transact: true
             })
         );
 
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
         
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equal(actualState.charityMessage, 0, "charity message zero");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equal(actualState.causeMessage, 0, "cause message zero");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
 
-        const actualParticipant = await seedom.participants({
+        const actualParticipant = await fundraiser.participants({
             address: participant.address
         }, { from: participant.address });
 

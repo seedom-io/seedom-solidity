@@ -55,8 +55,12 @@ const getInstalled = async () => {
 }
 
 const getInitialized = async () => {
-    const items = await fs.readdir(h.parityDir);
-    return items.length > 0;
+    try {
+        const items = await fs.readdir(h.parityDir);
+        return items.length > 0;
+    } catch (error) {
+        return false;
+    }
 }
 
 const launch = async (state, pid) => {
@@ -202,6 +206,8 @@ const initialize = async (state, pid) => {
         await kill(pid);
     }
 
+    // mkdir
+    mkdirp(h.parityDir);
     // deinitialize
     await fse.emptyDir(h.parityDir);
     // populate network configuration

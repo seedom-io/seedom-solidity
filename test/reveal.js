@@ -7,30 +7,30 @@ const network = require('../chronicle/network');
 
 suite('reveal', (state) => {
 
-    test("should reveal properly from charity", async () => {
+    test("should reveal properly from cause", async () => {
 
         await raise.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isFulfilled(
-            seedom.reveal({
-                message: env.charityMessage
-            }, { from: env.charity, transact: true })
+            fundraiser.reveal({
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
-        assert.equal(actualState.charitySecret, env.charitySecret, "charity secret does not match");
-        assert.equalIgnoreCase(actualState.charityMessage, env.charityMessage, "charity message does not match");
-        assert.isNotOk(actualState.charityWithdrawn, 0, "charity not withdrawn");
-        assert.equal(actualState.selected, 0, "selected zero");
-        assert.equal(actualState.selectedMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.selectedWithdrawn, 0, "charity not withdrawn");
+        assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
+        assert.equalIgnoreCase(actualState.causeMessage, env.causeMessage, "cause message does not match");
+        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
+        assert.equal(actualState.participant, 0, "selected zero");
+        assert.equal(actualState.participantMessage, 0, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
@@ -39,46 +39,46 @@ suite('reveal', (state) => {
 
     });
 
-    test("should reject multiple valid reveals from charity", async () => {
+    test("should reject multiple valid reveals from cause", async () => {
         
         await raise.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isFulfilled(
-            seedom.reveal({
-                message: env.charityMessage
-            }, { from: env.charity, transact: true })
+            fundraiser.reveal({
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
         await assert.isRejected(
-            seedom.reveal({
-                message: env.charityMessage
-            }, { from: env.charity, transact: true })
+            fundraiser.reveal({
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
     });
 
-    test("should reject invalid reveal from charity", async () => {
+    test("should reject invalid reveal from cause", async () => {
         
         await raise.run(state);
 
         const { env } = state;
         // generate a new random message
-        const charityMessage = sh.messageHex();
-        const charitySecret = sh.hashMessage(charityMessage, env.charity);
+        const causeMessage = sh.messageHex();
+        const causeSecret = sh.hashMessage(causeMessage, env.cause);
 
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
-                message: charityMessage
-            }, { from: env.charity, transact: true })
+            (await state.interfaces.fundraiser).reveal({
+                message: causeMessage
+            }, { from: env.cause, transact: true })
         );
 
     });
@@ -93,8 +93,8 @@ suite('reveal', (state) => {
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).reveal({
-                message: env.charityMessage
+            (await state.interfaces.fundraiser).reveal({
+                message: env.causeMessage
             }, { from: env.owner, transact: true })
         );
 
@@ -111,8 +111,8 @@ suite('reveal', (state) => {
         await cli.progress("waiting for end phase", env.endTime - now);
 
         await assert.isRejected(
-            (await state.interfaces.seedom).seed({
-                message: env.charityMessage
+            (await state.interfaces.fundraiser).begin({
+                message: env.causeMessage
             }, { from: participant, transact: true })
         );
 

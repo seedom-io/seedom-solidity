@@ -7,9 +7,9 @@ module.exports.run = async (state) => {
     const { env } = state;
 
     env.owner = state.accountAddresses[0];
-    env.charity = state.accountAddresses[1];
-    env.charitySplit = 600;
-    env.selectedSplit = 350;
+    env.cause = state.accountAddresses[1];
+    env.causeSplit = 600;
+    env.participantSplit = 350;
     env.ownerSplit = 50;
     env.ownerMessage = h.messageHex();
     env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
@@ -21,11 +21,11 @@ module.exports.run = async (state) => {
     const now = ch.timestamp();
     // FIXME: triple the parity send delay to get overall transaction duration
     const transactionDuration = Math.round((state.network.sendDelay / 1000) * 2);
-    // participation phase has two initial transactions: 2x deploys and seed
+    // participation phase has two initial transactions: 2x deploys and begin
     // and then two transactions per participant: participate and raise
     const participationDuration = (transactionDuration * 3) + (env.participantsCount * transactionDuration * 2);
     env.endTime = now + participationDuration;
-    // end phase has (if not cancelled) two transactions: (charity) reveal and (owner) select
+    // end phase has (if not cancelled) two transactions: (cause) reveal and (owner) select
     const endDuration = transactionDuration * 2;
     env.expireTime = env.endTime + endDuration;
     // expire phase has only one possible transaction: cancel

@@ -1,9 +1,9 @@
 const h = require('./helper');
 
 module.exports.options = [
-    ['charity', true],
-    ['charitySplit', true],
-    ['selectedSplit', true],
+    ['cause', true],
+    ['causeSplit', true],
+    ['participantSplit', true],
     ['owner', true],
     ['ownerSplit', true],
     ['ownerMessageString', true],
@@ -23,15 +23,13 @@ module.exports.run = async (state) => {
         env.ownerMessageString ? h.hexMessage(env.ownerMessageString) : h.messageHex()
     );
     
-    env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
+    env.ownerSecret = env.ownerSecret ? env.ownerSecret : h.hashMessage(env.ownerMessage, env.owner);
 
-    env.ownerSecret = env.ownerSecret ? env.ownerSecret : h.hexMessage(env.ownerMessageString);
-
-    // deploy seedom
-    const seedom = await (await state.interfaces.seedom).deploy({
-        charity: env.charity,
-        charitySplit: env.charitySplit,
-        selectedSplit: env.selectedSplit,
+    // deploy fundraiser
+    const fundraiser = await (await state.interfaces.fundraiser).deploy({
+        cause: env.cause,
+        causeSplit: env.causeSplit,
+        participantSplit: env.participantSplit,
         ownerSplit: env.ownerSplit,
         ownerSecret: env.ownerSecret,
         valuePerEntry: env.valuePerEntry,
@@ -44,12 +42,12 @@ module.exports.run = async (state) => {
     });
 
     // save receipt
-    env.seedomReceipt = seedom.receipt;
+    env.fundraiserReceipt = fundraiser.receipt;
 
     // deploy polling
     const polling = await (await state.interfaces.polling).deploy({
         maxScore: env.maxScore,
-        seedomAddress: seedom.receipt.contractAddress
+        fundraiserAddress: fundraiser.receipt.contractAddress
     }, {
         from: env.owner
     });

@@ -4,7 +4,7 @@ const sh = require('../script/helper');
 const deploy = require('../script/simulation/deploy');
 const participate = require('../script/simulation/participate');
 const raise = require('../script/simulation/raise');
-const select = require('../script/simulation/select');
+const end = require('../script/simulation/end');
 const withdraw = require('../script/simulation/withdraw');
 
 suite('withdraw', (state) => {
@@ -15,23 +15,23 @@ suite('withdraw', (state) => {
         await participate.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         await assert.isRejected(
-            seedom.withdraw({
+            fundraiser.withdraw({
                 from: env.owner, transact: true
             })
         );
 
         await assert.isRejected(
-            seedom.withdraw({
-                from: env.charity, transact: true
+            fundraiser.withdraw({
+                from: env.cause, transact: true
             })
         );
 
         for (let participant of env.participants) {
             await assert.isRejected(
-                seedom.withdraw({
+                fundraiser.withdraw({
                     from: participant.address, transact: true
                 })
             )
@@ -47,19 +47,24 @@ suite('withdraw', (state) => {
             initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
         }
 
-        await select.run(state);
+        await end.run(state);
 
         const { env } = state;
 
-        // seedom
-        const seedomGasUsed = env.seedomReceipt.gasUsed;
-        const seedomTransactionCost = await sh.getTransactionCost(seedomGasUsed, state.web3);
-        initialBalances[env.owner] = initialBalances[env.owner].minus(seedomTransactionCost);
+        // deploy (fundraiser)
+        const fundraiserGasUsed = env.fundraiserReceipt.gasUsed;
+        const fundraiserTransactionCost = await sh.getTransactionCost(fundraiserGasUsed, state.web3);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(fundraiserTransactionCost);
 
-        // seed
-        const seedGasUsed = env.seedReceipt.gasUsed;
-        const seedTransactionCost = await sh.getTransactionCost(seedGasUsed, state.web3);
-        initialBalances[env.charity] = initialBalances[env.charity].minus(seedTransactionCost);
+        // deploy (polling)
+        const pollingGasUsed = env.pollingReceipt.gasUsed;
+        const pollingTransactionCost = await sh.getTransactionCost(pollingGasUsed, state.web3);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(pollingTransactionCost);
+
+        // begin
+        const beginGasUsed = env.beginReceipt.gasUsed;
+        const beginTransactionCost = await sh.getTransactionCost(beginGasUsed, state.web3);
+        initialBalances[env.cause] = initialBalances[env.cause].minus(beginTransactionCost);
 
         // participate
         for (let participant of env.participants) {
@@ -78,12 +83,12 @@ suite('withdraw', (state) => {
         // reveal
         const revealGasUsed = env.revealReceipt.gasUsed;
         const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
-        initialBalances[env.charity] = initialBalances[env.charity].minus(revealTransactionCost);
+        initialBalances[env.cause] = initialBalances[env.cause].minus(revealTransactionCost);
 
-        // select
-        const selectGasUser = env.endReceipt.gasUsed;
-        const selectTransactionCost = await sh.getTransactionCost(selectGasUser, state.web3);
-        initialBalances[env.owner] = initialBalances[env.owner].minus(selectTransactionCost);
+        // end
+        const endGasUsed = env.endReceipt.gasUsed;
+        const endTransactionCost = await sh.getTransactionCost(endGasUsed, state.web3);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(endTransactionCost);
         
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {
@@ -95,7 +100,7 @@ suite('withdraw', (state) => {
 
     test("should have correct post-withdraw balances", async () => {
 
-        await select.run(state);
+        await end.run(state);
 
         const initialBalances = {};
         // get all initial balances
@@ -104,43 +109,43 @@ suite('withdraw', (state) => {
         }
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // calculate expected rewards
-        const charityReward = 20 * env.participantsCount * env.valuePerEntry * env.charitySplit / 1000;
-        const selectedReward = 20 * env.participantsCount * env.valuePerEntry * env.selectedSplit / 1000;
+        const causeReward = 20 * env.participantsCount * env.valuePerEntry * env.causeSplit / 1000;
+        const selectedReward = 20 * env.participantsCount * env.valuePerEntry * env.participantSplit / 1000;
         const ownerReward = 20 * env.participantsCount * env.valuePerEntry * env.ownerSplit / 1000;
 
         // get state
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
         // check balances
-        const actualCharityReward = await seedom.balance({ from: env.charity });
-        assert.equal(actualCharityReward, charityReward, "charity reward balance incorrect");
-        const actualSelectedReward = await seedom.balance({ from: actualState.selected });
+        const actualCauseReward = await fundraiser.balance({ from: env.cause });
+        assert.equal(actualCauseReward, causeReward, "cause reward balance incorrect");
+        const actualSelectedReward = await fundraiser.balance({ from: actualState.participant });
         assert.equal(actualSelectedReward, selectedReward, "selected reward balance incorrect");
-        const actualOwnerReward = await seedom.balance({ from: env.owner });
+        const actualOwnerReward = await fundraiser.balance({ from: env.owner });
         assert.equal(actualOwnerReward, ownerReward, "owner reward balance incorrect");
 
         // issue withdraws
-        const charityWithdrawReceipt = await seedom.withdraw({ from: env.charity, transact: true });
-        const selectedWithdrawReceipt = await seedom.withdraw({ from: actualState.selected, transact: true });
-        const ownerWithdrawReceipt = await seedom.withdraw({ from: env.owner, transact: true });
+        const causeWithdrawReceipt = await fundraiser.withdraw({ from: env.cause, transact: true });
+        const selectedWithdrawReceipt = await fundraiser.withdraw({ from: actualState.participant, transact: true });
+        const ownerWithdrawReceipt = await fundraiser.withdraw({ from: env.owner, transact: true });
 
         // verify owner balance
         const ownerWithdrawGasUsed = ownerWithdrawReceipt.gasUsed;
         const ownerWithdrawTransactionCost = await sh.getTransactionCost(ownerWithdrawGasUsed, state.web3);
         initialBalances[env.owner] = initialBalances[env.owner].minus(ownerWithdrawTransactionCost).plus(ownerReward);
 
-        // verify charity balance
-        const charityWithdrawGasUsed = charityWithdrawReceipt.gasUsed;
-        const charityWithdrawTransactionCost = await sh.getTransactionCost(charityWithdrawGasUsed, state.web3);
-        initialBalances[env.charity] = initialBalances[env.charity].minus(charityWithdrawTransactionCost).plus(charityReward);
+        // verify cause balance
+        const causeWithdrawGasUsed = causeWithdrawReceipt.gasUsed;
+        const causeWithdrawTransactionCost = await sh.getTransactionCost(causeWithdrawGasUsed, state.web3);
+        initialBalances[env.cause] = initialBalances[env.cause].minus(causeWithdrawTransactionCost).plus(causeReward);
 
         // verify selected balance
         const selectedWithdrawGasUsed = selectedWithdrawReceipt.gasUsed;
         const selectedWithdrawTransactionCost = await sh.getTransactionCost(selectedWithdrawGasUsed, state.web3);
-        const selected = actualState.selected.toLowerCase();
+        const selected = actualState.participant.toLowerCase();
         initialBalances[selected] = initialBalances[selected].minus(selectedWithdrawTransactionCost).plus(selectedReward);
 
         // verify all balances are expected
@@ -160,10 +165,10 @@ suite('withdraw', (state) => {
         }
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // now cancel
-        const cancelReceipt = await seedom.cancel({ from: account, transact: true });
+        const cancelReceipt = await fundraiser.cancel({ from: account, transact: true });
         const cancelGasUsed = cancelReceipt.gasUsed;
         const cancelTransactionCost = await sh.getTransactionCost(cancelGasUsed, state.web3);
         initialBalances[account] = initialBalances[account].minus(cancelTransactionCost);
@@ -172,27 +177,27 @@ suite('withdraw', (state) => {
         for (let participant of env.participants) {
 
             // check pre-balance
-            let actualParticipantBalance = await seedom.balance({ from: participant.address });
+            let actualParticipantBalance = await fundraiser.balance({ from: participant.address });
             assert.equal(actualParticipantBalance, 20000, "participant pre-balance incorrect");
 
             // verify pre-participant
-            let actualParticipant = await seedom.participants({
+            let actualParticipant = await fundraiser.participants({
                 address: participant.address
             }, { from: participant.address });
             assert.equal(actualParticipant.entries, 20, "participant pre-entries incorrect");
 
             // issue withdraw and update local balance
-            const withdrawReceipt = await seedom.withdraw({ from: participant.address, transact: true });
+            const withdrawReceipt = await fundraiser.withdraw({ from: participant.address, transact: true });
             const withdrawGasUsed = withdrawReceipt.gasUsed;
             const withdrawTransactionCost = await sh.getTransactionCost(withdrawGasUsed, state.web3);
             initialBalances[participant.address] = initialBalances[participant.address].minus(withdrawTransactionCost).plus(20000); 
 
             // check post-balance
-            actualParticipantBalance = await seedom.balance({ from: participant.address });
+            actualParticipantBalance = await fundraiser.balance({ from: participant.address });
             assert.equal(actualParticipantBalance, 0, "participant pre-balance incorrect");
 
             // verify pre-participant
-            actualParticipant = await seedom.participants({
+            actualParticipant = await fundraiser.participants({
                 address: participant.address
             }, { from: participant.address });
             assert.equal(actualParticipant.entries, 0, "participant post-entries incorrect");
@@ -212,9 +217,9 @@ suite('withdraw', (state) => {
         await testCancelWithdrawFunds(state.env.owner);
     });
 
-    test("should withdraw cancelled (by charity) participation wei", async () => {
+    test("should withdraw cancelled (by cause) participation wei", async () => {
         await raise.run(state);
-        await testCancelWithdrawFunds(state.env.charity);
+        await testCancelWithdrawFunds(state.env.cause);
     });
 
     test("should reject multiple withdraw attempts (from participant) after cancel", async () => {
@@ -223,44 +228,44 @@ suite('withdraw', (state) => {
         await raise.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // now cancel
-        await seedom.cancel({ from: env.owner, transact: true });
+        await fundraiser.cancel({ from: env.owner, transact: true });
 
         // withdraw a single participant
         const participant = env.participants[0];
 
         // initial withdraw
         await assert.isFulfilled(
-            seedom.withdraw({ from: participant.address, transact: true })
+            fundraiser.withdraw({ from: participant.address, transact: true })
         );
 
         // attempt second withdraw
         await assert.isRejected(
-            seedom.withdraw({ from: participant.address, transact: true })
+            fundraiser.withdraw({ from: participant.address, transact: true })
         );
 
     });
 
-    test("should reject multiple withdraw attempts (by charity) after select", async () => {
+    test("should reject multiple withdraw attempts (by cause) after select", async () => {
         
         const { env } = state;
 
-        // set charity lowest so it can
+        // set cause lowest so it can
         // have a chance at withdrawing twice
-        env.charitySplit = 100
-        env.selectedSplit = 450;
+        env.causeSplit = 100
+        env.participantSplit = 450;
         env.ownerSplit = 450;
-        await select.run(state);
+        await end.run(state);
         
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         await assert.isFulfilled(
-            seedom.withdraw({ from: env.charity, transact: true })
+            fundraiser.withdraw({ from: env.cause, transact: true })
         );
         await assert.isRejected(
-            seedom.withdraw({ from: env.charity, transact: true })
+            fundraiser.withdraw({ from: env.cause, transact: true })
         );
 
     });
@@ -271,21 +276,21 @@ suite('withdraw', (state) => {
 
         // set selected lowest so it can
         // have a chance at withdrawing twice
-        env.selectedSplit = 100;
-        env.charitySplit = 100
+        env.participantSplit = 100;
+        env.causeSplit = 100
         env.ownerSplit = 450;
-        await select.run(state);
+        await end.run(state);
         
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // get state
-        const actualState = await seedom.state({ from: env.owner });
+        const actualState = await fundraiser.state({ from: env.owner });
 
         await assert.isFulfilled(
-            seedom.withdraw({ from: actualState.selected, transact: true })
+            fundraiser.withdraw({ from: actualState.participant, transact: true })
         );
         await assert.isRejected(
-            seedom.withdraw({ from: actualState.selected, transact: true })
+            fundraiser.withdraw({ from: actualState.participant, transact: true })
         );
 
     });
@@ -297,17 +302,17 @@ suite('withdraw', (state) => {
         // set selected lowest so it can
         // have a chance at withdrawing twice
         env.ownerSplit = 100;
-        env.selectedSplit = 450;
-        env.charitySplit = 450;
-        await select.run(state);
+        env.participantSplit = 450;
+        env.causeSplit = 450;
+        await end.run(state);
         
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         await assert.isFulfilled(
-            seedom.withdraw({ from: env.owner, transact: true })
+            fundraiser.withdraw({ from: env.owner, transact: true })
         );
         await assert.isRejected(
-            seedom.withdraw({ from: env.owner, transact: true })
+            fundraiser.withdraw({ from: env.owner, transact: true })
         );
 
     });

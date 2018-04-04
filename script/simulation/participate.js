@@ -2,15 +2,14 @@ const ch = require('../../chronicle/helper');
 const h = require('../helper');
 const cli = require('../../chronicle/cli');
 const deploy = require('./deploy');
-const seed = require('./seed');
+const begin = require('./begin');
 
 module.exports.run = async (state) => {
-
-    // seed first
-    await seed.run(state);
+    
+    await begin.run(state);
 
     const { env } = state;
-    const seedom = await state.interfaces.seedom;
+    const fundraiser = await state.interfaces.fundraiser;
 
     const raise = env.participateRaise ? env.participateRaise : 10000;
     
@@ -20,7 +19,7 @@ module.exports.run = async (state) => {
         const address = state.accountAddresses[i + 2];
         const message = h.messageHex();
 
-        const receipt = await seedom.participate({
+        const receipt = await fundraiser.participate({
             message
         }, { from: address, value: raise, transact: true });
 

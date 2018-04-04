@@ -2,27 +2,27 @@ const ch = require('../chronicle/helper');
 const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
 const deploy = require('../script/simulation/deploy');
-const seed = require('../script/simulation/seed');
+const begin = require('../script/simulation/begin');
 const participate = require('../script/simulation/participate');
 const raise = require('../script/simulation/raise');
 const reveal = require('../script/simulation/reveal');
-const select = require('../script/simulation/select');
+const end = require('../script/simulation/end');
 
 suite('cancel', (state) => {
 
     const testCancelSuccess = async (account) => {
         
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
         // after deploy, cancel should never be true
-        let actualState = await seedom.state({ from: account });
+        let actualState = await fundraiser.state({ from: account });
         assert.isNotOk(actualState.cancelled);
 
         await assert.isFulfilled(
-            seedom.cancel({ from: account, transact: true })
+            fundraiser.cancel({ from: account, transact: true })
         );
 
-        actualState = await seedom.state({ from: account });
+        actualState = await fundraiser.state({ from: account });
         assert.isOk(actualState.cancelled);
 
     };
@@ -30,16 +30,16 @@ suite('cancel', (state) => {
     const testCancelFail = async (account) => {
         
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
         // after deploy, cancel should never be true
-        let actualState = await seedom.state({ from: account });
+        let actualState = await fundraiser.state({ from: account });
         assert.isNotOk(actualState.cancelled);
 
         await assert.isRejected(
-            seedom.cancel({ from: account, transact: true })
+            fundraiser.cancel({ from: account, transact: true })
         );
 
-        actualState = await seedom.state({ from: account });
+        actualState = await fundraiser.state({ from: account });
         assert.isNotOk(actualState.cancelled);
 
     };
@@ -49,9 +49,9 @@ suite('cancel', (state) => {
         await testCancelSuccess(state.env.owner);
     });
 
-    test("should cancel (by charity) after deploy", async () => {
+    test("should cancel (by cause) after deploy", async () => {
         await deploy.run(state);
-        await testCancelSuccess(state.env.charity);
+        await testCancelSuccess(state.env.cause);
     });
 
     test("should reject cancel (by participant) after deploy", async () => {
@@ -60,18 +60,18 @@ suite('cancel', (state) => {
         await testCancelFail(participant);
     });
 
-    test("should cancel (by owner) after seed", async () => {
-        await seed.run(state);
+    test("should cancel (by owner) after begin", async () => {
+        await begin.run(state);
         await testCancelSuccess(state.env.owner);
     });
 
-    test("should cancel (by charity) after seed", async () => {
-        await seed.run(state);
-        await testCancelSuccess(state.env.charity);
+    test("should cancel (by cause) after begin", async () => {
+        await begin.run(state);
+        await testCancelSuccess(state.env.cause);
     });
 
-    test("should reject cancel (by participant) after seed", async () => {
-        await seed.run(state);
+    test("should reject cancel (by participant) after begin", async () => {
+        await begin.run(state);
         const participant = state.accountAddresses[2];
         await testCancelFail(participant);
     });
@@ -81,9 +81,9 @@ suite('cancel', (state) => {
         await testCancelSuccess(state.env.owner);
     });
 
-    test("should cancel (by charity) after raise", async () => {
+    test("should cancel (by cause) after raise", async () => {
         await raise.run(state);
-        await testCancelSuccess(state.env.charity);
+        await testCancelSuccess(state.env.cause);
     });
 
     test("should cancel (by owner) after reveal", async () => {
@@ -91,23 +91,23 @@ suite('cancel', (state) => {
         await testCancelSuccess(state.env.owner);
     });
 
-    test("should cancel (by charity) after reveal", async () => {
+    test("should cancel (by cause) after reveal", async () => {
         await reveal.run(state);
-        await testCancelSuccess(state.env.charity);
+        await testCancelSuccess(state.env.cause);
     });
 
     test("should reject cancel (from owner) after select", async () => {
-        await select.run(state);
+        await end.run(state);
         await testCancelFail(state.env.owner);
     });
 
-    test("should reject cancel (from charity) after select", async () => {
-        await select.run(state);
-        await testCancelFail(state.env.charity);
+    test("should reject cancel (from cause) after select", async () => {
+        await end.run(state);
+        await testCancelFail(state.env.cause);
     });
 
     test("should reject cancel (from participant) after select", async () => {
-        await select.run(state);
+        await end.run(state);
         const participant = state.accountAddresses[2];
         await testCancelFail(participant);
     });
@@ -128,9 +128,9 @@ suite('cancel', (state) => {
         await testCancelSuccessAfterExpiration(state.env.owner);
     });
 
-    test("should cancel (by charity) and refund after expiration", async () => {
+    test("should cancel (by cause) and refund after expiration", async () => {
         await reveal.run(state);
-        await testCancelSuccessAfterExpiration(state.env.charity);
+        await testCancelSuccessAfterExpiration(state.env.cause);
     });
 
 });

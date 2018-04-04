@@ -2,21 +2,21 @@ const h = require('./helper');
 
 module.exports.options = [
     ['to'],
-    ['charity', true],
-    ['charityMessageString']
+    ['cause', true],
+    ['causeMessageString']
 ];
 
 module.exports.run = async (state) => {
 
     const { env } = state;
 
-    env.charityMessage = env.charityMessage ? env.charityMessage : h.hexMessage(env.charityMessageString);
+    env.causeMessage = env.causeMessage ? env.causeMessage : h.hexMessage(env.causeMessageString);
 
-    const to = env.to ? env.to : 'seedom';
+    const to = env.to ? env.to : 'fundraiser';
 
-    // only the charity can reveal their secret message
+    // only the cause can reveal their secret message
     env.revealReceipt = await (await state.interfaces[to]).reveal({
-        message: env.charityMessage
-    }, { from: env.charity, transact: true });
+        message: env.causeMessage
+    }, { from: env.cause, transact: true });
 
 }

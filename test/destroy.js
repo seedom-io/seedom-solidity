@@ -3,7 +3,7 @@ const sh = require('../script/helper');
 const cli = require('../chronicle/cli');
 const network = require('../chronicle/network');
 const raise = require('../script/simulation/raise');
-const select = require('../script/simulation/select');
+const end = require('../script/simulation/end');
 const BigNumber = require('bignumber.js');
 
 suite('destroy', (state) => {
@@ -14,13 +14,13 @@ suite('destroy', (state) => {
         await raise.run(state);
 
         const { env } = state;
-        const seedom = await state.interfaces.seedom;
+        const fundraiser = await state.interfaces.fundraiser;
 
         // get initial owner balance after raise
         const initialOwnerBalance = await sh.getBalance(env.owner, state.web3);
 
         // get contract balance after raise
-        const contractAddress = seedom.receipt.contractAddress;
+        const contractAddress = fundraiser.receipt.contractAddress;
         const initialContractBalance = await sh.getBalance(contractAddress, state.web3);
 
         // ensure expected initial contract balance
@@ -31,7 +31,7 @@ suite('destroy', (state) => {
         await cli.progress("waiting for destruct time", env.destructTime - now);
 
         // destroy contract
-        const destroyReceipt = await seedom.destroy({ from: env.owner, transact: true });
+        const destroyReceipt = await fundraiser.destroy({ from: env.owner, transact: true });
         const destroyTransactionCost = await sh.getTransactionCost(destroyReceipt.gasUsed, state.web3);
 
         // ensure expected final contract balance
@@ -47,13 +47,13 @@ suite('destroy', (state) => {
 
     const testDestroyFail = async (account) => {
         await assert.isRejected(
-            (await state.interfaces.seedom).destroy({ from: account, transact: true })
+            (await state.interfaces.fundraiser).destroy({ from: account, transact: true })
         );
     };
 
     test("should reject destroy (by owner) after expire", async () => {
 
-        await select.run(state);
+        await end.run(state);
 
         const { env } = state;
 
@@ -64,22 +64,22 @@ suite('destroy', (state) => {
 
     });
 
-    test("should reject destroy (by charity) after destruct", async () => {
+    test("should reject destroy (by cause) after destruct", async () => {
 
-        await select.run(state);
+        await end.run(state);
 
         const { env } = state;
 
         const now = ch.timestamp();
         await cli.progress("waiting for destruct time", env.destructTime - now);
 
-        await testDestroyFail(env.charity);
+        await testDestroyFail(env.cause);
 
     });
 
     test("should reject destroy (by participant) after destruct", async () => {
 
-        await select.run(state);
+        await end.run(state);
 
         const { env } = state;
 

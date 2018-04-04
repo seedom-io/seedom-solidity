@@ -12,10 +12,10 @@ module.exports.run = async (state) => {
 
     env.ownerMessage = env.ownerMessage ? env.ownerMessage : h.hexMessage(env.ownerMessageString);
 
-    const to = env.to ? env.to : 'seedom';
+    const to = env.to ? env.to : 'fundraiser';
 
-    // only the owner can select in the ether-raiser
-    env.endReceipt = await (await state.interfaces[to]).select({
+    // only the owner can select in the fundraiser
+    env.endReceipt = await (await state.interfaces[to]).end({
         message: env.ownerMessage
     }, { from: env.owner, transact: true });
 
