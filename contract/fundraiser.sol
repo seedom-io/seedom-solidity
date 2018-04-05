@@ -2,7 +2,7 @@ pragma solidity ^0.4.19;
 
 contract Fundraiser {
 
-    event Seed(
+    event Beginning(
         bytes32 _causeSecret
     );
 
@@ -220,8 +220,8 @@ contract Fundraiser {
         // seed cause secret, starting the fundraiser
         _state._causeSecret = _secret;
 
-        // broadcast seed
-        Seed(_secret);
+        // broadcast event
+        Beginning(_secret);
     }
 
     // participate in this fundraiser by contributing messages and ether for entries
