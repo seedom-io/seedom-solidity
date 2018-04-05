@@ -20,6 +20,15 @@ run scripts on the chonicle platform
 
 ## Seedom Script Examples
 ### Deployment
-`chronicle script:deploy --owner 0x003b873f4443e727536391f9c27fedc65d17c5ff --cause 0x003b873f4443e727536391f9c27fedc65d17c5ff --causeSplit 500 --participantSplit 500 --ownerSplit 0 --ownerMessageString 'HELLO SFT' --valuePerEntry 100000000000000000 --endTime 'in 60 minutes' --expireTime 'in 120 minutes' --destructTime 'in 240 minutes' --maxParticipants 10 --maxScore 10`
+```chronicle script:deploy \
+    --owner 0x003b873f4443e727536391f9c27fedc65d17c5ff \
+    --cause 0x003b873f4443e727536391f9c27fedc65d17c5ff \
+    --causeSplit 500 --participantSplit 500 --ownerSplit 0 \
+    --ownerMessageString 'HELLO SFT' \
+    --valuePerEntry 100000000000000000 \
+    --endTime 'in 60 minutes' --expireTime 'in 120 minutes' --destructTime 'in 240 minutes' \
+    --maxParticipants 10 --maxScore 10```
 ### Begin
-`chronicle script:begin --cause 0x003b873f4443e727536391f9c27fedc65d17c5ff --causeMessageString 'BONJOUR'`
+```chronicle script:begin \
+    --cause 0x003b873f4443e727536391f9c27fedc65d17c5ff \
+    --causeMessageString 'BONJOUR'```
