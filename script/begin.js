@@ -14,7 +14,7 @@ module.exports.run = async (state) => {
         env.causeMessageString ? h.hexMessage(env.causeMessageString) : h.messageHex()
     );
     
-    env.causeSecret = h.hashMessage(env.causeMessage, env.cause);
+    env.causeSecret = env.causeSecret ? env.causeSecret : h.hashMessage(env.causeMessage, env.cause);
     
     const to = env.to ? env.to : 'fundraiser';
 

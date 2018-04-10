@@ -2,6 +2,9 @@ const ch = require('../../chronicle/helper');
 const h = require('../helper');
 const deploy = require('../deploy');
 
+const txnsPerSecond = 30;
+const defaultDuration = 1;
+
 module.exports.run = async (state) => {
 
     const { env } = state;
@@ -19,17 +22,12 @@ module.exports.run = async (state) => {
     env.maxScore = 10;
 
     const now = ch.timestamp();
-    // FIXME: triple the parity send delay to get overall transaction duration
-    const transactionDuration = Math.round((state.network.sendDelay / 1000) * 2);
-    // participation phase has two initial transactions: 2x deploys and begin
-    // and then two transactions per participant: participate and raise
-    const participationDuration = (transactionDuration * 3) + (env.participantsCount * transactionDuration * 2);
+    let participationDuration = Math.floor(env.participantsCount / txnsPerSecond);
+    participationDuration = participationDuration > 0 ? participationDuration : defaultDuration;
     env.endTime = now + participationDuration;
-    // end phase has (if not cancelled) two transactions: (cause) reveal and (owner) select
-    const endDuration = transactionDuration * 2;
+    const endDuration = defaultDuration;
     env.expireTime = env.endTime + endDuration;
-    // expire phase has only one possible transaction: cancel
-    const expireDuration = transactionDuration;
+    const expireDuration = defaultDuration;
     env.destructTime = env.expireTime + expireDuration;
 
     await deploy.run(state);

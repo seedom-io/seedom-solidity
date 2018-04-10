@@ -1,10 +1,9 @@
 {
-    "gas": "2000000",
+    "gas": "4000000",
     "gasPrice": "20000000000",
     "password": "password",
     "balance": "100000000000000000000000000",
-    "accounts": 9,
-    "sendDelay": 1000,
+    "accounts": 100,
     "toml": {
         "parity": {
             "mode": "offline"
@@ -47,7 +46,8 @@
         "mining": {
             "reseal_min_period": 0,
             "min_gas_price": 0,
-            "reseal_on_txs": "own"
+            "reseal_on_txs": "own",
+            "tx_gas_limit": "8000000"
         },
         "footprint": {
             "tracing": "on",
@@ -56,6 +56,10 @@
         },
         "misc": {
             "logging": "info"
+        },
+        "account": {
+            "fast_unlock": true,
+            "refresh_time": 0
         }
     },
     "chain": {

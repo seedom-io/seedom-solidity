@@ -9,8 +9,9 @@ const mkdirp = require('mz-modules/mkdirp');
 const path = require("path");
 const dir = require('node-dir');
 
-const startupDelay = 5;
+const pollDelay = 5;
 const killDelay = 5;
+const maxDelay = 60;
 
 module.exports.main = async (state) => {
 
@@ -70,18 +71,19 @@ const launch = async (state, pid) => {
     // get account addresses
     state.accountAddresses = getChainAccountAddresses(parityChain.accounts);
 
-    // execute parity
-    if (!pid) {
-        await executeUnlocked(state.accountAddresses);
-    }
-
-    // set web3
-    if (!await network.setWeb3(state)) {
-        return false;
+    if (pid) {
+        // set web3
+        if (!await network.setWeb3(state)) {
+            return false;
+        }
+    } else {
+        // execute parity
+        await execute(true, state);
     }
     
     // get authorization token
     state.authorizationToken = await getLastAuthorizationToken();
+    cli.success("parity launched");
     return true;
 
 }
@@ -101,25 +103,12 @@ const getChainAccountAddresses = (chainAccounts) => {
 
 }
 
-const executeUnlocked = async (accountAddresses) => {
-    await execute([
-        '--unlock',
-        accountAddresses.join(),
-        '--password',
-        h.parityPasswordFile
-    ], true);
-}
+const execute = async (detached, state) => {
 
-const execute = async (args, detached) => {
-
-    let actualArgs = [
+    const args = [
         '--config',
         h.parityTomlFile
     ];
-
-    if (args) {
-        actualArgs = actualArgs.concat(args);
-    }
 
     let options = {};
     // launch detached?
@@ -130,7 +119,7 @@ const execute = async (args, detached) => {
         }
     };
 
-    let process = childProcess.spawn('parity', actualArgs, options);
+    let process = childProcess.spawn('parity', args, options);
     let pid = process.pid;
     process.unref();
 
@@ -138,8 +127,16 @@ const execute = async (args, detached) => {
     if (detached) {
         await h.writeFile(h.parityPidFile, pid);
     }
-
-    await cli.progress("parity starting", startupDelay);
+    
+    let delay = 0;
+    // wait for parity to start by setting web3
+    while (!await network.setWeb3(state)) {
+        await cli.progress("waiting for parity to start", pollDelay);
+        delay += pollDelay;
+        if (delay > maxDelay) {
+            return null;
+        }
+    }
 
     return pid;
 
@@ -210,23 +207,16 @@ const initialize = async (state, pid) => {
     mkdirp(h.parityDir);
     // deinitialize
     await fse.emptyDir(h.parityDir);
-    // populate network configuration
-    populateToml(state.network.toml);
-    // save network toml
+
+    // save parity toml
     await writeToml(state.network.toml);
+    cli.success("initial parity toml file written");
     // write initial chain
     await h.writeJsonFile(h.parityChainFile, state.network.chain);
     cli.success("initial parity chain file written");
-    // write password file
-    await h.writeFile(h.parityPasswordFile, state.network.password);
 
     // run parity to open rpc for account creation
-    pid = await execute();
-    // set web3
-    if (!await network.setWeb3(state)) {
-        return false;
-    }
-    
+    pid = await execute(false, state);
     // create accounts from network
     state.accountAddresses = await createAccounts(state);
     // generate authorization token
@@ -239,17 +229,37 @@ const initialize = async (state, pid) => {
     // write the chain file with accounts now added
     await h.writeJsonFile(h.parityChainFile, state.network.chain);
     cli.success("final parity chain file written with accounts");
+    // write the final toml file
+    await writeToml(state.network.toml, state.accountAddresses);
+    cli.success("final parity toml file written with accounts");
+    // write password file
+    await writePasswordFile(state.network.password, state.accountAddresses.length);
+    cli.success("parity password file written");
     // delete chain db data
     await fse.emptyDir(h.parityDbDir);
     cli.success("initial chain database cleared for new genesis");
 
+
     // run and stop parity (genesis)
-    await executeUnlocked(state.accountAddresses);
+    await execute(true, state);
+    cli.success("parity initialized");
     return true;
 
 }
 
-const populateToml = (toml) => {
+const writePasswordFile = async (password, count) => {
+    let data = '';
+    for (let i = 0; i < count; i++) {
+        data += `${password}\n`;
+    }
+    await h.writeFile(h.parityPasswordFile, data);
+};
+
+const writeToml = async (networkToml, unlockAddresses) => {
+
+    // copy network toml
+    const toml = { ...networkToml };
+    // base toml data
     toml.parity.base_path = h.parityDir;
     toml.parity.chain = h.parityChainFile;
     toml.parity.db_path = h.parityDbDir;
@@ -259,27 +269,29 @@ const populateToml = (toml) => {
     toml.secretstore.path = h.paritySecretstoreDir;
     toml.ui.path = h.paritySignerDir;
     toml.misc.log_file = h.parityLogFile;
-}
 
-const writeToml = async (toml) => {
+    // set up accounts to unlock
+    if (unlockAddresses) {
+        toml.account.password = [h.parityPasswordFile];
+        toml.account.unlock = unlockAddresses;
+    }
 
     let data = '';
     // write sections
     for (let sectionName in toml) {
         // write [section]
-        data += '[' + sectionName + ']\n';
+        data += `[${sectionName}]\n`;
         const section = toml[sectionName];
         // write parameters
         for (let parameterName in section) {
             const value = section[parameterName];
-            data += parameterName + ' = ' + JSON.stringify(value) + '\n';
+            data += `${parameterName} = ${JSON.stringify(value)}\n`;
         }
     }
 
     await h.writeFile(h.parityTomlFile, data);
-    cli.success("parity toml configuration written");
 
-}
+};
 
 const logAccounts = (state) => {
     for (let accountAddress of state.accountAddresses) {
@@ -287,12 +299,11 @@ const logAccounts = (state) => {
             balance: state.network.balance
         }
     }
-}
+};
 
 const createAccounts = async (state) => {
     
     const addresses = [];
-
     for (let i = 0; i < state.network.accounts; i++) {
 
         const recovery = state.network.password + i;
@@ -305,13 +316,12 @@ const createAccounts = async (state) => {
 
     }
 
-    cli.success("all network accounts created");
     return addresses;
 
-}
+};
 
 const createAuthorizationToken = async (state) => {
     const authorizationToken = await network.callProvider('signer_generateAuthorizationToken', [], state);
     cli.success(`created authorization token ${authorizationToken}`);
     return authorizationToken;
-}
+};

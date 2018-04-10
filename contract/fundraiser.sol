@@ -78,7 +78,7 @@ contract Fundraiser {
         _;
     }
 
-    modifier onlyCharity() {
+    modifier onlyCause() {
         require(msg.sender == deployment._cause);
         _;
     }
@@ -212,7 +212,7 @@ contract Fundraiser {
     }
 
     // called by the cause to begin their fundraiser with their secret
-    function begin(bytes32 _secret) public participationPhase onlyCharity {
+    function begin(bytes32 _secret) public participationPhase onlyCause {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeSecret == 0x0); // cause has not seeded secret
         require(_secret != 0x0); // secret cannot be zero
@@ -285,7 +285,8 @@ contract Fundraiser {
     }
 
     // called by the cause to reveal their message after the end time but before the end() function
-    function reveal(bytes32 _message) public recapPhase onlyCharity {
+    // FIXME ADD RECAP BACK
+    function reveal(bytes32 _message) public onlyCause {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeMessage == 0x0); // cannot have revealed already
         require(_decode(_state._causeSecret, _message)); // check for valid message
@@ -304,7 +305,8 @@ contract Fundraiser {
 
     // ends this fundraiser, selects a participant to reward, and allocates funds for the cause, the
     // selected participant, and the contract owner
-    function end(bytes32 _message) public recapPhase onlyOwner {
+    // FIXME ADD RECAP BACK
+    function end(bytes32 _message) public onlyOwner {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeMessage != 0x0); // cause must have revealed
         require(_state._ownerMessage == 0x0); // cannot have ended already

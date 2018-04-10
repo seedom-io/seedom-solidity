@@ -56,11 +56,9 @@ module.exports.setWeb3 = async (state) => {
 
     state.web3 = createWeb3(state.network);
     if (!(await testWeb3(state.web3))) {
-        cli.error(`could not connect to ${state.networkName} network`);
         return false;
     }
 
-    cli.success(`connected to ${state.networkName} network`);
     return true;
 
 }
@@ -82,24 +80,7 @@ const createWeb3 = (network) => {
 }
 
 const createParityProvider = (network) => {
-
-    const provider = new Web3.providers.IpcProvider(h.parityIpcFile, net);
-    // FIXME: parity cannot execute transactions as fast as we send them; we need a delay in between
-    provider.send = (payload, callback) => {
-
-        let delay = 0;
-        if (payload.method == 'eth_sendTransaction' || payload.method == 'eth_sendRawTransaction') {
-            delay = network.sendDelay;
-        }
-
-        setTimeout(() => {
-            Object.getPrototypeOf(provider).send.call(provider, payload, callback);
-        }, delay);
-
-    };
-
-    return provider;
-
+    return new Web3.providers.IpcProvider(h.parityIpcFile, net);
 }
 
 const testWeb3 = async (web3) => {
@@ -135,10 +116,13 @@ module.exports.callProvider = async (method, args, state) => {
         params: args
     };
 
-    const result = await new Promise((fulfill, reject) => {
+    const result = await new Promise((accept, reject) => {
         state.web3.currentProvider.send(request, (error, result) => {
-            if (error) reject(error)
-            else fulfill(result);
+            if (error) {
+                reject(error);
+            } else {
+                accept(result);
+            }
         });
     });
 
@@ -206,12 +190,14 @@ const verifySend = (call) => {
         call.once('receipt', (data) => {
             // capture receipt
             receipt = data;
+            cli.info(`gas used: ${receipt.gasUsed}`);
         }).then((result) => {
 
             // triage result type
             if (!result.options) {
                 // check for standard transaction result
                 if (!result.status || result.status === "0x0") {
+                    cli.json(result);
                     reject(new Error("Something Thrown"));
                     return;
                 }

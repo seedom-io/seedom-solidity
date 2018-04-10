@@ -52,9 +52,11 @@ compile.prepare(program, state).then(() => {
         .command('test [suites...]')
         .alias('t')
         .description("run tests")
-        .action((suites) => {
+        .option('--timeout [timeout]', "test timeout")
+        .action((suites, options) => {
             main('test', Object.assign(state, {
-                suiteNames: suites
+                suiteNames: suites,
+                timeout: options.timeout
             }));
         });
 

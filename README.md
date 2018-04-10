@@ -1,6 +1,6 @@
 ## Dependencies
 - NodeJS v8.6.0+
-- Parity v1.8.7 (https://parity.io)
+- Parity v1.11.0-unstable-0d75d01c8-20180409+ (https://parity.io)
 
 ## Getting started
 - Clone this repo

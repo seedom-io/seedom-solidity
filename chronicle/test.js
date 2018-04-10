@@ -16,7 +16,7 @@ global.chai.use(require('chai-as-promised'));
 global.chai.use(require('chai-string'));
 global.assert = global.chai.assert;
 
-const testTimeout = 100000;
+const defaultTimeout = 100000;
 
 module.exports.main = async (state) => {
 
@@ -39,6 +39,8 @@ module.exports.main = async (state) => {
 
 const setupSuite = (state) => {
 
+    const timeout = state.timeout ? state.timeout : defaultTimeout;
+
     global.suite = (name, tests) => {
         Mocha.describe(name, function() {
 
@@ -55,7 +57,7 @@ const setupSuite = (state) => {
     global.test = (name, code) => {
         
         Mocha.it(name, async function() {
-            this.timeout(testTimeout);
+            this.timeout(timeout);
             return await code();
         });
 

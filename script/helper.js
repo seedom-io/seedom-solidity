@@ -15,7 +15,7 @@ module.exports.hexMessage = (message) => {
     return `0x${buffer.toString('hex')}`;
 };
 
-module.exports.hashMessage = (messageHex, participant) => {
+module.exports.hashMessage = (messageHex, address) => {
 
     const hasher = new keccak256.create(256);
 
@@ -25,9 +25,9 @@ module.exports.hashMessage = (messageHex, participant) => {
     hasher.update(messageBuffer);
 
     // remove 0x
-    const participantHex = participant.substr(2);
-    const participantBuffer = new Buffer(participantHex, 'hex');
-    hasher.update(participantBuffer);
+    const addressHex = address.substr(2);
+    const addressBuffer = new Buffer(addressHex, 'hex');
+    hasher.update(addressBuffer);
 
     return `0x${hasher.hex()}`;
 
