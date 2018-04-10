@@ -285,8 +285,7 @@ contract Fundraiser {
     }
 
     // called by the cause to reveal their message after the end time but before the end() function
-    // FIXME ADD RECAP BACK
-    function reveal(bytes32 _message) public onlyCause {
+    function reveal(bytes32 _message) public recapPhase onlyCause {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeMessage == 0x0); // cannot have revealed already
         require(_decode(_state._causeSecret, _message)); // check for valid message
@@ -305,8 +304,7 @@ contract Fundraiser {
 
     // ends this fundraiser, selects a participant to reward, and allocates funds for the cause, the
     // selected participant, and the contract owner
-    // FIXME ADD RECAP BACK
-    function end(bytes32 _message) public onlyOwner {
+    function end(bytes32 _message) public recapPhase onlyOwner {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeMessage != 0x0); // cause must have revealed
         require(_state._ownerMessage == 0x0); // cannot have ended already
@@ -324,7 +322,7 @@ contract Fundraiser {
         uint256 _participantParticipantIndex = _findSelectedParticipantIndex(_entryIndex, _entryCumulatives);
         _state._participant = participantAddresses[_participantParticipantIndex];
         Participant memory _participant = participants[_state._participant];
-
+        
         // send out select event
         Selection(_state._participant, _participant._message, _state._causeMessage, _message);
     }
@@ -334,17 +332,13 @@ contract Fundraiser {
     function _calculateParticipantsMessage(
         uint256[] memory _entryCumulatives
     ) internal view returns (bytes32) {
-        address _participantAddress;
         uint256 _entryCumulative = 0;
-        bytes32 _participantsMessage = 0;
-        Participant memory _participant;
+        bytes32 _participantsMessage = 0x0;
         // loop through all participants
         for (uint256 _participantIndex = 0; _participantIndex < participantAddresses.length; _participantIndex++) {
             // get the participant at this index
-            _participantAddress = participantAddresses[_participantIndex];
-            _participant = participants[_participantAddress];
-            require(_participant._entries >= 1); // needs to have at least one entry
-            require(_participant._message != 0x0); // needs to have a message
+            address _participantAddress = participantAddresses[_participantIndex];
+            Participant memory _participant = participants[_participantAddress];
             // set lower cumulative bound
             _entryCumulatives[_participantIndex] = _entryCumulative;
             _entryCumulative += _participant._entries;

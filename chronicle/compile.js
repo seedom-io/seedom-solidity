@@ -183,7 +183,7 @@ const compile = async (contracts) => {
         );
 
         // check for errors
-        if (!(await handleErrors(output.errors))) {
+        if (await handleErrors(output.errors)) {
             return false;
         }
 
@@ -220,7 +220,7 @@ const getSources = (contract) => {
 const handleErrors = (errors) => {
 
     if (!errors) {
-        return true;
+        return false;
     }
 
     let hasErrors = false;

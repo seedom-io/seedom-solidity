@@ -3,7 +3,7 @@
     "gasPrice": "20000000000",
     "password": "password",
     "balance": "100000000000000000000000000",
-    "accounts": 100,
+    "accounts": 10,
     "toml": {
         "parity": {
             "mode": "offline"
