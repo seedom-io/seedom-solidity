@@ -52,14 +52,14 @@ suite('end', (state) => {
             distribution[address.toLowerCase()] = 0;
         }
 
-        const runs = 100;
+        const runs = 50;
         for (let run = 0; run < runs; run++) {
             await end.run(state);
             const actualState = await (await state.interfaces.fundraiser).state({ from: env.owner });
             distribution[actualState.participant.toLowerCase()]++;
         }
 
-        cli.json(distribution);
+        cli.bars(distribution);
 
     });
 

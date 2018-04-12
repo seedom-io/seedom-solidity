@@ -7,6 +7,7 @@ const Progress = require('progress');
 const readline = require('mz/readline');
 const chalkline = require('chalkline');
 const prettyjson = require('prettyjson');
+const barHorizontal = require('bar-horizontal');
 
 const normalize = (params) => {
     if (Array.isArray(params) && (params.length == 1) && Array.isArray(params[0])) {
@@ -115,4 +116,10 @@ module.exports.question = async (question, answer) => {
     const response = await rl.question(question);
     rl.close();
     return (response === answer);
+}
+
+module.exports.bars = (data) => {
+    this.log('');
+    barHorizontal(data, {labels: true});
+    this.log('');
 }
