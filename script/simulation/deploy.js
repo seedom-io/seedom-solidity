@@ -2,7 +2,7 @@ const ch = require('../../chronicle/helper');
 const h = require('../helper');
 const deploy = require('../deploy');
 
-const txnsPerSecond = 30;
+const txnsPerSecond = 25;
 const defaultDuration = 2;
 
 module.exports.run = async (state) => {
@@ -17,7 +17,7 @@ module.exports.run = async (state) => {
     env.ownerMessage = h.messageHex();
     env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
-    env.participantsCount = state.accountAddresses.length - 3;
+    env.participantsCount = state.accountAddresses.length - 2;
     env.maxScore = 10;
 
     const now = ch.timestamp();

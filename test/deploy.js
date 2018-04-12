@@ -42,7 +42,7 @@ suite('deploy', (state) => {
         assert.equal(actualState.entries, 0, "total entries zero");
     });
 
-    test("should deploy properly with no owner split and no max participants", async () => {
+    test("should deploy properly with no owner split", async () => {
 
         const { env } = state;
         let fundraiser = await state.interfaces.fundraiser;

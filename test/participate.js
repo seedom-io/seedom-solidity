@@ -107,23 +107,6 @@ suite('participate', (state) => {
 
     });
 
-    test("reject participation if over max participants", async () => {
-
-        await participate.run(state);
-        
-        const { env } = state;
-        // get last participant that is never used otherwise
-        const participant = state.accountAddresses[8];
-        const message = sh.messageHex();
-        
-        await assert.isRejected(
-            (await state.interfaces.fundraiser).participate({
-                message
-            }, { from: participant, transact: true })
-        );
-
-    });
-
     test("should fail participation without begin", async () => {
 
         await deploy.run(state);
