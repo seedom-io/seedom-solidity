@@ -11,7 +11,6 @@ module.exports.options = [
     ['endTime', true],
     ['expireTime', true],
     ['destructTime', true],
-    ['maxParticipants', true],
     ['maxScore', true]
 ];
 
@@ -35,8 +34,7 @@ module.exports.run = async (state) => {
         valuePerEntry: env.valuePerEntry,
         endTime: env.endTime,
         expireTime: env.expireTime,
-        destructTime: env.destructTime,
-        maxParticipants: env.maxParticipants
+        destructTime: env.destructTime
     }, {
         from: env.owner
     });

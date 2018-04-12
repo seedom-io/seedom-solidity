@@ -36,8 +36,8 @@ suite('begin', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, 0, "total participants zero");
-        assert.equal(actualState.totalEntries, 0, "total entries zero");
+        assert.equal(actualState.participants, 0, "total participants zero");
+        assert.equal(actualState.entries, 0, "total entries zero");
 
     });
 

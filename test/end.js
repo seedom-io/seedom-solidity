@@ -23,8 +23,8 @@ suite('end', (state) => {
         assert.equalIgnoreCase(actualState.ownerMessage, env.ownerMessage, "owner message does not match");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 20, "total entries incorrect");
 
         let foundSelected = false;
         let participantMessage;
@@ -42,7 +42,28 @@ suite('end', (state) => {
 
     });
 
-    /*test("should reject multiple ends from owner after cause reveal", async () => {
+    test("should select in a random distribution", async () => {
+
+        const { env } = state;
+
+        const distribution = {};
+        for (let i = 2; i < state.accountAddresses.length; i++) {
+            const address = state.accountAddresses[i];
+            distribution[address.toLowerCase()] = 0;
+        }
+
+        const runs = 50;
+        for (let run = 0; run < runs; run++) {
+            await end.run(state);
+            const actualState = await (await state.interfaces.fundraiser).state({ from: env.owner });
+            distribution[actualState.participant.toLowerCase()]++;
+        }
+
+        cli.bars(distribution);
+
+    });
+
+    test("should reject multiple ends from owner after cause reveal", async () => {
         
         await reveal.run(state);
 
@@ -69,7 +90,7 @@ suite('end', (state) => {
 
         const { env } = state;
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).end({
@@ -77,6 +98,6 @@ suite('end', (state) => {
             }, { from: env.owner, transact: true })
         );
 
-    });*/
+    });
 
 });

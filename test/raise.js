@@ -58,8 +58,8 @@ suite('raise', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 20, "total entries incorrect");
 
         // check balance()s
         const actualCauseReward = await fundraiser.balance({ from: env.cause });
@@ -95,8 +95,8 @@ suite('raise', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, 0, "total participants not zero");
-        assert.equal(actualState.totalEntries, 0, "total entries not zero");
+        assert.equal(actualState.participants, 0, "total participants not zero");
+        assert.equal(actualState.entries, 0, "total entries not zero");
 
         const actualParticipant = await fundraiser.participants({
             participant
@@ -132,8 +132,8 @@ suite('raise', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 10, "total entries incorrect");
 
         const actualParticipant = await fundraiser.participants({
             address: participant.address
@@ -169,8 +169,8 @@ suite('raise', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 10, "total entries incorrect");
 
         const actualParticipant = await fundraiser.participants({
             address: participant.address

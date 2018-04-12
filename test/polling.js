@@ -91,7 +91,7 @@ suite('polling', (state) => {
 
         const { env } = state;
         const now = ch.timestamp();
-        await cli.progress("waiting for destruct time", env.destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now, 1);
 
         const polling = await state.interfaces.polling;
         const participant = state.accountAddresses[2];
@@ -260,12 +260,12 @@ suite('polling', (state) => {
         const actualCauses = await polling.causes({ from: participant1 });
         assert.equal(actualCauses.names[0], causeName1, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[0], participant1, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[0], score1 + score3, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[0], 2, "cause total votes wrong");
+        assert.equal(actualCauses.scores[0], score1 + score3, "cause score wrong");
+        assert.equal(actualCauses.votes[0], 2, "cause total votes wrong");
         assert.equal(actualCauses.names[1], causeName2, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[1], participant2, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[1], score2 + score4, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[1], 2, "cause total votes wrong");
+        assert.equal(actualCauses.scores[1], score2 + score4, "cause score wrong");
+        assert.equal(actualCauses.votes[1], 2, "cause total votes wrong");
 
         const actualVotes1 = await polling.votes({ from: participant1 });
         assert.equal(actualVotes1.causeIndexes[0], 0, "cause index wrong (1)");
@@ -315,12 +315,12 @@ suite('polling', (state) => {
         const actualCauses = await polling.causes({ from: participant1 });
         assert.equal(actualCauses.names[0], causeName1, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[0], participant1, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[0], score1, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[0], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[0], score1, "cause score wrong");
+        assert.equal(actualCauses.votes[0], 1, "cause total votes wrong");
         assert.equal(actualCauses.names[1], causeName2, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[1], participant2, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[1], score2, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[1], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[1], score2, "cause score wrong");
+        assert.equal(actualCauses.votes[1], 1, "cause total votes wrong");
 
         const actualVotes1 = await polling.votes({ from: participant1 });
         assert.equal(actualVotes1.causeIndexes[0], 0, "cause index wrong");
@@ -439,12 +439,12 @@ suite('polling', (state) => {
         const actualCauses = await polling.causes({ from: participant1 });
         assert.equal(actualCauses.names[0], causeName1, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[0], participant1, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[0], score3, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[0], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[0], score3, "cause score wrong");
+        assert.equal(actualCauses.votes[0], 1, "cause total votes wrong");
         assert.equal(actualCauses.names[1], causeName2, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[1], participant2, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[1], score4, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[1], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[1], score4, "cause score wrong");
+        assert.equal(actualCauses.votes[1], 1, "cause total votes wrong");
 
         const actualVotes1 = await polling.votes({ from: participant1 });
         assert.equal(actualVotes1.causeIndexes[0], 0, "cause index wrong");
@@ -500,12 +500,12 @@ suite('polling', (state) => {
         let actualCauses = await polling.causes({ from: participant1 });
         assert.equal(actualCauses.names[0], causeName1, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[0], participant1, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[0], 0, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[0], 0, "cause total votes wrong");
+        assert.equal(actualCauses.scores[0], 0, "cause score wrong");
+        assert.equal(actualCauses.votes[0], 0, "cause total votes wrong");
         assert.equal(actualCauses.names[1], causeName2, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[1], participant2, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[1], 0, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[1], 0, "cause total votes wrong");
+        assert.equal(actualCauses.scores[1], 0, "cause score wrong");
+        assert.equal(actualCauses.votes[1], 0, "cause total votes wrong");
 
         let actualVotes1 = await polling.votes({ from: participant1 });
         assert.equal(actualVotes1.causeIndexes[0], 0, "cause index wrong");
@@ -535,12 +535,12 @@ suite('polling', (state) => {
         actualCauses = await polling.causes({ from: participant1 });
         assert.equal(actualCauses.names[0], causeName1, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[0], participant1, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[0], score3, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[0], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[0], score3, "cause score wrong");
+        assert.equal(actualCauses.votes[0], 1, "cause total votes wrong");
         assert.equal(actualCauses.names[1], causeName2, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[1], participant2, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[1], score4, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[1], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[1], score4, "cause score wrong");
+        assert.equal(actualCauses.votes[1], 1, "cause total votes wrong");
 
         actualVotes1 = await polling.votes({ from: participant1 });
         assert.equal(actualVotes1.causeIndexes[0], 0, "cause index wrong");
@@ -600,12 +600,12 @@ suite('polling', (state) => {
         let actualCauses = await polling.causes({ from: participant1 });
         assert.equal(actualCauses.names[0], causeName1, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[0], participant1, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[0], score1, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[0], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[0], score1, "cause score wrong");
+        assert.equal(actualCauses.votes[0], 1, "cause total votes wrong");
         assert.equal(actualCauses.names[1], causeName2, "cause name wrong");
         assert.equalIgnoreCase(actualCauses.casters[1], participant2, "cause caster wrong");
-        assert.equal(actualCauses.totalScores[1], score2, "cause score wrong");
-        assert.equal(actualCauses.totalVotes[1], 1, "cause total votes wrong");
+        assert.equal(actualCauses.scores[1], score2, "cause score wrong");
+        assert.equal(actualCauses.votes[1], 1, "cause total votes wrong");
 
         let actualVotes1 = await polling.votes({ from: participant1 });
         assert.equal(actualVotes1.causeIndexes[0], 0, "cause index wrong");

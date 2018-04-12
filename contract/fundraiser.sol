@@ -48,7 +48,6 @@ contract Fundraiser {
         uint256 _endTime;
         uint256 _expireTime;
         uint256 _destructTime;
-        uint256 _maxParticipants;
     }
 
     struct State {
@@ -60,12 +59,18 @@ contract Fundraiser {
         bytes32 _ownerMessage;
         bool _ownerWithdrawn;
         bool _cancelled;
-        uint256 _totalEntries;
+        uint256 _participants;
+        uint256 _entries;
     }
 
     struct Participant {
-        uint256 _entries;
         bytes32 _message;
+        uint256 _entries;
+    }
+
+    struct Fund {
+        address _participant;
+        uint256 _entries;
     }
 
     modifier onlyOwner() {
@@ -105,7 +110,7 @@ contract Fundraiser {
     
     Deployment public deployment;
     mapping(address => Participant) public participants;
-    address[] public participantAddresses;
+    Fund[] funds;
     State _state;
 
     function Fundraiser(
@@ -117,8 +122,7 @@ contract Fundraiser {
         uint256 _valuePerEntry,
         uint256 _endTime,
         uint256 _expireTime,
-        uint256 _destructTime,
-        uint256 _maxParticipants
+        uint256 _destructTime
     ) public {
         require(_cause != 0x0);
         require(_causeSplit != 0);
@@ -142,8 +146,7 @@ contract Fundraiser {
             now,
             _endTime,
             _expireTime,
-            _destructTime,
-            _maxParticipants
+            _destructTime
         );
 
     }
@@ -159,8 +162,8 @@ contract Fundraiser {
         bytes32 _ownerMessage,
         bool _ownerWithdrawn,
         bool _cancelled,
-        uint256 _totalParticipants,
-        uint256 _totalEntries
+        uint256 _participants,
+        uint256 _entries
     ) {
         _causeSecret = _state._causeSecret;
         _causeMessage = _state._causeMessage;
@@ -171,8 +174,8 @@ contract Fundraiser {
         _ownerMessage = _state._ownerMessage;
         _ownerWithdrawn = _state._ownerWithdrawn;
         _cancelled = _state._cancelled;
-        _totalParticipants = participantAddresses.length;
-        _totalEntries = _state._totalEntries;
+        _participants = _state._participants;
+        _entries = _state._entries;
     }
 
     // returns the balance of a cause, selected participant, owner, or participant (refund)
@@ -201,7 +204,7 @@ contract Fundraiser {
                 return 0;
             }
             // multiply total entries by split % (non-revealed winnings are forfeited)
-            return _state._totalEntries * deployment._valuePerEntry * _split / 1000;
+            return _state._entries * deployment._valuePerEntry * _split / 1000;
         } else if (_state._cancelled) {
             // value per entry times participant entries == balance
             Participant storage _participant = participants[msg.sender];
@@ -229,22 +232,17 @@ contract Fundraiser {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeSecret != 0x0); // cause has seeded secret
         require(_message != 0x0); // message cannot be zero
-        // check for no limit or under limit
-        require(
-            (deployment._maxParticipants == 0)
-            || (participantAddresses.length < deployment._maxParticipants)
-        );
 
         // find and check for no existing participant
         Participant storage _participant = participants[msg.sender];
-        require(_participant._entries == 0);
         require(_participant._message == 0x0);
+        require(_participant._entries == 0);
 
         // add entries to participant
         var (_entries, _refund) = _raise(_participant);
-        // save secret, and remember participation
+        // save participant message, increment total participants
         _participant._message = _message;
-        participantAddresses.push(msg.sender);
+        _state._participants++;
 
         // send out participation update
         Participation(msg.sender, _message, _entries, _refund);
@@ -258,9 +256,22 @@ contract Fundraiser {
         // calculate the number of entries from the wei sent
         _entries = msg.value / deployment._valuePerEntry;
         require(_entries >= 1); // ensure we have at least one entry
-        // if we have any, update participant and total
+        // update participant totals
         _participant._entries += _entries;
-        _state._totalEntries += _entries;
+        _state._entries += _entries;
+
+        Fund memory _fund;
+        if (funds.length == 0) {
+            // first fund
+            _fund = Fund(msg.sender, 0);
+        } else {
+            // get previous fund to create new one
+            Fund memory _previousFund = funds[funds.length - 1];
+            _fund = Fund(msg.sender, _previousFund._entries + _entries);
+        }
+
+        // save fund
+        funds.push(_fund);
         // calculate partial entry refund
         _refund = msg.value % deployment._valuePerEntry;
         // refund any excess wei immediately (partial entry)
@@ -312,79 +323,53 @@ contract Fundraiser {
 
         // save revealed owner message
         _state._ownerMessage = _message;
-        // calculate entry cumulatives, participants message, and universal message
-        uint256[] memory _entryCumulatives = new uint256[](participantAddresses.length);
-        bytes32 _participantsMessage = _calculateParticipantsMessage(_entryCumulatives);
-        bytes32 _randomMessage = _participantsMessage ^ _state._causeMessage ^ _message;
-        // calculate entry index from universal message and total entries
-        uint256 _entryIndex = uint256(_randomMessage) % _state._totalEntries;
-        // find and set selected, get the participant
-        uint256 _participantParticipantIndex = _findSelectedParticipantIndex(_entryIndex, _entryCumulatives);
-        _state._participant = participantAddresses[_participantParticipantIndex];
+        // calculate admin random message (cause ^ owner), use to find admin entry index
+        bytes32 _adminRandomMessage = _state._causeMessage ^ _message;
+        uint256 _adminEntry = uint256(_adminRandomMessage) % _state._entries;
+        // find admin participant at this entry index
+        address _adminParticipantAddress = _findParticipant(_adminEntry);
+        Participant memory _adminParticipant = participants[_adminParticipantAddress];
+
+        // random participant's message and the admin message determines entry index
+        bytes32 _randomMessage = _adminRandomMessage ^ _adminParticipant._message;
+        uint256 _entry = uint256(_randomMessage) % _state._entries;
+        // find and set selected participant at this entry index
+        _state._participant = _findParticipant(_entry);
         Participant memory _participant = participants[_state._participant];
         
         // send out select event
         Selection(_state._participant, _participant._message, _state._causeMessage, _message);
     }
 
-    // XORs all participant messages in order to generate a crowd-sourced participants message,
-    // generating a CDF of entries by participant in the process
-    function _calculateParticipantsMessage(
-        uint256[] memory _entryCumulatives
-    ) internal view returns (bytes32) {
-        uint256 _entryCumulative = 0;
-        bytes32 _participantsMessage = 0x0;
-        // loop through all participants
-        for (uint256 _participantIndex = 0; _participantIndex < participantAddresses.length; _participantIndex++) {
-            // get the participant at this index
-            address _participantAddress = participantAddresses[_participantIndex];
-            Participant memory _participant = participants[_participantAddress];
-            // set lower cumulative bound
-            _entryCumulatives[_participantIndex] = _entryCumulative;
-            _entryCumulative += _participant._entries;
-            // xor all messages together
-            _participantsMessage = _participantsMessage ^ _participant._message;
-        }
-        // participant messages XORed
-        return _participantsMessage;
-    }
-
-    // finds a selected participant index using the CDF generated in
-    // _calculateParticipantsMessage()
-    function _findSelectedParticipantIndex(
-        uint256 _entryCumulative,
-        uint256[] memory _entryCumulatives
-    ) internal view returns (uint256)  {
-        uint256 _midEntryCumulative;
-        uint256 _nextEntryCumulative;
-        uint256 _midParticipantIndex;
-        uint256 _nextParticipantIndex;
-        uint256 _leftParticipantIndex = 0;
-        uint256 _rightParticipantIndex = participantAddresses.length - 1;
+    // given an entry index, find the corresponding participant (address)
+    function _findParticipant(uint256 _entry) internal view returns (address)  {
+        uint256 _midFundIndex;
+        uint256 _nextFundIndex;
+        uint256 _leftFundIndex = 0;
+        uint256 _rightFundIndex = funds.length - 1;
         // loop until winning participant found
         while (true) {
             // the selected is the last participant! (edge case)
-            if (_leftParticipantIndex == _rightParticipantIndex) {
-                return _leftParticipantIndex;
+            if (_leftFundIndex == _rightFundIndex) {
+                return funds[_leftFundIndex]._participant;
             }
             // get indexes for mid & next
-            _midParticipantIndex =
-                _leftParticipantIndex + ((_rightParticipantIndex - _leftParticipantIndex) / 2);
-            _nextParticipantIndex = _midParticipantIndex + 1;
-            // get cumulatives for mid & next
-            _midEntryCumulative = _entryCumulatives[_midParticipantIndex];
-            _nextEntryCumulative = _entryCumulatives[_nextParticipantIndex];
+            _midFundIndex = _leftFundIndex + ((_rightFundIndex - _leftFundIndex) / 2);
+            _nextFundIndex = _midFundIndex + 1;
+            // get mid and next funds
+            Fund memory _midFund = funds[_midFundIndex];
+            Fund memory _nextFund = funds[_nextFundIndex];
             // binary search
-            if (_entryCumulative >= _midEntryCumulative) {
-                if (_entryCumulative < _nextEntryCumulative) {
+            if (_entry >= _midFund._entries) {
+                if (_entry < _nextFund._entries) {
                     // we are in range, selected found!
-                    return _midParticipantIndex;
+                    return _midFund._participant;
                 }
                 // selected is greater, move right
-                _leftParticipantIndex = _nextParticipantIndex;
+                _leftFundIndex = _nextFundIndex;
             } else {
                 // selected is less, move left
-                _rightParticipantIndex = _midParticipantIndex;
+                _rightFundIndex = _midFundIndex;
             }
         }
     }

@@ -52,8 +52,8 @@ suite('participate', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 10, "total entries incorrect");
 
     });
 
@@ -102,25 +102,8 @@ suite('participate', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
-
-    });
-
-    test("reject participation if over max participants", async () => {
-
-        await participate.run(state);
-        
-        const { env } = state;
-        // get last participant that is never used otherwise
-        const participant = state.accountAddresses[8];
-        const message = sh.messageHex();
-        
-        await assert.isRejected(
-            (await state.interfaces.fundraiser).participate({
-                message
-            }, { from: participant, transact: true })
-        );
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 10, "total entries incorrect");
 
     });
 
@@ -146,7 +129,7 @@ suite('participate', (state) => {
 
         const { env } = state;
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         const participant = state.accountAddresses[2];
         const message = sh.messageHex();

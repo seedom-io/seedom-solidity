@@ -9,7 +9,7 @@ module.exports.run = async (state) => {
 
     const { env } = state;
     const now = ch.timestamp();
-    await cli.progress("waiting for recap phase", env.endTime - now);
+    await cli.progress("waiting for recap phase", env.endTime - now, 1);
 
     await reveal.run(state);
 
