@@ -3,7 +3,7 @@ const h = require('../helper');
 const deploy = require('../deploy');
 
 const txnsPerSecond = 30;
-const defaultDuration = 1;
+const defaultDuration = 2;
 
 module.exports.run = async (state) => {
 
@@ -18,7 +18,6 @@ module.exports.run = async (state) => {
     env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
     env.participantsCount = state.accountAddresses.length - 3;
-    env.maxParticipants = env.participantsCount;
     env.maxScore = 10;
 
     const now = ch.timestamp();

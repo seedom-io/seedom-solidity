@@ -114,7 +114,7 @@ suite('cancel', (state) => {
 
     const testCancelSuccessAfterExpiration = async (account) => {
         const now = ch.timestamp();
-        await cli.progress("waiting for expiration time", state.env.expireTime - now);
+        await cli.progress("waiting for expiration time", state.env.expireTime - now, 1);
         await testCancelSuccess(account);
     };
 

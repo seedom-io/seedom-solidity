@@ -52,8 +52,8 @@ suite('participate', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 10, "total entries incorrect");
 
     });
 
@@ -102,8 +102,8 @@ suite('participate', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants incorrect");
-        assert.equal(actualState.totalEntries, env.participantsCount * 10, "total entries incorrect");
+        assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
+        assert.equal(actualState.entries, env.participantsCount * 10, "total entries incorrect");
 
     });
 
@@ -146,7 +146,7 @@ suite('participate', (state) => {
 
         const { env } = state;
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         const participant = state.accountAddresses[2];
         const message = sh.messageHex();

@@ -28,7 +28,7 @@ suite('destroy', (state) => {
         assert.equal(initialContractBalance.toString(), expectedInitialContractBalance.toString(), "initial contract balance does not match expected");
 
         const now = ch.timestamp();
-        await cli.progress("waiting for destruct time", env.destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now, 1);
 
         // destroy contract
         const destroyReceipt = await fundraiser.destroy({ from: env.owner, transact: true });
@@ -58,7 +58,7 @@ suite('destroy', (state) => {
         const { env } = state;
 
         const now = ch.timestamp();
-        await cli.progress("waiting for expiration time", env.expireTime - now);
+        await cli.progress("waiting for expiration time", env.expireTime - now, 1);
 
         await testDestroyFail(env.owner);
 
@@ -71,7 +71,7 @@ suite('destroy', (state) => {
         const { env } = state;
 
         const now = ch.timestamp();
-        await cli.progress("waiting for destruct time", env.destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now, 1);
 
         await testDestroyFail(env.cause);
 
@@ -84,7 +84,7 @@ suite('destroy', (state) => {
         const { env } = state;
 
         const now = ch.timestamp();
-        await cli.progress("waiting for destruct time", env.destructTime - now);
+        await cli.progress("waiting for destruct time", env.destructTime - now, 1);
 
         await testDestroyFail(env.participants[0].address);
 

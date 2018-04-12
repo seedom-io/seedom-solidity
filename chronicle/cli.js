@@ -87,9 +87,9 @@ module.exports.nl = () => {
     this.log('');
 }
 
-module.exports.progress = (text, seconds) => {
+module.exports.progress = (text, seconds, delay) => {
 
-    const total = seconds * 10;
+    const total = (delay ? seconds + delay : seconds) * 10;
     const progress = new Progress(tab + tab + ls.info + tab + clc.yellow(text + tab + '[:bar]'), { total: total });
 
     return new Promise(resolve => {

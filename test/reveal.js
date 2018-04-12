@@ -15,7 +15,7 @@ suite('reveal', (state) => {
         const fundraiser = await state.interfaces.fundraiser;
 
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         await assert.isFulfilled(
             fundraiser.reveal({
@@ -34,8 +34,8 @@ suite('reveal', (state) => {
         assert.equal(actualState.ownerMessage, 0, "owner message zero");
         assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
-        assert.equal(actualState.totalParticipants, env.participantsCount, "total participants zero");
-        assert.equal(actualState.totalEntries, env.participantsCount * 20, "total entries zero");
+        assert.equal(actualState.participants, env.participantsCount, "total participants zero");
+        assert.equal(actualState.entries, env.participantsCount * 20, "total entries zero");
 
     });
 
@@ -47,7 +47,7 @@ suite('reveal', (state) => {
         const fundraiser = await state.interfaces.fundraiser;
 
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         await assert.isFulfilled(
             fundraiser.reveal({
@@ -73,7 +73,7 @@ suite('reveal', (state) => {
         const causeSecret = sh.hashMessage(causeMessage, env.cause);
 
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).reveal({
@@ -90,7 +90,7 @@ suite('reveal', (state) => {
         const { env } = state;
 
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).reveal({
@@ -108,7 +108,7 @@ suite('reveal', (state) => {
         const participant = state.accountAddresses[2];
 
         const now = ch.timestamp();
-        await cli.progress("waiting for end phase", env.endTime - now);
+        await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).begin({
