@@ -325,3 +325,22 @@ const createAuthorizationToken = async (state) => {
     cli.success(`created authorization token ${authorizationToken}`);
     return authorizationToken;
 };
+
+module.exports.prepare = (program, state) => {
+    program
+        .command('parity')
+        .alias('p')
+        .description("start parity")
+        .option('--fresh', "fresh start")
+        .option('--kill', "kill parity")
+        .action((options) => {
+            // run parity
+            this.main(Object.assign(state, {
+                fresh: options.fresh ? true : false,
+                kill: options.kill ? true : false
+            })).then(() => {
+                // kill web 3
+                network.destroyWeb3(state);
+            });
+        });
+};

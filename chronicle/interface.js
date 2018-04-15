@@ -21,6 +21,11 @@ module.exports.save = async (state) => {
 
 module.exports.main = async (state) => {
 
+    // if method name supplied, print
+    if (state.methodName) {
+        cli.info(`running ${state.contractName}.${state.methodName}`);
+    }
+
     // first network
     await network.main(state);
 
@@ -44,9 +49,6 @@ module.exports.main = async (state) => {
 
         // to is either the contract addy or name
         const to = state.methodOptions.to ? state.methodOptions.to : state.contractName;
-
-        cli.info(`running ${to}.${state.methodName}`);
-
         const interface = await state.interfaces[to];
         if (!interface) {
 
@@ -67,9 +69,6 @@ module.exports.main = async (state) => {
             await this.save(state);
 
         }
-
-        
-        network.destroyWeb3(state);
 
     }
 
@@ -437,14 +436,19 @@ const prepareCommand = (program, contract, state) => {
         prepareCommandOptions(command, methodArgOptions);
 
         // prepare action
-        command.action((network, options, commander) => {
+        command.action((networkName, options, commander) => {
+            cli.section("Interface");
+            // run method
             this.main(Object.assign(state, {
-                networkName: network,
+                networkName,
                 contractName: contract.name,
                 methodName,
                 methodArgs: parser.getValues(options, methodArgOptions),
                 methodOptions: parser.getValues(options, methodOptionOptions)
-            }));
+            })).then(() => {
+                // kill web 3
+                network.destroyWeb3(state);
+            });
         });
 
     }

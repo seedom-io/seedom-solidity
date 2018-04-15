@@ -20,6 +20,8 @@ const defaultTimeout = 100000;
 
 module.exports.main = async (state) => {
 
+    cli.info(`running tests: ${state.suiteNames.join(', ')}`);
+
     // first interface
     await interface.main(state);
 
@@ -144,4 +146,23 @@ function reporter(runner) {
 
     });
 
-}
+};
+
+module.exports.prepare = (program, state) => {
+    program
+        .command('test [suites...]')
+        .alias('t')
+        .description("run tests")
+        .option('--timeout [timeout]', "test timeout")
+        .action((suiteNames, options) => {
+            cli.section("Test");
+            // run test(s)
+            this.main(Object.assign(state, {
+                suiteNames,
+                timeout: options.timeout
+            })).then(() => {
+                // kill web 3
+                network.destroyWeb3(state);
+            });
+        });
+};

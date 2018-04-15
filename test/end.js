@@ -42,27 +42,6 @@ suite('end', (state) => {
 
     });
 
-    test("should select in a random distribution", async () => {
-
-        const { env } = state;
-
-        const distribution = {};
-        for (let i = 2; i < state.accountAddresses.length; i++) {
-            const address = state.accountAddresses[i];
-            distribution[address.toLowerCase()] = 0;
-        }
-
-        const runs = 50;
-        for (let run = 0; run < runs; run++) {
-            await end.run(state);
-            const actualState = await (await state.interfaces.fundraiser).state({ from: env.owner });
-            distribution[actualState.participant.toLowerCase()]++;
-        }
-
-        cli.bars(distribution);
-
-    });
-
     test("should reject multiple ends from owner after cause reveal", async () => {
         
         await reveal.run(state);

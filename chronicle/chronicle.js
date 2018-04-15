@@ -6,6 +6,8 @@ const compile = require('./compile');
 const script = require('./script');
 const network = require('./network');
 const interface = require('./interface');
+const parity = require('./parity');
+const test = require('./test');
 const wtfnode = require('wtfnode');
 
 // print out anything hanging after ctrl-c
@@ -26,44 +28,14 @@ process.on('warning', (warning) => {
     console.log(warning.stack);
 });
 
-const main = async (name, state) => {
-    await require('./' + name).main(state);
-    network.destroyWeb3(state);
-}
-
 const state = {};
 
 compile.prepare(program, state).then(() => {
-
-    program
-        .command('parity')
-        .alias('p')
-        .description("start parity")
-        .option('--fresh', "fresh start")
-        .option('--kill', "kill parity")
-        .action((options) => {
-            main('parity', Object.assign(state, {
-                fresh: options.fresh ? true : false,
-                kill: options.kill ? true : false
-            }));
-        });
-
-    program
-        .command('test [suites...]')
-        .alias('t')
-        .description("run tests")
-        .option('--timeout [timeout]', "test timeout")
-        .action((suites, options) => {
-            main('test', Object.assign(state, {
-                suiteNames: suites,
-                timeout: options.timeout
-            }));
-        });
-
+    parity.prepare(program, state);
+    test.prepare(program, state);
     interface.prepare(program, state).then(() => {
         script.prepare(program, state).then(() => {
             program.parse(process.argv);
         });
     });
-
 });

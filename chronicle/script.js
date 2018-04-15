@@ -11,6 +11,12 @@ const parser = require('./parser');
 const dir = require('node-dir');
 
 module.exports.main = async (state) => {
+
+    cli.info(`running script ${state.scriptName}`);
+    // make sure env supplied (no missing args)
+    if (!state.env) {
+        return;
+    }
     
     // first interface
     await interface.main(state);
@@ -18,12 +24,13 @@ module.exports.main = async (state) => {
     // now script
     cli.section("Script");
 
-    cli.info(`running script ${state.scriptName}`);
     // now run through requested script
     await state.scripts[state.scriptName].run(state);
     
     // print out env for all to see
-    printEnv(state.env);
+    if (state.print) {
+        printEnv(state.env);
+    }
 
     cli.success(`${state.scriptName} script complete`);
 
@@ -31,8 +38,6 @@ module.exports.main = async (state) => {
     if (!state.forget) {
         await interface.save(state);
     }
-
-    network.destroyWeb3(state);
 
 }
 
@@ -96,20 +101,27 @@ const prepareCommand = (program, script, state) => {
 
     const command = program
         .command(`script:${script.name} [network]`)
-        .option('--forget', "forget network deployment");
+        .option('--forget', "forget network deployment")
+        .option('--print', "print environment data");
 
     // get script options
     const scriptOptions = parser.getOptions(script.options);
     prepareCommandOptions(command, scriptOptions);
 
     // action
-    command.action((network, options, commander) => {
+    command.action((networkName, options, commander) => {
+        cli.section("Script");
+        // begin script
         this.main(Object.assign(state, {
-            networkName: network,
+            networkName,
             scriptName: script.name,
             env: parser.getValues(options, scriptOptions),
-            forget: options.forget ? true : false
-        }));
+            forget: options.forget ? true : false,
+            print: options.print ? true : false
+        })).then(() => {
+            // kill web 3
+            network.destroyWeb3(state);
+        });
     });
 
 };
