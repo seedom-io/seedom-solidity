@@ -22,21 +22,31 @@ run scripts on the chonicle platform
 ### Deployment
 ```
 chronicle script:deploy \
-    --owner 0x003b873f4443e727536391f9c27fedc65d17c5ff \
-    --cause 0x003b873f4443e727536391f9c27fedc65d17c5ff \
+    --owner 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
+    --cause 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
     --causeSplit 500 \
     --participantSplit 500 \
     --ownerSplit 0 \
     --ownerMessageString 'HELLO SFT' \
     --valuePerEntry 100000000000000000 \
-    --endTime 'in 60 minutes' \
+    --endTime 'in 8 minutes' \
     --expireTime 'in 120 minutes' \
     --destructTime 'in 240 minutes' \
-    --maxParticipants 10 --maxScore 10
+    --maxScore 10
 ```
 ### Begin
 ```
 chronicle script:begin \
-    --cause 0x003b873f4443e727536391f9c27fedc65d17c5ff \
+    --cause 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
     --causeMessageString 'BONJOUR'
 ```
+### Reveal
+```
+chronicle script:reveal \
+    --cause 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
+    --causeMessageString 'BONJOUR'
+```
+### End
+chronicle script:end \
+    --owner 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
+    --ownerMessageString 'HELLO SFT'

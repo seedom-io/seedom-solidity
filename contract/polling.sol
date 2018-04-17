@@ -39,10 +39,10 @@ contract Polling {
 
     function Polling(
         uint256 _maxScore,
-        address _fundraiserAddress
+        address _fundraiser
     ) public {
         maxScore = _maxScore;
-        fundraiser = Fundraiser(_fundraiserAddress);
+        fundraiser = Fundraiser(_fundraiser);
     }
 
     function caster() public view returns (

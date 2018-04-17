@@ -61,6 +61,8 @@ contract Fundraiser {
         bool _cancelled;
         uint256 _participants;
         uint256 _entries;
+        uint256 _revealBlockNumber;
+        uint256 _revealBlockHash;
     }
 
     struct Participant {
@@ -299,10 +301,13 @@ contract Fundraiser {
     function reveal(bytes32 _message) public recapPhase onlyCause {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeMessage == 0x0); // cannot have revealed already
+        require(_state._revealBlockNumber == 0); // block number of reveal should not be set
         require(_decode(_state._causeSecret, _message)); // check for valid message
 
         // save revealed cause message
         _state._causeMessage = _message;
+        // save reveal block number
+        _state._revealBlockNumber = block.number;
 
         // send reveal event
         Revelation(_message);
@@ -318,22 +323,37 @@ contract Fundraiser {
     function end(bytes32 _message) public recapPhase onlyOwner {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeMessage != 0x0); // cause must have revealed
+        require(_state._revealBlockNumber != 0); // reveal block number must be set
         require(_state._ownerMessage == 0x0); // cannot have ended already
         require(_decode(deployment._ownerSecret, _message)); // check for valid message
+        require(block.number > _state._revealBlockNumber); // verify reveal has been mined
 
+        // get the reveal block hash and ensure within 256 blocks (non-zero)
+        _state._revealBlockHash = uint256(block.blockhash(_state._revealBlockNumber));
+        require(_state._revealBlockHash != 0);
         // save revealed owner message
         _state._ownerMessage = _message;
-        // calculate admin random message (cause ^ owner), use to find admin entry index
-        bytes32 _adminRandomMessage = _state._causeMessage ^ _message;
-        uint256 _adminEntry = uint256(_adminRandomMessage) % _state._entries;
-        // find admin participant at this entry index
-        address _adminParticipantAddress = _findParticipant(_adminEntry);
-        Participant memory _adminParticipant = participants[_adminParticipantAddress];
 
-        // random participant's message and the admin message determines entry index
-        bytes32 _randomMessage = _adminRandomMessage ^ _adminParticipant._message;
-        uint256 _entry = uint256(_randomMessage) % _state._entries;
+        // calculate admin random message
+        bytes32 _adminRandomMessage = keccak256(
+            _message,
+            _state._causeMessage,
+            _state._revealBlockHash
+        );
+
+        // get admin entry from admin random message and find admin participant
+        uint256 _adminEntry = uint256(_adminRandomMessage) % _state._entries;
+        Participant memory _adminParticipant = participants[_findParticipant(_adminEntry)];
+
+        // calculate random message
+        bytes32 _randomMessage = keccak256(
+            _adminRandomMessage,
+            _adminParticipant._message,
+            _state._revealBlockHash
+        );
+
         // find and set selected participant at this entry index
+        uint256 _entry = uint256(_randomMessage) % _state._entries;
         _state._participant = _findParticipant(_entry);
         Participant memory _participant = participants[_state._participant];
         
@@ -379,6 +399,7 @@ contract Fundraiser {
     function cancel() public {
         require(!_state._cancelled); // fundraiser not already cancelled
         require(_state._participant == address(0)); // selected must not have been chosen
+        
         // open cancellation to community if past expire time (but before destruct time)
         if ((msg.sender != deployment._owner) && (msg.sender != deployment._cause)) {
             require((now >= deployment._expireTime) && (now < deployment._destructTime));

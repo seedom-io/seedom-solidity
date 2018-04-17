@@ -45,7 +45,7 @@ module.exports.run = async (state) => {
     // deploy polling
     const polling = await (await state.interfaces.polling).deploy({
         maxScore: env.maxScore,
-        fundraiserAddress: fundraiser.receipt.contractAddress
+        fundraiser: fundraiser.receipt.contractAddress
     }, {
         from: env.owner
     });
