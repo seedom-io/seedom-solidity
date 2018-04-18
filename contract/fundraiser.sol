@@ -338,20 +338,20 @@ contract Fundraiser {
         // save revealed owner message
         _state._ownerMessage = _message;
 
-        bytes32 _random;
+        bytes32 _randomNumber;
         address _participant;
         bytes32 _participantMessage;
         // add additional entropy to the random from participant messages
         for (uint256 i = 0; i < deployment._entropy; i++) {
             // calculate the next random
-            _random = keccak256(
+            _randomNumber = keccak256(
                 _message,
                 _state._causeMessage,
                 _state._revealBlockHash,
                 _participantMessage
             );
             // calculate next entry and grab corresponding participant
-            uint256 _entry = uint256(_random) % _state._entries;
+            uint256 _entry = uint256(_randomNumber) % _state._entries;
             _participant = _findParticipant(_entry);
             _participantMessage = participants[_participant]._message;
         }

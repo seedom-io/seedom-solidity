@@ -20,3 +20,6 @@ parity/*
 
 # vscode
 .vscode/*
+
+# output
+out.txt
