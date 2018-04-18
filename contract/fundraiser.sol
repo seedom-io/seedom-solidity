@@ -48,6 +48,7 @@ contract Fundraiser {
         uint256 _endTime;
         uint256 _expireTime;
         uint256 _destructTime;
+        uint256 _entropy;
     }
 
     struct State {
@@ -124,7 +125,8 @@ contract Fundraiser {
         uint256 _valuePerEntry,
         uint256 _endTime,
         uint256 _expireTime,
-        uint256 _destructTime
+        uint256 _destructTime,
+        uint256 _entropy
     ) public {
         require(_cause != 0x0);
         require(_causeSplit != 0);
@@ -135,6 +137,7 @@ contract Fundraiser {
         require(_endTime > now); // participation phase
         require(_expireTime > _endTime); // end phase
         require(_destructTime > _expireTime); // destruct phase
+        require(_entropy > 0);
 
         // set the deployment
         deployment = Deployment(
@@ -148,7 +151,8 @@ contract Fundraiser {
             now,
             _endTime,
             _expireTime,
-            _destructTime
+            _destructTime,
+            _entropy
         );
 
     }
@@ -328,37 +332,40 @@ contract Fundraiser {
         require(_decode(deployment._ownerSecret, _message)); // check for valid message
         require(block.number > _state._revealBlockNumber); // verify reveal has been mined
 
-        // get the reveal block hash and ensure within 256 blocks (non-zero)
+        // get the (cause) reveal blockhash and ensure within 256 blocks (non-zero)
         _state._revealBlockHash = uint256(block.blockhash(_state._revealBlockNumber));
         require(_state._revealBlockHash != 0);
         // save revealed owner message
         _state._ownerMessage = _message;
 
-        // calculate admin random message
-        bytes32 _adminRandomMessage = keccak256(
-            _message,
-            _state._causeMessage,
-            _state._revealBlockHash
-        );
+        bytes32 _random;
+        address _participant;
+        bytes32 _participantMessage;
+        // add additional entropy to the random from participant messages
+        for (uint256 i = 0; i < deployment._entropy; i++) {
+            // calculate the next random
+            _random = keccak256(
+                _message,
+                _state._causeMessage,
+                _state._revealBlockHash,
+                _participantMessage
+            );
+            // calculate next entry and grab corresponding participant
+            uint256 _entry = uint256(_random) % _state._entries;
+            _participant = _findParticipant(_entry);
+            _participantMessage = participants[_participant]._message;
+        }
 
-        // get admin entry from admin random message and find admin participant
-        uint256 _adminEntry = uint256(_adminRandomMessage) % _state._entries;
-        Participant memory _adminParticipant = participants[_findParticipant(_adminEntry)];
-
-        // calculate random message
-        bytes32 _randomMessage = keccak256(
-            _adminRandomMessage,
-            _adminParticipant._message,
-            _state._revealBlockHash
-        );
-
-        // find and set selected participant at this entry index
-        uint256 _entry = uint256(_randomMessage) % _state._entries;
-        _state._participant = _findParticipant(_entry);
-        Participant memory _participant = participants[_state._participant];
+        // the final participant receives the reward
+        _state._participant = _participant;
         
         // send out select event
-        Selection(_state._participant, _participant._message, _state._causeMessage, _message);
+        Selection(
+            _state._participant,
+            _participantMessage,
+            _state._causeMessage,
+            _message
+        );
     }
 
     // given an entry index, find the corresponding participant (address)

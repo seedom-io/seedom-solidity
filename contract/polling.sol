@@ -108,7 +108,7 @@ contract Polling {
 
     function maxVotes() public view returns (uint256) {
         // get end time from fundraiser
-        var ( , , , , , , , , _endTime, , ) = fundraiser.deployment();
+        var ( , , , , , , , , _endTime, , , ) = fundraiser.deployment();
         if (now >= _endTime) {
             return 0;
         }
@@ -223,7 +223,7 @@ contract Polling {
 
     function destroy() public {
         // get destruct time from fundraiser
-        var ( , , , _owner, , , , , , , _destructTime) = fundraiser.deployment();
+        var ( , , , _owner, , , , , , , _destructTime, ) = fundraiser.deployment();
         require (_owner == msg.sender);
         require (now >= _destructTime);
         selfdestruct(msg.sender);

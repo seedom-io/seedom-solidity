@@ -11,6 +11,7 @@ module.exports.options = [
     ['endTime', true],
     ['expireTime', true],
     ['destructTime', true],
+    ['entropy', true],
     ['maxScore', true]
 ];
 
@@ -34,7 +35,8 @@ module.exports.run = async (state) => {
         valuePerEntry: env.valuePerEntry,
         endTime: env.endTime,
         expireTime: env.expireTime,
-        destructTime: env.destructTime
+        destructTime: env.destructTime,
+        entropy: env.entropy
     }, {
         from: env.owner
     });

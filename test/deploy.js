@@ -26,6 +26,7 @@ suite('deploy', (state) => {
         assert.equal(actualDeployment.endTime, env.endTime, "end time does not match");
         assert.equal(actualDeployment.expireTime, env.expireTime, "expire time does not match");
         assert.equal(actualDeployment.destructTime, env.destructTime, "destruct time does not match");
+        assert.equal(actualDeployment.entropy, env.entropy, "entropy does not match");
 
         const actualState = await fundraiser.state({ from: env.owner });
 
@@ -60,6 +61,7 @@ suite('deploy', (state) => {
         const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
+        const entropy = 8;
 
         fundraiser = await fundraiser.deploy({
             cause,
@@ -70,7 +72,8 @@ suite('deploy', (state) => {
             valuePerEntry,
             endTime,
             expireTime,
-            destructTime
+            destructTime,
+            entropy
         }, { from: owner });
 
         const actualDeployment = await fundraiser.deployment({ from: owner });
@@ -87,6 +90,7 @@ suite('deploy', (state) => {
         assert.equal(actualDeployment.endTime, endTime, "end time does not match");
         assert.equal(actualDeployment.expireTime, expireTime, "expire time does not match");
         assert.equal(actualDeployment.destructTime, destructTime, "destruct time does not match");
+        assert.equal(actualDeployment.entropy, entropy, "entropy does not match");
 
     });
 
@@ -105,22 +109,24 @@ suite('deploy', (state) => {
         const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
+        const entropy = 8;
         
         const testData = [
-            {cause: 0, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit: 0, participantSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit, participantSplit: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit, participantSplit, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, expireTime, destructTime},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0}
+            {cause: 0, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit: 0, participantSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit, participantSplit: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, expireTime, destructTime, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, entropy},
+            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy: 0}
         ];
         
         for (let testArgs of testData) {
             cli.json(testArgs);
-            assert.equal(Object.keys(testArgs).length, 9, "invalid number of test args");
+            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.fundraiser).deploy(testArgs, { from: owner })
             );
@@ -140,17 +146,18 @@ suite('deploy', (state) => {
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
         const valuePerEntry = 1000;
+        const entropy = 8;
         
         const testData = [
-            {cause, causeSplit: 20, participantSplit: 30, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit: 200, participantSplit: 350, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit: 601, participantSplit: 200, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime},
-            {cause, causeSplit: 6000, participantSplit: 2000, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime}
+            {cause, causeSplit: 20, participantSplit: 30, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit: 200, participantSplit: 350, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit: 601, participantSplit: 200, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeSplit: 6000, participantSplit: 2000, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy}
         ];
         
         for (let testArgs of testData) {
             cli.json(testArgs);
-            assert.equal(Object.keys(testArgs).length, 9, "invalid number of test args");
+            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.fundraiser).deploy(testArgs, { from: owner })
             );
@@ -176,45 +183,52 @@ suite('deploy', (state) => {
         const oldEndTime = now - phaseDuration * 3;
         const oldExpireTime = oldEndTime + phaseDuration;
         const oldDestructTime = oldExpireTime + phaseDuration;
-        
+        const entropy = 8;
 
         const testData = [
             // old dates
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: oldEndTime,
                 expireTime,
-                destructTime},
+                destructTime,
+                entropy},
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: oldExpireTime,
-                destructTime},
+                destructTime,
+                entropy},
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
-                destructTime: oldDestructTime},
+                destructTime: oldDestructTime,
+                entropy},
             // equal dates
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: endTime,
-                destructTime},
+                destructTime,
+                entropy},
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
-                destructTime: expireTime},
+                destructTime: expireTime,
+                entropy},
             // out of order dates
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: expireTime,
                 expireTime: endTime,
-                destructTime},
+                destructTime,
+                entropy},
             {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: destructTime,
-                destructTime: expireTime}
+                destructTime: expireTime,
+                entropy}
         ];
 
         for (let testArgs of testData) {
             cli.json(testArgs);
-            assert.equal(Object.keys(testArgs).length, 9, "invalid number of test args");
+            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.fundraiser).deploy(testArgs, { from: owner })
             );

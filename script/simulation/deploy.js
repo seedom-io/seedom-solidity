@@ -18,6 +18,7 @@ module.exports.run = async (state) => {
     env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
     env.participantsCount = state.accountAddresses.length - 2;
+    env.entropy = 8;
     env.maxScore = 10;
 
     const now = ch.timestamp();
