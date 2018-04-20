@@ -450,7 +450,7 @@ contract Fundraiser {
         Withdrawal(msg.sender);
     }
 
-    // destroy() will be used to clean up old contracts from the Ethreum network
+    // destroy() will be used to clean up old contracts from the network
     function destroy() public destructionPhase onlyOwner {
         // destroy this contract and send remaining funds to owner
         selfdestruct(msg.sender);
