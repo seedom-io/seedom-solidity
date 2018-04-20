@@ -363,7 +363,7 @@ contract Fundraiser {
         );
     }
 
-    // given an entry index, find the corresponding participant (address)
+    // given an entry number, find the corresponding participant (address)
     function _findParticipant(uint256 _entry) internal view returns (address)  {
         uint256 _leftFundIndex = 0;
         uint256 _rightFundIndex = funds.length - 1;
@@ -373,7 +373,7 @@ contract Fundraiser {
             if (_leftFundIndex == _rightFundIndex) {
                 return funds[_leftFundIndex]._participant;
             }
-            // get indexes for mid & next
+            // get fund indexes for mid & next
             uint256 _midFundIndex =
                 _leftFundIndex + ((_rightFundIndex - _leftFundIndex) / 2);
             uint256 _nextFundIndex = _midFundIndex + 1;
