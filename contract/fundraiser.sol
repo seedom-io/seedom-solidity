@@ -312,7 +312,7 @@ contract Fundraiser {
         Revelation(_message);
     }
 
-    // determines that validity of a message, given a secret.
+    // determines that validity of a message, given a secret
     function _decode(bytes32 _secret, bytes32 _message) internal view returns (bool) {
         return _secret == keccak256(_message, msg.sender);
     }
