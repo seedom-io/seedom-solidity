@@ -266,18 +266,13 @@ contract Fundraiser {
         _participant._entries += _entries;
         _state._entries += _entries;
 
-        Fund memory _fund;
-        if (funds.length == 0) {
-            // first fund
-            _fund = Fund(msg.sender, 0);
-        } else {
-            // get previous fund to create new one
-            Fund memory _previousFund = funds[funds.length - 1];
-            _fund = Fund(msg.sender, _previousFund._entries + _entries);
-        }
-
-        // save fund
+        // get previous fund's entries
+        uint256 _previousFundEntries = (funds.length > 0) ?
+            funds[funds.length - 1]._entries : 0;
+        // create and save new fund with cumulative entries
+        Fund memory _fund = Fund(msg.sender, _previousFundEntries + _entries);
         funds.push(_fund);
+
         // calculate partial entry refund
         _refund = msg.value % deployment._valuePerEntry;
         // refund any excess wei immediately (partial entry)
@@ -370,32 +365,31 @@ contract Fundraiser {
 
     // given an entry index, find the corresponding participant (address)
     function _findParticipant(uint256 _entry) internal view returns (address)  {
-        uint256 _midFundIndex;
-        uint256 _nextFundIndex;
         uint256 _leftFundIndex = 0;
         uint256 _rightFundIndex = funds.length - 1;
-        // loop until winning participant found
+        // loop until participant found
         while (true) {
-            // the selected is the last participant! (edge case)
+            // first or last fund (edge cases)
             if (_leftFundIndex == _rightFundIndex) {
                 return funds[_leftFundIndex]._participant;
             }
             // get indexes for mid & next
-            _midFundIndex = _leftFundIndex + ((_rightFundIndex - _leftFundIndex) / 2);
-            _nextFundIndex = _midFundIndex + 1;
+            uint256 _midFundIndex =
+                _leftFundIndex + ((_rightFundIndex - _leftFundIndex) / 2);
+            uint256 _nextFundIndex = _midFundIndex + 1;
             // get mid and next funds
             Fund memory _midFund = funds[_midFundIndex];
             Fund memory _nextFund = funds[_nextFundIndex];
             // binary search
             if (_entry >= _midFund._entries) {
                 if (_entry < _nextFund._entries) {
-                    // we are in range, selected found!
-                    return _midFund._participant;
+                    // we are in range, participant found
+                    return _nextFund._participant;
                 }
-                // selected is greater, move right
+                // entry is greater, move right
                 _leftFundIndex = _nextFundIndex;
             } else {
-                // selected is less, move left
+                // entry is less, move left
                 _rightFundIndex = _midFundIndex;
             }
         }
