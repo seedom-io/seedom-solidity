@@ -47,6 +47,8 @@ chronicle script:reveal \
     --causeMessageString 'BONJOUR'
 ```
 ### End
+```
 chronicle script:end \
     --owner 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
     --ownerMessageString 'HELLO SFT'
+```
