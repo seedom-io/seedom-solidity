@@ -113,8 +113,8 @@ contract Fundraiser {
     
     Deployment public deployment;
     mapping(address => Participant) public participants;
-    Fund[] funds;
-    State _state;
+    Fund[] private funds;
+    State private _state;
 
     function Fundraiser(
         address _cause,
@@ -255,7 +255,7 @@ contract Fundraiser {
     }
 
     // called by participate() and the fallback function for obtaining (additional) entries
-    function _raise(Participant storage _participant) internal returns (
+    function _raise(Participant storage _participant) private returns (
         uint256 _entries,
         uint256 _refund
     ) {
@@ -313,7 +313,7 @@ contract Fundraiser {
     }
 
     // determines that validity of a message, given a secret
-    function _decode(bytes32 _secret, bytes32 _message) internal view returns (bool) {
+    function _decode(bytes32 _secret, bytes32 _message) private view returns (bool) {
         return _secret == keccak256(_message, msg.sender);
     }
 
@@ -364,7 +364,7 @@ contract Fundraiser {
     }
 
     // given an entry number, find the corresponding participant (address)
-    function _findParticipant(uint256 _entry) internal view returns (address)  {
+    function _findParticipant(uint256 _entry) private view returns (address)  {
         uint256 _leftFundIndex = 0;
         uint256 _rightFundIndex = funds.length - 1;
         // loop until participant found
