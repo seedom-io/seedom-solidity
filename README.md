@@ -29,9 +29,10 @@ chronicle script:deploy \
     --ownerSplit 0 \
     --ownerMessageString 'HELLO SFT' \
     --valuePerEntry 100000000000000000 \
-    --endTime 'in 8 minutes' \
+    --endTime 'in 60 minutes' \
     --expireTime 'in 120 minutes' \
     --destructTime 'in 240 minutes' \
+    --entropy 8 \
     --maxScore 10
 ```
 ### Begin
