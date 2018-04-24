@@ -3,6 +3,7 @@ const h = require('../helper');
 const cli = require('../../chronicle/cli');
 const deploy = require('./deploy');
 const begin = require('./begin');
+const m = require('../../../seedom-crypter/messages');
 
 module.exports.run = async (state) => {
     
@@ -17,7 +18,7 @@ module.exports.run = async (state) => {
     for (let i = 0; i < env.participantsCount; i++) {
 
         const address = state.accountAddresses[i + 2];
-        const message = h.messageHex();
+        const message = m.random();
 
         const receipt = await fundraiser.participate({
             message

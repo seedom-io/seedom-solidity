@@ -4,6 +4,7 @@ const cli = require('../chronicle/cli');
 const parity = require('../chronicle/parity');
 const raise = require('../script/simulation/raise');
 const network = require('../chronicle/network');
+const m = require('../../seedom-crypter/messages');
 
 suite('reveal', (state) => {
 
@@ -69,8 +70,8 @@ suite('reveal', (state) => {
 
         const { env } = state;
         // generate a new random message
-        const causeMessage = sh.messageHex();
-        const causeSecret = sh.hashMessage(causeMessage, env.cause);
+        const causeMessage = m.random();
+        const causeSecret = m.hash(causeMessage, env.cause);
 
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now, 1);

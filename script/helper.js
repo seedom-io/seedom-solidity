@@ -1,37 +1,5 @@
-const crypto = require('crypto');
 const cli = require('../chronicle/cli');
 const BigNumber = require('bignumber.js');
-const keccak256 = require('js-sha3').keccak256;
-
-module.exports.messageHex = () => {
-    const buffer = Buffer.alloc(32);
-    crypto.randomFillSync(buffer, 0, 32);
-    return `0x${buffer.toString('hex')}`;
-};
-
-module.exports.hexMessage = (message) => {
-    const buffer = Buffer.alloc(32);
-    buffer.write(message);
-    return `0x${buffer.toString('hex')}`;
-};
-
-module.exports.hashMessage = (messageHex, address) => {
-
-    const hasher = new keccak256.create(256);
-
-    // remove 0x
-    messageHex = messageHex.substr(2);
-    const messageBuffer = new Buffer(messageHex, 'hex');
-    hasher.update(messageBuffer);
-
-    // remove 0x
-    const addressHex = address.substr(2);
-    const addressBuffer = new Buffer(addressHex, 'hex');
-    hasher.update(addressBuffer);
-
-    return `0x${hasher.hex()}`;
-
-}
 
 module.exports.hexBigNumber = (bigNumber) => {
     return "0x" + bigNumber.toString(16);

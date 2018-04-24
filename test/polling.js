@@ -5,6 +5,7 @@ const parity = require('../chronicle/parity');
 const begin = require('../script/simulation/begin');
 const participate = require('../script/simulation/participate');
 const end = require('../script/simulation/end');
+const m = require('../../seedom-crypter/messages');
 
 suite('polling', (state) => {
 
@@ -13,7 +14,7 @@ suite('polling', (state) => {
         await begin.run(state);
 
         const { env } = state;
-        const causeName = sh.hexMessage("TEST CAUSE");
+        const causeName = m.hex("TEST CAUSE");
         const participant = state.accountAddresses[2];
         const score = 10;
 
@@ -31,7 +32,7 @@ suite('polling', (state) => {
         await participate.run(state);
 
         const { env } = state;
-        const causeName = sh.hexMessage("");
+        const causeName = m.hex("");
         const participant = state.accountAddresses[2];
         const score = 10;
 
@@ -49,7 +50,7 @@ suite('polling', (state) => {
         await participate.run(state);
 
         const { env } = state;
-        const causeName = sh.hexMessage("TEST CAUSE1");
+        const causeName = m.hex("TEST CAUSE1");
         const participant = state.accountAddresses[2];
         const score = 15;
 
@@ -68,7 +69,7 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName = sh.hexMessage("TEST CAUSE1");
+        const causeName = m.hex("TEST CAUSE1");
         const participant = state.accountAddresses[2];
         const score = 10;
 
@@ -112,7 +113,7 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName = sh.hexMessage("TEST CAUSE1");
+        const causeName = m.hex("TEST CAUSE1");
         const participant1 = state.accountAddresses[2];
         const score1 = 10;
 
@@ -141,7 +142,7 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName = sh.hexMessage("TEST CAUSE1");
+        const causeName = m.hex("TEST CAUSE1");
         const participant1 = state.accountAddresses[2];
         const score = 10;
 
@@ -169,8 +170,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -217,8 +218,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -291,8 +292,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -330,8 +331,8 @@ suite('polling', (state) => {
         assert.equal(actualVotes2.causeIndexes[0], 1, "cause index wrong");
         assert.equal(actualVotes2.scores[0], score2, "cause score wrong");
 
-        const causeName3 = sh.hexMessage("TEST CAUSE3");
-        const causeName4 = sh.hexMessage("TEST CAUSE4");
+        const causeName3 = m.hex("TEST CAUSE3");
+        const causeName4 = m.hex("TEST CAUSE4");
 
         await assert.isRejected(
             polling.voteName({
@@ -355,8 +356,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -398,8 +399,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -462,8 +463,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -558,8 +559,8 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score1 = 10;
@@ -623,9 +624,9 @@ suite('polling', (state) => {
 
         const { env } = state;
         const polling = await state.interfaces.polling;
-        const causeName1 = sh.hexMessage("TEST CAUSE1");
-        const causeName2 = sh.hexMessage("TEST CAUSE2");
-        const causeName3 = sh.hexMessage("TEST CAUSE3");
+        const causeName1 = m.hex("TEST CAUSE1");
+        const causeName2 = m.hex("TEST CAUSE2");
+        const causeName3 = m.hex("TEST CAUSE3");
         const participant1 = state.accountAddresses[2];
         const participant2 = state.accountAddresses[3];
         const score = 10;

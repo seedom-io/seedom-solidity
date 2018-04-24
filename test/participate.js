@@ -4,6 +4,7 @@ const cli = require('../chronicle/cli');
 const begin = require('../script/simulation/begin');
 const deploy = require('../script/simulation/deploy');
 const participate = require('../script/simulation/participate');
+const m = require('../../seedom-crypter/messages');
 
 suite('participate', (state) => {
 
@@ -113,7 +114,7 @@ suite('participate', (state) => {
 
         const { env } = state;
         const participant = state.accountAddresses[2];
-        const message = sh.messageHex();
+        const message = m.random();
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).participate({
@@ -132,7 +133,7 @@ suite('participate', (state) => {
         await cli.progress("waiting for end phase", env.endTime - now, 1);
 
         const participant = state.accountAddresses[2];
-        const message = sh.messageHex();
+        const message = m.random();
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).participate({
@@ -147,7 +148,7 @@ suite('participate', (state) => {
         await begin.run(state);
         
         const { env } = state;
-        const message = sh.messageHex();
+        const message = m.random();
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).participate({
@@ -164,7 +165,7 @@ suite('participate', (state) => {
         const { env } = state;
         const fundraiser = await state.interfaces.fundraiser;
         const participant = state.accountAddresses[2];
-        let message = sh.messageHex();
+        let message = m.random();
 
         await assert.isFulfilled(
             fundraiser.participate({
@@ -179,7 +180,7 @@ suite('participate', (state) => {
         );
 
         // generate a new message just for fun
-        message = sh.messageHex();
+        message = m.random();
 
         await assert.isRejected(
             fundraiser.participate({

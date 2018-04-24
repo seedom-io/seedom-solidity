@@ -3,6 +3,7 @@ const sh = require('../script/helper');
 const parity = require('../chronicle/parity');
 const deploy = require('../script/simulation/deploy');
 const network = require('../chronicle/network');
+const m = require('../../seedom-crypter/messages');
 
 suite('begin', (state) => {
 
@@ -16,8 +17,8 @@ suite('begin', (state) => {
         const actualDeployment = await fundraiser.deployment({ from: env.owner });
         assert.equalIgnoreCase(actualDeployment.cause, env.cause, "cause does not match");
 
-        const causeMessage = sh.messageHex();
-        const causeSecret = sh.hashMessage(causeMessage, env.cause);
+        const causeMessage = m.random();
+        const causeSecret = m.hash(causeMessage, env.cause);
 
         await assert.isFulfilled(
             fundraiser.begin({
@@ -47,8 +48,8 @@ suite('begin', (state) => {
 
         const { env } = state;
         const fundraiser = await state.interfaces.fundraiser;
-        const causeMessage = sh.messageHex();
-        const causeSecret = sh.hashMessage(causeMessage, env.cause);
+        const causeMessage = m.random();
+        const causeSecret = m.hash(causeMessage, env.cause);
 
         await assert.isFulfilled(
             fundraiser.begin({
@@ -69,8 +70,8 @@ suite('begin', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const causeMessage = sh.messageHex();
-        const causeSecret = sh.hashMessage(causeMessage, env.cause);
+        const causeMessage = m.random();
+        const causeSecret = m.hash(causeMessage, env.cause);
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).begin({
@@ -85,8 +86,8 @@ suite('begin', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const causeMessage = sh.messageHex();
-        const causeSecret = sh.hashMessage(causeMessage, env.cause);
+        const causeMessage = m.random();
+        const causeSecret = m.hash(causeMessage, env.cause);
         const participant = state.accountAddresses[2];
 
         await assert.isRejected(

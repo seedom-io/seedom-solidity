@@ -1,6 +1,7 @@
 const ch = require('../../chronicle/helper');
 const h = require('../helper');
 const deploy = require('../deploy');
+const m = require('../../../seedom-crypter/messages');
 
 const txnsPerSecond = 25;
 const defaultDuration = 2;
@@ -14,8 +15,8 @@ module.exports.run = async (state) => {
     env.causeSplit = 600;
     env.participantSplit = 350;
     env.ownerSplit = 50;
-    env.ownerMessage = h.messageHex();
-    env.ownerSecret = h.hashMessage(env.ownerMessage, env.owner);
+    env.ownerMessage = m.random();
+    env.ownerSecret = m.hash(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
     env.participantsCount = state.accountAddresses.length - 2;
     env.entropy = 8;

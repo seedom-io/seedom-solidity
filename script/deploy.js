@@ -1,4 +1,5 @@
 const h = require('./helper');
+const m = require('../../seedom-crypter/messages');
 
 module.exports.options = [
     ['cause', true],
@@ -20,10 +21,10 @@ module.exports.run = async (state) => {
     const { env } = state;
 
     env.ownerMessage = env.ownerMessage ? env.ownerMessage : (
-        env.ownerMessageString ? h.hexMessage(env.ownerMessageString) : h.messageHex()
+        env.ownerMessageString ? m.hex(env.ownerMessageString) : m.random()
     );
     
-    env.ownerSecret = env.ownerSecret ? env.ownerSecret : h.hashMessage(env.ownerMessage, env.owner);
+    env.ownerSecret = env.ownerSecret ? env.ownerSecret : m.hash(env.ownerMessage, env.owner);
 
     // deploy fundraiser
     const fundraiser = await (await state.interfaces.fundraiser).deploy({

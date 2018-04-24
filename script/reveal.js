@@ -1,4 +1,5 @@
 const h = require('./helper');
+const m = require('../../seedom-crypter/messages');
 
 module.exports.options = [
     ['to'],
@@ -10,7 +11,7 @@ module.exports.run = async (state) => {
 
     const { env } = state;
 
-    env.causeMessage = env.causeMessage ? env.causeMessage : h.hexMessage(env.causeMessageString);
+    env.causeMessage = env.causeMessage ? env.causeMessage : m.hex(env.causeMessageString);
 
     const to = env.to ? env.to : 'fundraiser';
 

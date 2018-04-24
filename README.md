@@ -1,9 +1,11 @@
-## Dependencies
+## General dependencies
 - NodeJS v8.6.0+
 - Parity v1.11.0-unstable-0d75d01c8-20180409+ (https://parity.io)
 
+## Seedom dependencies
+- seedom-crypter
+
 ## Getting started
-- Clone this repo
 - Run `npm link` to install and link chronicle
 
 ## Chronicle commands
