@@ -1,5 +1,7 @@
 pragma solidity ^0.4.19;
 
+import "erc20.sol";
+
 contract Fundraiser {
 
     event Beginning(
@@ -454,5 +456,13 @@ contract Fundraiser {
     function destroy() public destructionPhase onlyOwner {
         // destroy this contract and send remaining funds to owner
         selfdestruct(msg.sender);
+    }
+
+    // recover() allows the owner to recover ERC20 tokens sent to this contract, for later
+    // distribution back to their original holders, upon request
+    function recover(address _token) public onlyOwner {
+        ERC20 _erc20 = ERC20(_token);
+        uint256 _balance = _erc20.balanceOf(this);
+        require(_erc20.transfer(deployment._owner, _balance));
     }
 }
