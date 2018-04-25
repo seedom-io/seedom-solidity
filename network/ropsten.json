@@ -3,5 +3,5 @@
     "verify": true,
     "requires": "localhost",
     "gas": "2000000",
-    "gasPrice": "40000000000"
+    "gasPrice": "80000000000"
 }
