@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const dir = require('node-dir');
 
+const LOCALHOST_RPC_URL = 'http://localhost:8545';
 const LOCALHOST_WS_URL = 'ws://localhost:8546';
 const MAX_CONTRACTS_PER_NAME = 6;
 
@@ -16,7 +17,8 @@ module.exports.getNetworks = () => {
     const networkData = fs.readFileSync(networkFile);
     const network = JSON.parse(networkData);
     networks[networkName] = {
-      url: network.url ? network.url : LOCALHOST_WS_URL
+        rpcUrl: network.rpcUrl ? network.rpcUrl : LOCALHOST_RPC_URL,
+        wsUrl: network.wsUrl ? network.wsUrl : LOCALHOST_WS_URL
     };
   }
 

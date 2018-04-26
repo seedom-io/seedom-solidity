@@ -18,6 +18,8 @@
             "discovery": false
         },
         "rpc": {
+            "disable": false,
+            "port": 8545,
             "interface": "all",
             "apis": [ "all" ],
             "hosts": [ "all" ]

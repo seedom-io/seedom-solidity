@@ -41,15 +41,6 @@ const network = async (state) => {
         return;
     }
 
-    // ask user for verification (optional)
-    /*if (state.network.verify) {
-        const question = "verification required!";
-        if (!(await cli.question(question, iAmCompletelySure))) {
-            cli.error("deployment aborted");
-            return;
-        }
-    }*/
-
 };
 
 module.exports.setWeb3 = async (state) => {
@@ -67,12 +58,15 @@ const createWeb3 = (network) => {
 
     let provider;
 
-    if (!('url' in network)) {
+    if ('wsUrl' in network) {
+         // use websocket; the next best thing to IPC
+         provider = new Web3.providers.WebsocketProvider(network.wsUrl);
+    } else if ('rpcUrl' in network) {
+        // use rpc (http)
+        provider = new Web3.providers.HttpProvider(network.rpcUrl);
+    } else {
         // assume local test; create web3 ipc provider (parity)
         provider = createParityProvider(network);
-    } else {
-        // use websocket; the next best thing to IPC (also http(s) is deprecated by web3)
-        provider = new Web3.providers.WebsocketProvider(network.url);
     }
 
     return new Web3(provider);
