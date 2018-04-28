@@ -8,13 +8,13 @@ contract Polling {
         address indexed _caster,
         uint256 indexed _causeIndex,
         bytes32 _causeName,
-        uint256 _causeVoteCount
+        uint256 _voteCount
     );
 
     event CastIndex(
         address indexed _caster,
         uint256 indexed _causeIndex,
-        uint256 _causeVoteCount
+        uint256 _voteCount
     );
 
     struct Cause {
@@ -70,7 +70,7 @@ contract Polling {
         }
     }
 
-    function maxVotes() public view returns (uint256) {
+    function maxVoteCount() public view returns (uint256) {
         // get end time from fundraiser
         var (,,,,,,,,,, _endTime,,,) = fundraiser.deployment();
         if (now >= _endTime) {
@@ -100,7 +100,7 @@ contract Polling {
             _currentCount += _vote._count;
         }
 
-        return (_currentCount + _count) <= maxVotes();
+        return (_currentCount + _count) <= maxVoteCount();
     } 
 
     function voteName(bytes32 _causeName, uint256 _count) public {
@@ -120,7 +120,7 @@ contract Polling {
 
         _causeIndex = _causes.length;
         // cast vote
-        _vote(_causeIndex, _count);
+        _voteIndex(_causeIndex, _count);
         // create cause
         Cause memory _newCause = Cause(_causeName, msg.sender, _count);
         _causes.push(_newCause);
@@ -133,7 +133,7 @@ contract Polling {
         );
     }
 
-    function _vote(uint256 _causeIndex, uint256 _count) public {
+    function _voteIndex(uint256 _causeIndex, uint256 _count) public {
         // get participant votes, ensure new under max count
         Vote[] storage _votes = _participants[msg.sender];
         require(underMaxVoteCount(_votes, _count));
@@ -146,7 +146,7 @@ contract Polling {
         require(_causeIndex < _causes.length);
         
         // cast vote
-        _vote(_causeIndex, _count);
+        _voteIndex(_causeIndex, _count);
         // update cause
         Cause storage _cause = _causes[_causeIndex];
         _cause._voteCount += _count;
@@ -154,7 +154,7 @@ contract Polling {
         CastIndex(
             msg.sender,
             _causeIndex,
-            _cause._voteCount
+            _count
         );
     }
 

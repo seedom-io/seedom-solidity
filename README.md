@@ -25,7 +25,9 @@ run scripts on the chonicle platform
 ```
 chronicle script:deploy \
     --owner 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
+    --ownerWallet 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
     --cause 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
+    --causeWallet 0x0003dFf23dD77e4D74730d7DA3A0a672A5140D34 \
     --causeSplit 500 \
     --participantSplit 500 \
     --ownerSplit 0 \
@@ -34,8 +36,7 @@ chronicle script:deploy \
     --endTime 'in 60 minutes' \
     --expireTime 'in 120 minutes' \
     --destructTime 'in 240 minutes' \
-    --entropy 8 \
-    --maxScore 10
+    --entropy 8
 ```
 ### Begin
 ```

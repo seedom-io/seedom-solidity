@@ -87,6 +87,7 @@ contract Fundraiser {
 
     modifier neverOwner() {
         require(msg.sender != deployment._owner);
+        require(msg.sender != deployment._ownerWallet);
         _;
     }
 
@@ -95,8 +96,9 @@ contract Fundraiser {
         _;
     }
 
-    modifier neverCharity() {
+    modifier neverCause() {
         require(msg.sender != deployment._cause);
+        require(msg.sender != deployment._causeWallet);
         _;
     }
 
@@ -244,7 +246,7 @@ contract Fundraiser {
     }
 
     // participate in this fundraiser by contributing messages and ether for entries
-    function participate(bytes32 _message) public participationPhase neverCharity neverOwner payable {
+    function participate(bytes32 _message) public participationPhase neverCause neverOwner payable {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeSecret != 0x0); // cause has seeded secret
         require(_message != 0x0); // message cannot be zero
@@ -292,7 +294,7 @@ contract Fundraiser {
     }
 
     // fallback function that accepts ether for additional entries after an initial participation
-    function () public participationPhase neverCharity neverOwner payable {
+    function () public participationPhase neverCause neverOwner payable {
         require(!_state._cancelled); // fundraiser not cancelled
         require(_state._causeSecret != 0x0); // cause has seeded secret
 
