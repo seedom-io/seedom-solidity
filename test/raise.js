@@ -76,7 +76,7 @@ suite('raise', (state) => {
         const { env } = state;
         const fundraiser = await state.interfaces.fundraiser;
         
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         // call fallback function
         await assert.isRejected(
             fundraiser.fallback({

@@ -106,7 +106,7 @@ suite('reveal', (state) => {
         await raise.run(state);
 
         const { env } = state;
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
 
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now, 1);

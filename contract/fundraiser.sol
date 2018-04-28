@@ -40,9 +40,11 @@ contract Fundraiser {
 
     struct Deployment {
         address _cause;
+        address _causeWallet;
         uint256 _causeSplit;
         uint256 _participantSplit;
         address _owner;
+        address _ownerWallet;
         uint256 _ownerSplit;
         bytes32 _ownerSecret;
         uint256 _valuePerEntry;
@@ -120,8 +122,10 @@ contract Fundraiser {
 
     function Fundraiser(
         address _cause,
+        address _causeWallet,
         uint256 _causeSplit,
         uint256 _participantSplit,
+        address _ownerWallet,
         uint256 _ownerSplit,
         bytes32 _ownerSecret,
         uint256 _valuePerEntry,
@@ -131,8 +135,10 @@ contract Fundraiser {
         uint256 _entropy
     ) public {
         require(_cause != 0x0);
+        require(_causeWallet != 0x0);
         require(_causeSplit != 0);
         require(_participantSplit != 0);
+        require(_ownerWallet != 0x0);
         require(_causeSplit + _participantSplit + _ownerSplit == 1000);
         require(_ownerSecret != 0x0);
         require(_valuePerEntry != 0);
@@ -144,9 +150,11 @@ contract Fundraiser {
         // set the deployment
         deployment = Deployment(
             _cause,
+            _causeWallet,
             _causeSplit,
             _participantSplit,
             msg.sender,
+            _ownerWallet,
             _ownerSplit,
             _ownerSecret,
             _valuePerEntry,
@@ -421,16 +429,21 @@ contract Fundraiser {
         // check for a balance
         uint256 _balance = balance();
         require (_balance > 0); // can only withdraw a balance
+
+        address _wallet;
         // check for fundraiser ended normally
         if (_state._participant != address(0)) {
 
             // determine split based on sender
             if (msg.sender == deployment._cause) {
                 _state._causeWithdrawn = true;
+                _wallet = deployment._causeWallet;
             } else if (msg.sender == _state._participant) {
                 _state._participantWithdrawn = true;
+                _wallet = _state._participant;
             } else if (msg.sender == deployment._owner) {
                 _state._ownerWithdrawn = true;
+                _wallet = deployment._ownerWallet;
             } else {
                 revert();
             }
@@ -440,6 +453,7 @@ contract Fundraiser {
             // set participant entries to zero to prevent multiple refunds
             Participant storage _participant = participants[msg.sender];
             _participant._entries = 0;
+            _wallet = msg.sender;
 
         } else {
             // no selected and not cancelled
@@ -447,7 +461,7 @@ contract Fundraiser {
         }
 
         // execute the refund if we have one
-        msg.sender.transfer(_balance);
+        _wallet.transfer(_balance);
         // send withdrawal event
         Withdrawal(msg.sender);
     }

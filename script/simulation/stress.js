@@ -10,7 +10,8 @@ module.exports.run = async (state) => {
     const { env } = state;
 
     const distribution = {};
-    for (let i = 2; i < state.accountAddresses.length; i++) {
+    // participants start at index 4, after cause, owner, and their wallets
+    for (let i = 4; i < state.accountAddresses.length; i++) {
         const address = state.accountAddresses[i];
         distribution[address.toLowerCase()] = 0;
     }

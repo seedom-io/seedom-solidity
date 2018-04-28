@@ -113,7 +113,7 @@ suite('participate', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         const message = m.random();
 
         await assert.isRejected(
@@ -132,7 +132,7 @@ suite('participate', (state) => {
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now, 1);
 
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         const message = m.random();
 
         await assert.isRejected(
@@ -164,7 +164,7 @@ suite('participate', (state) => {
         
         const { env } = state;
         const fundraiser = await state.interfaces.fundraiser;
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         let message = m.random();
 
         await assert.isFulfilled(
@@ -195,7 +195,7 @@ suite('participate', (state) => {
         await begin.run(state);
         
         const { env } = state;
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         const message = '0x0000000000000000000000000000000000000000000000000000000000000000';
         
         await assert.isRejected(

@@ -56,7 +56,7 @@ suite('cancel', (state) => {
 
     test("should reject cancel (by participant) after deploy", async () => {
         await deploy.run(state);
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         await testCancelFail(participant);
     });
 
@@ -72,7 +72,7 @@ suite('cancel', (state) => {
 
     test("should reject cancel (by participant) after begin", async () => {
         await begin.run(state);
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         await testCancelFail(participant);
     });
 
@@ -108,7 +108,7 @@ suite('cancel', (state) => {
 
     test("should reject cancel (from participant) after select", async () => {
         await end.run(state);
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
         await testCancelFail(participant);
     });
 

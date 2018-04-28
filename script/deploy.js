@@ -3,17 +3,18 @@ const m = require('../../seedom-crypter/messages');
 
 module.exports.options = [
     ['cause', true],
+    ['causeWallet', true],
     ['causeSplit', true],
     ['participantSplit', true],
     ['owner', true],
+    ['ownerWallet', true],
     ['ownerSplit', true],
     ['ownerMessageString', true],
     ['valuePerEntry', true],
     ['endTime', true],
     ['expireTime', true],
     ['destructTime', true],
-    ['entropy', true],
-    ['maxScore', true]
+    ['entropy', true]
 ];
 
 module.exports.run = async (state) => {
@@ -29,8 +30,10 @@ module.exports.run = async (state) => {
     // deploy fundraiser
     const fundraiser = await (await state.interfaces.fundraiser).deploy({
         cause: env.cause,
+        causeWallet: env.causeWallet,
         causeSplit: env.causeSplit,
         participantSplit: env.participantSplit,
+        ownerWallet: env.ownerWallet,
         ownerSplit: env.ownerSplit,
         ownerSecret: env.ownerSecret,
         valuePerEntry: env.valuePerEntry,
@@ -47,7 +50,6 @@ module.exports.run = async (state) => {
 
     // deploy polling
     const polling = await (await state.interfaces.polling).deploy({
-        maxScore: env.maxScore,
         fundraiser: fundraiser.receipt.contractAddress
     }, {
         from: env.owner

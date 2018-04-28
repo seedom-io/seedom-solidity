@@ -16,10 +16,12 @@ suite('deploy', (state) => {
         const actualDeployment = await fundraiser.deployment({ from: env.owner });
         const deployTimeDifference = actualDeployment.deployTime - now;
 
-        assert.equalIgnoreCase(actualDeployment.owner, env.owner, "owner does not match");
         assert.equalIgnoreCase(actualDeployment.cause, env.cause, "cause does not match");
+        assert.equalIgnoreCase(actualDeployment.causeWallet, env.causeWallet, "cause wallet does not match");
         assert.equal(actualDeployment.causeSplit, env.causeSplit, "cause split does not match");
         assert.equal(actualDeployment.participantSplit, env.participantSplit, "selected split does not match");
+        assert.equalIgnoreCase(actualDeployment.owner, env.owner, "owner does not match");
+        assert.equalIgnoreCase(actualDeployment.ownerWallet, env.ownerWallet, "owner wallet does not match");
         assert.equal(actualDeployment.ownerSplit, env.ownerSplit, "owner split does not match");
         assert.equal(actualDeployment.ownerSecret, env.ownerSecret, "owner secret does not match");
         assert.equal(actualDeployment.valuePerEntry, env.valuePerEntry, "wei per entry does not match");
@@ -49,10 +51,12 @@ suite('deploy', (state) => {
         const { env } = state;
         let fundraiser = await state.interfaces.fundraiser;
         
-        const cause = state.accountAddresses[1];
+        const cause = state.accountAddresses[0];
+        const causeWallet = state.accountAddresses[1];
         const causeSplit = 500;
         const participantSplit = 500;
-        const owner = state.accountAddresses[0];
+        const owner = state.accountAddresses[2];
+        const ownerWallet = state.accountAddresses[3];
         const ownerSplit = 0;
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
@@ -66,8 +70,10 @@ suite('deploy', (state) => {
 
         fundraiser = await fundraiser.deploy({
             cause,
+            causeWallet,
             causeSplit,
             participantSplit,
+            ownerWallet,
             ownerSplit,
             ownerSecret,
             valuePerEntry,
@@ -80,10 +86,12 @@ suite('deploy', (state) => {
         const actualDeployment = await fundraiser.deployment({ from: owner });
         const deployTimeDifference = actualDeployment.deployTime - now;
 
-        assert.equalIgnoreCase(actualDeployment.owner, owner, "owner does not match");
         assert.equalIgnoreCase(actualDeployment.cause, cause, "cause does not match");
+        assert.equalIgnoreCase(actualDeployment.causeWallet, causeWallet, "cause wallet does not match");
         assert.equal(actualDeployment.causeSplit, causeSplit, "cause split does not match");
         assert.equal(actualDeployment.participantSplit, participantSplit, "selected split does not match");
+        assert.equalIgnoreCase(actualDeployment.owner, owner, "owner does not match");
+        assert.equalIgnoreCase(actualDeployment.ownerWallet, ownerWallet, "owner wallet does not match");
         assert.equal(actualDeployment.ownerSplit, ownerSplit, "owner split does not match");
         assert.equal(actualDeployment.ownerSecret, ownerSecret, "owner secret does not match");
         assert.equal(actualDeployment.valuePerEntry, valuePerEntry, "wei per entry does not match");
@@ -97,10 +105,12 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with zeroed data", async () => {
 
-        const cause = state.accountAddresses[1];
+        const cause = state.accountAddresses[0];
+        const causeWallet = state.accountAddresses[1];
         const causeSplit = 600;
         const participantSplit = 350;
-        const owner = state.accountAddresses[0];
+        const owner = state.accountAddresses[2];
+        const ownerWallet = state.accountAddresses[3];
         const ownerSplit = 50;
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
@@ -113,21 +123,23 @@ suite('deploy', (state) => {
         const entropy = 8;
         
         const testData = [
-            {cause: 0, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit: 0, participantSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit, participantSplit: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, expireTime, destructTime, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy: 0}
+            {cause: 0, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet: 0, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit: 0, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit: 0, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, entropy},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy: 0}
         ];
         
         for (let testArgs of testData) {
             cli.json(testArgs);
-            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
+            assert.equal(Object.keys(testArgs).length, 12, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.fundraiser).deploy(testArgs, { from: owner })
             );
@@ -137,8 +149,10 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with splits that don't add to 1000", async () => {
 
-        const cause = state.accountAddresses[1];
-        const owner = state.accountAddresses[0];
+        const cause = state.accountAddresses[0];
+        const causeWallet = state.accountAddresses[1];
+        const owner = state.accountAddresses[2];
+        const ownerWallet = state.accountAddresses[3];
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
         const phaseDuration = 5000;
@@ -150,15 +164,15 @@ suite('deploy', (state) => {
         const entropy = 8;
         
         const testData = [
-            {cause, causeSplit: 20, participantSplit: 30, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit: 200, participantSplit: 350, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit: 601, participantSplit: 200, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeSplit: 6000, participantSplit: 2000, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy}
+            {cause, causeWallet, causeSplit: 20, participantSplit: 30, ownerWallet, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit: 200, participantSplit: 350, ownerWallet, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit: 601, participantSplit: 200, ownerWallet, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
+            {cause, causeWallet, causeSplit: 6000, participantSplit: 2000, ownerWallet, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy}
         ];
         
         for (let testArgs of testData) {
             cli.json(testArgs);
-            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
+            assert.equal(Object.keys(testArgs).length, 12, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.fundraiser).deploy(testArgs, { from: owner })
             );
@@ -168,12 +182,14 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with invalid dates", async () => {
 
-        const cause = state.accountAddresses[1];
+        const cause = state.accountAddresses[0];
+        const causeWallet = state.accountAddresses[1];
         const causeSplit = 600;
         const participantSplit = 350;
         const ownerSplit = 50;
         const valuePerEntry = 1000;
-        const owner = state.accountAddresses[0];
+        const owner = state.accountAddresses[2];
+        const ownerWallet = state.accountAddresses[3];
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
         const phaseDuration = 5000;
@@ -188,39 +204,39 @@ suite('deploy', (state) => {
 
         const testData = [
             // old dates
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: oldEndTime,
                 expireTime,
                 destructTime,
                 entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: oldExpireTime,
                 destructTime,
                 entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: oldDestructTime,
                 entropy},
             // equal dates
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: endTime,
                 destructTime,
                 entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: expireTime,
                 entropy},
             // out of order dates
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: expireTime,
                 expireTime: endTime,
                 destructTime,
                 entropy},
-            {cause, causeSplit, participantSplit, ownerSplit, ownerSecret, valuePerEntry,
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: destructTime,
                 destructTime: expireTime,
@@ -229,7 +245,7 @@ suite('deploy', (state) => {
 
         for (let testArgs of testData) {
             cli.json(testArgs);
-            assert.equal(Object.keys(testArgs).length, 10, "invalid number of test args");
+            assert.equal(Object.keys(testArgs).length, 12, "invalid number of test args");
             await assert.isRejected(
                 (await state.interfaces.fundraiser).deploy(testArgs, { from: owner })
             );

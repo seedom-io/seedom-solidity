@@ -88,7 +88,7 @@ suite('begin', (state) => {
         const { env } = state;
         const causeMessage = m.random();
         const causeSecret = m.hash(causeMessage, env.cause);
-        const participant = state.accountAddresses[2];
+        const participant = state.accountAddresses[4];
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).begin({

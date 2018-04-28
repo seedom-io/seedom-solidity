@@ -135,12 +135,14 @@ suite('withdraw', (state) => {
         // verify owner balance
         const ownerWithdrawGasUsed = ownerWithdrawReceipt.gasUsed;
         const ownerWithdrawTransactionCost = await sh.getTransactionCost(ownerWithdrawGasUsed, state.web3);
-        initialBalances[env.owner] = initialBalances[env.owner].minus(ownerWithdrawTransactionCost).plus(ownerReward);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(ownerWithdrawTransactionCost);
+        initialBalances[env.ownerWallet] = initialBalances[env.ownerWallet].plus(ownerReward);
 
         // verify cause balance
         const causeWithdrawGasUsed = causeWithdrawReceipt.gasUsed;
         const causeWithdrawTransactionCost = await sh.getTransactionCost(causeWithdrawGasUsed, state.web3);
-        initialBalances[env.cause] = initialBalances[env.cause].minus(causeWithdrawTransactionCost).plus(causeReward);
+        initialBalances[env.cause] = initialBalances[env.cause].minus(causeWithdrawTransactionCost);
+        initialBalances[env.causeWallet] = initialBalances[env.causeWallet].plus(causeReward);
 
         // verify selected balance
         const selectedWithdrawGasUsed = selectedWithdrawReceipt.gasUsed;

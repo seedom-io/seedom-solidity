@@ -9,18 +9,20 @@ const defaultDuration = 2;
 module.exports.run = async (state) => {
 
     const { env } = state;
-
-    env.owner = state.accountAddresses[0];
-    env.cause = state.accountAddresses[1];
+    
+    env.cause = state.accountAddresses[0];
+    env.causeWallet = state.accountAddresses[1];
     env.causeSplit = 600;
     env.participantSplit = 350;
+    env.owner = state.accountAddresses[2];
+    env.ownerWallet = state.accountAddresses[3];
     env.ownerSplit = 50;
     env.ownerMessage = m.random();
     env.ownerSecret = m.hash(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
-    env.participantsCount = state.accountAddresses.length - 2;
+    // owner, ownerWallet, cause, causeWallet == 4 total
+    env.participantsCount = state.accountAddresses.length - 4;
     env.entropy = 8;
-    env.maxScore = 10;
 
     const now = ch.timestamp();
     let participationDuration = Math.floor(env.participantsCount / txnsPerSecond);
