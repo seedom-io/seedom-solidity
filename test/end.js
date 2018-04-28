@@ -79,4 +79,23 @@ suite('end', (state) => {
 
     });
 
+    test("should reject after stale reveal (past 256 blocks)", async () => {
+
+        await reveal.run(state);
+
+        const { env } = state;
+        const fundraiser = await state.interfaces.fundraiser;
+
+        for (let i = 0; i < 256; i++) {
+            (await state.interfaces.fundraiser).balance({ from: env.owner, transact: true });
+        }
+
+        await assert.isRejected(
+            fundraiser.end({
+                message: env.ownerMessage
+            }, { from: env.owner, transact: true })
+        );
+
+    });
+
 });
