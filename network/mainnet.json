@@ -1,6 +1,8 @@
 {
     "rpcUrl": "https://manager1.seedom.io:8549",
     "wsUrl": "wss://manager1.seedom.io:8550",
+    "proxyRpcUrl": "https://manager1.seedom.io:8549",
+    "proxyWsUrl": "wss://manager1.seedom.io:8550",
     "verify": true,
     "requires": "localhost",
     "gas": "2000000",

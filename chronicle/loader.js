@@ -16,9 +16,18 @@ module.exports.getNetworks = () => {
     const networkName = path.basename(networkFile, '.json');
     const networkData = fs.readFileSync(networkFile);
     const network = JSON.parse(networkData);
+    // check for proxy url, then standard url, then default to localhost
     networks[networkName] = {
-        rpcUrl: network.rpcUrl ? network.rpcUrl : LOCALHOST_RPC_URL,
-        wsUrl: network.wsUrl ? network.wsUrl : LOCALHOST_WS_URL
+        rpcUrl: network.proxyRpcUrl
+            ? network.proxyRpcUrl
+            : (network.rpcUrl
+                ? network.rpcUrl
+                : LOCALHOST_RPC_URL),
+        wsUrl: network.proxyWsUrl
+            ? network.proxyWsUrl
+            : (network.wsUrl
+                ? network.wsUrl
+                : LOCALHOST_WS_URL)
     };
   }
 
