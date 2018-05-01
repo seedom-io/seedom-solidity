@@ -1,6 +1,6 @@
 {
-    "rpcUrl": "https://manager1.seedom.io:8549",
-    "wsUrl": "wss://manager1.seedom.io:8550",
+    "rpcUrl": "https://storage2.seedom.io:8545",
+    "wsUrl": "wss://storage2.seedom.io:8546",
     "proxyRpcUrl": "https://manager1.seedom.io:8549",
     "proxyWsUrl": "wss://manager1.seedom.io:8550",
     "verify": true,

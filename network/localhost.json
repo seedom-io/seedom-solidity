@@ -22,7 +22,8 @@
             "port": 8545,
             "interface": "all",
             "apis": [ "all" ],
-            "hosts": [ "all" ]
+            "hosts": [ "all" ],
+            "cors": ["all"]
         },
         "websockets": {
             "disable": false,
