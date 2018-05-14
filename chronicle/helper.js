@@ -155,3 +155,7 @@ module.exports.calculateHash = (data) => {
     }
     return hasher.hex();
 };
+
+module.exports.zero32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+module.exports.zero20 = '0x0000000000000000000000000000000000000000';

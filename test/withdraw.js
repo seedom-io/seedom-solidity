@@ -83,12 +83,12 @@ suite('withdraw', (state) => {
         // reveal
         const revealGasUsed = env.revealReceipt.gasUsed;
         const revealTransactionCost = await sh.getTransactionCost(revealGasUsed, state.web3);
-        initialBalances[env.cause] = initialBalances[env.cause].minus(revealTransactionCost);
+        initialBalances[env.owner] = initialBalances[env.owner].minus(revealTransactionCost);
 
         // end
         const endGasUsed = env.endReceipt.gasUsed;
         const endTransactionCost = await sh.getTransactionCost(endGasUsed, state.web3);
-        initialBalances[env.owner] = initialBalances[env.owner].minus(endTransactionCost);
+        initialBalances[env.cause] = initialBalances[env.cause].minus(endTransactionCost);
         
         // verify all balances are expected
         for (let accountAddress of state.accountAddresses) {

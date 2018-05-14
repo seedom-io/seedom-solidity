@@ -181,7 +181,9 @@ contract Fundraiser {
         bool _ownerWithdrawn,
         bool _cancelled,
         uint256 _participants,
-        uint256 _entries
+        uint256 _entries,
+        uint256 _revealBlockNumber,
+        uint256 _revealBlockHash
     ) {
         _causeSecret = _state._causeSecret;
         _causeMessage = _state._causeMessage;
@@ -194,6 +196,8 @@ contract Fundraiser {
         _cancelled = _state._cancelled;
         _participants = _state._participants;
         _entries = _state._entries;
+        _revealBlockNumber = _state._revealBlockNumber;
+        _revealBlockHash = _state._revealBlockHash;
     }
 
     // returns the balance of a cause, selected participant, owner, or participant (refund)
@@ -308,15 +312,15 @@ contract Fundraiser {
         Raise(msg.sender, _entries, _refund);
     }
 
-    // called by the cause to reveal their message after the end time but before the end() function
-    function reveal(bytes32 _message) public recapPhase onlyCause {
+    // called by the owner to reveal their message after the end time but before the end() function
+    function reveal(bytes32 _message) public recapPhase onlyOwner {
         require(!_state._cancelled); // fundraiser not cancelled
-        require(_state._causeMessage == 0x0); // cannot have revealed already
+        require(_state._ownerMessage == 0x0); // cannot have revealed already
         require(_state._revealBlockNumber == 0); // block number of reveal should not be set
-        require(_decode(_state._causeSecret, _message)); // check for valid message
+        require(_decode(deployment._ownerSecret, _message)); // check for valid message
 
-        // save revealed cause message
-        _state._causeMessage = _message;
+        // save owner cause message
+        _state._ownerMessage = _message;
         // save reveal block number
         _state._revealBlockNumber = block.number;
 
@@ -329,21 +333,21 @@ contract Fundraiser {
         return _secret == keccak256(_message, msg.sender);
     }
 
-    // ends this fundraiser, selects a participant to reward, and allocates funds for the cause, the
-    // selected participant, and the contract owner
-    function end(bytes32 _message) public recapPhase onlyOwner {
+    // called by the cause to end this fundraiser, select a participant to reward, and allocate
+    // funds for the cause, the selected participant, and the contract owner
+    function end(bytes32 _message) public recapPhase onlyCause {
         require(!_state._cancelled); // fundraiser not cancelled
-        require(_state._causeMessage != 0x0); // cause must have revealed
+        require(_state._ownerMessage != 0x0); // owner must have revealed
         require(_state._revealBlockNumber != 0); // reveal block number must be set
-        require(_state._ownerMessage == 0x0); // cannot have ended already
-        require(_decode(deployment._ownerSecret, _message)); // check for valid message
+        require(_state._causeMessage == 0x0); // cannot have ended already
+        require(_decode(_state._causeSecret, _message)); // check for valid message
         require(block.number > _state._revealBlockNumber); // verify reveal has been mined
 
-        // get the (cause) reveal blockhash and ensure within 256 blocks (non-zero)
+        // get the (owner) reveal blockhash and ensure within 256 blocks (non-zero)
         _state._revealBlockHash = uint256(block.blockhash(_state._revealBlockNumber));
         require(_state._revealBlockHash != 0);
-        // save revealed owner message
-        _state._ownerMessage = _message;
+        // save revealed cause message
+        _state._causeMessage = _message;
 
         bytes32 _randomNumber;
         address _participant;
@@ -353,7 +357,7 @@ contract Fundraiser {
             // calculate the next random
             _randomNumber = keccak256(
                 _message,
-                _state._causeMessage,
+                _state._ownerMessage,
                 _state._revealBlockHash,
                 _participantMessage
             );
@@ -370,8 +374,8 @@ contract Fundraiser {
         Selection(
             _state._participant,
             _participantMessage,
-            _state._causeMessage,
-            _message
+            _message,
+            _state._ownerMessage
         );
     }
 

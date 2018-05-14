@@ -9,9 +9,13 @@ const interface = require('./interface');
 const parity = require('./parity');
 const test = require('./test');
 const wtfnode = require('wtfnode');
+const events = require('events');
 
 // print out anything hanging after ctrl-c
 wtfnode.init();
+
+// increase max default number of event emitter listeners
+events.EventEmitter.defaultMaxListeners = 20;
 
 // don't judge an app by it's logo
 cli.logo('chronicle');

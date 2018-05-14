@@ -77,7 +77,7 @@ contract Polling {
             return 0;
         }
         // ensure fundraiser not cancelled
-        var (,,,,,,,, _cancelled,,) = fundraiser.state();
+        var (,,,,,,,, _cancelled,,,,) = fundraiser.state();
         if (_cancelled) {
             return 0;
         }

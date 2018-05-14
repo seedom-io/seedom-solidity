@@ -3,21 +3,21 @@ const m = require('../../seedom-crypter/messages');
 
 module.exports.options = [
     ['to'],
-    ['cause', true],
-    ['causeMessageString']
+    ['owner', true],
+    ['ownerMessageString']
 ];
 
 module.exports.run = async (state) => {
 
     const { env } = state;
 
-    env.causeMessage = env.causeMessage ? env.causeMessage : m.hex(env.causeMessageString);
+    env.ownerMessage = env.ownerMessage ? env.ownerMessage : m.hex(env.ownerMessageString);
 
     const to = env.to ? env.to : 'fundraiser';
 
-    // only the cause can reveal their secret message
+    // only the owner can reveal their secret message
     env.revealReceipt = await (await state.interfaces[to]).reveal({
-        message: env.causeMessage
-    }, { from: env.cause, transact: true });
+        message: env.ownerMessage
+    }, { from: env.owner, transact: true });
 
 }

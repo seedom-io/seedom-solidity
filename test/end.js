@@ -6,7 +6,7 @@ const cli = require('../chronicle/cli');
 
 suite('end', (state) => {
 
-    test("should select a participant after cause reveal and owner end", async () => {
+    test("should select a participant after owner reveal and cause end", async () => {
 
         await end.run(state);
 
@@ -16,15 +16,17 @@ suite('end', (state) => {
 
         assert.equal(actualState.causeSecret, env.causeSecret, "cause secret does not match");
         assert.equalIgnoreCase(actualState.causeMessage, env.causeMessage, "cause message does not match");
-        assert.isNotOk(actualState.causeWithdrawn, 0, "cause not withdrawn");
-        assert.notEqual(actualState.participant, 0, "selected zero");
-        assert.notEqual(actualState.participantMessage, 0, "selected message zero");
-        assert.isNotOk(actualState.participantWithdrawn, 0, "cause not withdrawn");
+        assert.isNotOk(actualState.causeWithdrawn, "cause not withdrawn");
+        assert.isOk(actualState.participant, "selected zero");
+        assert.isOk(actualState.participantMessage, "selected message zero");
+        assert.isNotOk(actualState.participantWithdrawn, "participant not withdrawn");
         assert.equalIgnoreCase(actualState.ownerMessage, env.ownerMessage, "owner message does not match");
-        assert.isNotOk(actualState.ownerWithdrawn, 0, "owner not withdrawn");
+        assert.isNotOk(actualState.ownerWithdrawn, "owner not withdrawn");
         assert.isNotOk(actualState.cancelled, "not cancelled");
         assert.equal(actualState.participants, env.participantsCount, "total participants incorrect");
         assert.equal(actualState.entries, env.participantsCount * 20, "total entries incorrect");
+        assert.isAbove(Number(actualState.revealBlockNumber), 0, "reveal block number should be > 0");
+        assert.isOk(Number(actualState.revealBlockHash), "reveal block hash should not be zero");
 
         let foundSelected = false;
         let participantMessage;
@@ -42,7 +44,7 @@ suite('end', (state) => {
 
     });
 
-    test("should reject multiple ends from owner after cause reveal", async () => {
+    test("should reject multiple ends from cause after owner reveal", async () => {
         
         await reveal.run(state);
 
@@ -51,19 +53,19 @@ suite('end', (state) => {
 
         await assert.isFulfilled(
             fundraiser.end({
-                message: env.ownerMessage
-            }, { from: env.owner, transact: true })
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
         await assert.isRejected(
             fundraiser.end({
-                message: env.ownerMessage
-            }, { from: env.owner, transact: true })
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
     });
 
-    test("should reject end before cause reveal", async () => {
+    test("should reject end before owner reveal", async () => {
         
         await raise.run(state);
 
@@ -73,8 +75,8 @@ suite('end', (state) => {
 
         await assert.isRejected(
             (await state.interfaces.fundraiser).end({
-                message: env.ownerMessage
-            }, { from: env.owner, transact: true })
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
     });
@@ -92,8 +94,8 @@ suite('end', (state) => {
 
         await assert.isRejected(
             fundraiser.end({
-                message: env.ownerMessage
-            }, { from: env.owner, transact: true })
+                message: env.causeMessage
+            }, { from: env.cause, transact: true })
         );
 
     });
