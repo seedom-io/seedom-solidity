@@ -1,6 +1,6 @@
 const util = require('util');
 const Web3 = require('web3');
-const Web3EthContract = require('../node_modules/web3/node_modules/web3-eth-contract');
+const Web3EthContract = require('../node_modules/web3-eth-contract');
 const path = require('path');
 const fs = require('mz/fs');
 const h = require('./helper');

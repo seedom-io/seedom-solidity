@@ -1,4 +1,6 @@
 const Web3 = require('web3');
+const WebsocketProvider = require('./ws');
+const https = require('https');
 const cli = require('./cli');
 const net = require('net');
 const h = require('./helper');
@@ -45,7 +47,7 @@ const network = async (state) => {
 
 module.exports.setWeb3 = async (state) => {
 
-    state.web3 = createWeb3(state.network);
+    state.web3 = await createWeb3(state.network);
     if (!(await testWeb3(state.web3))) {
         return false;
     }
@@ -54,13 +56,13 @@ module.exports.setWeb3 = async (state) => {
 
 }
 
-const createWeb3 = (network) => {
+const createWeb3 = async (network) => {
 
     let provider;
 
     if ('wsUrl' in network) {
-         // use websocket; the next best thing to IPC
-         provider = new Web3.providers.WebsocketProvider(network.wsUrl);
+        // use websocket; the next best thing to IPC
+        provider = await createWsProvider(network);
     } else if ('rpcUrl' in network) {
         // use rpc (http)
         provider = new Web3.providers.HttpProvider(network.rpcUrl);
@@ -71,11 +73,31 @@ const createWeb3 = (network) => {
 
     return new Web3(provider);
 
-}
+};
+
+const createWsProvider = async (network) => {
+
+    let clientConfig = undefined;
+
+    if ('ca' in network) {
+        clientConfig = {
+            tlsOptions: {
+                ca: await h.readFile(network.ca),
+                cert: await h.readFile(network.cert),
+                key: await h.readFile(network.key),
+                rejectUnauthorized: true,
+                requestCert: true
+            }
+        }
+    };
+
+    return new WebsocketProvider(network.wsUrl, clientConfig);
+
+};
 
 const createParityProvider = (network) => {
     return new Web3.providers.IpcProvider(h.parityIpcFile, net);
-}
+};
 
 const testWeb3 = async (web3) => {
     try {
@@ -83,7 +105,7 @@ const testWeb3 = async (web3) => {
     } catch (error) {
         return false;
     }
-}
+};
 
 module.exports.destroyWeb3 = (state) => {
     

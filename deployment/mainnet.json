@@ -1,10 +1,18 @@
 {
     "addresses": {
         "0x5f78a0BB08C7679729bA1816BA1A050E3907b348": "fundraiser",
-        "0xd665978a287bd8Cd929993E5602e161bA3dD181a": "polling"
+        "0xd665978a287bd8Cd929993E5602e161bA3dD181a": "polling",
+        "0x42daaa8053E71aF3040a51EF39079fd19C31C26e": "fundraiser",
+        "0x27cA59C2f4dF59f294F15dc13A0CA06E666516a6": "polling"
     },
     "releases": {
         "fundraiser": [
+            {
+                "deployed": 1526339379,
+                "address": "0x42daaa8053E71aF3040a51EF39079fd19C31C26e",
+                "transactionHash": "0xf893db15f884a4fadfdffc7305fa575bc35315e1efe7653744476a5f06ae091d",
+                "hash": "4b3b4c84febf2d7ea95fe1d1e0c525f712e3979d48e5b44b8a9e0883c41ff770"
+            },
             {
                 "deployed": 1525118585,
                 "address": "0x5f78a0BB08C7679729bA1816BA1A050E3907b348",
@@ -13,6 +21,12 @@
             }
         ],
         "polling": [
+            {
+                "deployed": 1526339404,
+                "address": "0x27cA59C2f4dF59f294F15dc13A0CA06E666516a6",
+                "transactionHash": "0x68de7f7d798875d61a47b3cd749f35b1fecae11d6e6da7b4788f331471334476",
+                "hash": "125192c9eeb20b91af65816fcf09d39e6e1910958949020df73033bfcbbbcccc"
+            },
             {
                 "deployed": 1525118922,
                 "address": "0xd665978a287bd8Cd929993E5602e161bA3dD181a",

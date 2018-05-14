@@ -22,7 +22,7 @@ contract Fundraiser {
     );
 
     event Revelation(
-        bytes32 _causeMessage
+        bytes32 _ownerMessage
     );
 
     event Selection(
