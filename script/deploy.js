@@ -14,7 +14,7 @@ module.exports.options = [
     ['endTime', true],
     ['expireTime', true],
     ['destructTime', true],
-    ['entropy', true]
+    ['goal', true]
 ];
 
 module.exports.run = async (state) => {
@@ -40,7 +40,7 @@ module.exports.run = async (state) => {
         endTime: env.endTime,
         expireTime: env.expireTime,
         destructTime: env.destructTime,
-        entropy: env.entropy
+        goal: env.goal
     }, {
         from: env.owner
     });

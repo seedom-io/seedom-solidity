@@ -1,8 +1,10 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 
 import "erc20.sol";
 
 contract Fundraiser {
+
+    uint256 constant entropy = 8;
 
     event Beginning(
         bytes32 _causeSecret
@@ -52,7 +54,7 @@ contract Fundraiser {
         uint256 _endTime;
         uint256 _expireTime;
         uint256 _destructTime;
-        uint256 _entropy;
+        uint256 _goal;
     }
 
     struct State {
@@ -134,7 +136,7 @@ contract Fundraiser {
         uint256 _endTime,
         uint256 _expireTime,
         uint256 _destructTime,
-        uint256 _entropy
+        uint256 _goal
     ) public {
         require(_cause != 0x0);
         require(_causeWallet != 0x0);
@@ -147,7 +149,6 @@ contract Fundraiser {
         require(_endTime > now); // participation phase
         require(_expireTime > _endTime); // end phase
         require(_destructTime > _expireTime); // destruct phase
-        require(_entropy > 0);
 
         // set the deployment
         deployment = Deployment(
@@ -164,7 +165,7 @@ contract Fundraiser {
             _endTime,
             _expireTime,
             _destructTime,
-            _entropy
+            _goal
         );
 
     }
@@ -353,7 +354,7 @@ contract Fundraiser {
         address _participant;
         bytes32 _participantMessage;
         // add additional entropy to the random from participant messages
-        for (uint256 i = 0; i < deployment._entropy; i++) {
+        for (uint256 i = 0; i < entropy; i++) {
             // calculate the next random
             _randomNumber = keccak256(
                 _message,

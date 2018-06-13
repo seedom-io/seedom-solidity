@@ -22,7 +22,7 @@ module.exports.run = async (state) => {
     env.valuePerEntry = 1000;
     // owner, ownerWallet, cause, causeWallet == 4 total
     env.participantsCount = state.accountAddresses.length - 4;
-    env.entropy = 8;
+    env.goal = 10000;
 
     const now = ch.timestamp();
     let participationDuration = Math.floor(env.participantsCount / txnsPerSecond);

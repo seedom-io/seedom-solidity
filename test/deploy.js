@@ -29,7 +29,7 @@ suite('deploy', (state) => {
         assert.equal(actualDeployment.endTime, env.endTime, "end time does not match");
         assert.equal(actualDeployment.expireTime, env.expireTime, "expire time does not match");
         assert.equal(actualDeployment.destructTime, env.destructTime, "destruct time does not match");
-        assert.equal(actualDeployment.entropy, env.entropy, "entropy does not match");
+        assert.equal(actualDeployment.goal, env.goal, "goal does not match");
 
         const actualState = await fundraiser.state({ from: env.owner });
 
@@ -66,7 +66,7 @@ suite('deploy', (state) => {
         const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
-        const entropy = 8;
+        const goal = 10000;
 
         fundraiser = await fundraiser.deploy({
             cause,
@@ -80,7 +80,7 @@ suite('deploy', (state) => {
             endTime,
             expireTime,
             destructTime,
-            entropy
+            goal
         }, { from: owner });
 
         const actualDeployment = await fundraiser.deployment({ from: owner });
@@ -99,7 +99,7 @@ suite('deploy', (state) => {
         assert.equal(actualDeployment.endTime, endTime, "end time does not match");
         assert.equal(actualDeployment.expireTime, expireTime, "expire time does not match");
         assert.equal(actualDeployment.destructTime, destructTime, "destruct time does not match");
-        assert.equal(actualDeployment.entropy, entropy, "entropy does not match");
+        assert.equal(actualDeployment.goal, goal, "goal does not match");
 
     });
 
@@ -120,21 +120,20 @@ suite('deploy', (state) => {
         const endTime = now + phaseDuration;
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
-        const entropy = 8;
+        const goal = 10000;
         
         const testData = [
-            {cause: 0, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet: 0, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit: 0, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit: 0, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, entropy},
-            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy: 0}
+            {cause: 0, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet: 0, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit: 0, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit: 0, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet: 0, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit: 0, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret: 0, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry: 0, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime: 0, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime: 0, destructTime, goal},
+            {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry, endTime, expireTime, destructTime: 0, goal}
         ];
         
         for (let testArgs of testData) {
@@ -161,13 +160,13 @@ suite('deploy', (state) => {
         const expireTime = endTime + phaseDuration;
         const destructTime = expireTime + phaseDuration;
         const valuePerEntry = 1000;
-        const entropy = 8;
+        const goal = 10000;
         
         const testData = [
-            {cause, causeWallet, causeSplit: 20, participantSplit: 30, ownerWallet, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit: 200, participantSplit: 350, ownerWallet, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit: 601, participantSplit: 200, ownerWallet, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy},
-            {cause, causeWallet, causeSplit: 6000, participantSplit: 2000, ownerWallet, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, entropy}
+            {cause, causeWallet, causeSplit: 20, participantSplit: 30, ownerWallet, ownerSplit: 50, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit: 200, participantSplit: 350, ownerWallet, ownerSplit: 500, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit: 601, participantSplit: 200, ownerWallet, ownerSplit: 200, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal},
+            {cause, causeWallet, causeSplit: 6000, participantSplit: 2000, ownerWallet, ownerSplit: 2000, ownerSecret, valuePerEntry, endTime, expireTime, destructTime, goal}
         ];
         
         for (let testArgs of testData) {
@@ -200,7 +199,7 @@ suite('deploy', (state) => {
         const oldEndTime = now - phaseDuration * 3;
         const oldExpireTime = oldEndTime + phaseDuration;
         const oldDestructTime = oldExpireTime + phaseDuration;
-        const entropy = 8;
+        const goal = 10000;
 
         const testData = [
             // old dates
@@ -208,39 +207,39 @@ suite('deploy', (state) => {
                 endTime: oldEndTime,
                 expireTime,
                 destructTime,
-                entropy},
+                goal},
             {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: oldExpireTime,
                 destructTime,
-                entropy},
+                goal},
             {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: oldDestructTime,
-                entropy},
+                goal},
             // equal dates
             {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: endTime,
                 destructTime,
-                entropy},
+                goal},
             {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime,
                 destructTime: expireTime,
-                entropy},
+                goal},
             // out of order dates
             {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime: expireTime,
                 expireTime: endTime,
                 destructTime,
-                entropy},
+                goal},
             {cause, causeWallet, causeSplit, participantSplit, ownerWallet, ownerSplit, ownerSecret, valuePerEntry,
                 endTime,
                 expireTime: destructTime,
                 destructTime: expireTime,
-                entropy}
+                goal},
         ];
 
         for (let testArgs of testData) {
