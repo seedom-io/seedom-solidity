@@ -36,7 +36,7 @@ chronicle script:deploy \
     --endTime 'in 60 minutes' \
     --expireTime 'in 120 minutes' \
     --destructTime 'in 240 minutes' \
-    --entropy 8
+    --goal 1000000000000000000
 ```
 ### Begin
 ```
