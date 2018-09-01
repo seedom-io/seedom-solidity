@@ -5,10 +5,18 @@
         "0x42daaa8053E71aF3040a51EF39079fd19C31C26e": "fundraiser",
         "0x27cA59C2f4dF59f294F15dc13A0CA06E666516a6": "polling",
         "0x98296fa6377a8fb9124a1dd89E985e1Dc2912c60": "fundraiser",
-        "0x31De7b82045c4C10136d21257b136dDa68b87c1d": "polling"
+        "0x31De7b82045c4C10136d21257b136dDa68b87c1d": "polling",
+        "0x8a78B7A001e5D879B721D0693280F44159D3236E": "fundraiser",
+        "0xa863f01cfB67c6f3c833bd5956413b54046bBc77": "polling"
     },
     "releases": {
         "fundraiser": [
+            {
+                "deployed": 1535824820,
+                "address": "0x8a78B7A001e5D879B721D0693280F44159D3236E",
+                "transactionHash": "0x2bc332c21b4b3b4ddfa1a48e6f795fc28d7534bba617d225e7e81ad0e35d181d",
+                "hash": "e3d7284a234fce6b549b02f05a024c0befe54ba5f0970ff3b50dd04305c46308"
+            },
             {
                 "deployed": 1528937359,
                 "address": "0x98296fa6377a8fb9124a1dd89E985e1Dc2912c60",
@@ -29,6 +37,12 @@
             }
         ],
         "polling": [
+            {
+                "deployed": 1535824851,
+                "address": "0xa863f01cfB67c6f3c833bd5956413b54046bBc77",
+                "transactionHash": "0x49d83b2db3004bd099374261c5fd6680a92c3d1c5563958c41ac168e744d4574",
+                "hash": "be345e03e0f8434a54130ac2ef3daab4f86f4af42b3fd11568400d581eea2e54"
+            },
             {
                 "deployed": 1528937491,
                 "address": "0x31De7b82045c4C10136d21257b136dDa68b87c1d",
