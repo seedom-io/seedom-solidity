@@ -112,7 +112,7 @@ module.exports.json = (obj, text) => {
 
 module.exports.question = async (question) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    question = tab + tab + ls.warning + tab + question;
+    question = tab + tab + ls.warning + tab + question + ' ';
     const response = await rl.question(question);
     rl.close();
     return response;
