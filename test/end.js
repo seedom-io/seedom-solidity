@@ -6,7 +6,7 @@ const cli = require('../chronicle/cli');
 
 suite('end', (state) => {
 
-    test("should select a participant after owner reveal and cause end", async () => {
+    /*test("should select a participant after owner reveal and cause end", async () => {
 
         await end.run(state);
 
@@ -79,7 +79,7 @@ suite('end', (state) => {
             }, { from: env.cause, transact: true })
         );
 
-    });
+    });*/
 
     test("should reject after stale reveal (past 256 blocks)", async () => {
 

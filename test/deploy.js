@@ -51,12 +51,12 @@ suite('deploy', (state) => {
         const { env } = state;
         let fundraiser = await state.interfaces.fundraiser;
         
-        const cause = state.accountAddresses[0];
-        const causeWallet = state.accountAddresses[1];
+        const cause = state.network.keys[0].address;
+        const causeWallet = state.network.keys[1].address;
         const causeSplit = 500;
         const participantSplit = 500;
-        const owner = state.accountAddresses[2];
-        const ownerWallet = state.accountAddresses[3];
+        const owner = state.network.keys[2].address;
+        const ownerWallet = state.network.keys[3].address;
         const ownerSplit = 0;
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
@@ -105,12 +105,12 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with zeroed data", async () => {
 
-        const cause = state.accountAddresses[0];
-        const causeWallet = state.accountAddresses[1];
+        const cause = state.network.keys[0].address;
+        const causeWallet = state.network.keys[1].address;
         const causeSplit = 600;
         const participantSplit = 350;
-        const owner = state.accountAddresses[2];
-        const ownerWallet = state.accountAddresses[3];
+        const owner = state.network.keys[2].address;
+        const ownerWallet = state.network.keys[3].address;
         const ownerSplit = 50;
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
@@ -148,10 +148,10 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with splits that don't add to 1000", async () => {
 
-        const cause = state.accountAddresses[0];
-        const causeWallet = state.accountAddresses[1];
-        const owner = state.accountAddresses[2];
-        const ownerWallet = state.accountAddresses[3];
+        const cause = state.network.keys[0].address;
+        const causeWallet = state.network.keys[1].address;
+        const owner = state.network.keys[2].address;
+        const ownerWallet = state.network.keys[3].address;
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
         const phaseDuration = 5000;
@@ -181,14 +181,14 @@ suite('deploy', (state) => {
 
     test("should fail to deploy with invalid dates", async () => {
 
-        const cause = state.accountAddresses[0];
-        const causeWallet = state.accountAddresses[1];
+        const cause = state.network.keys[0].address;
+        const causeWallet = state.network.keys[1].address;
         const causeSplit = 600;
         const participantSplit = 350;
         const ownerSplit = 50;
         const valuePerEntry = 1000;
-        const owner = state.accountAddresses[2];
-        const ownerWallet = state.accountAddresses[3];
+        const owner = state.network.keys[2].address;
+        const ownerWallet = state.network.keys[3].address;
         const ownerMessage = m.random();
         const ownerSecret = m.hash(ownerMessage, owner);
         const phaseDuration = 5000;

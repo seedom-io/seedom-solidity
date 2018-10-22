@@ -43,8 +43,8 @@ suite('withdraw', (state) => {
 
         const initialBalances = {};
         // get all initial balances
-        for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        for (let key of state.network.keys) {
+            initialBalances[key.address] = await sh.getBalance(key.address, state.web3);
         }
 
         await end.run(state);
@@ -91,9 +91,9 @@ suite('withdraw', (state) => {
         initialBalances[env.cause] = initialBalances[env.cause].minus(endTransactionCost);
         
         // verify all balances are expected
-        for (let accountAddress of state.accountAddresses) {
-            const finalBalance = await sh.getBalance(accountAddress, state.web3);
-            assert.equal(finalBalance.toString(), initialBalances[accountAddress].toString(), "pre-withdraw balance not expected for " + accountAddress);
+        for (let key of state.network.keys) {
+            const finalBalance = await sh.getBalance(key.address, state.web3);
+            assert.equal(finalBalance.toString(), initialBalances[key.address].toString(), "pre-withdraw balance not expected for " + key.address);
         }
 
     });
@@ -104,8 +104,8 @@ suite('withdraw', (state) => {
 
         const initialBalances = {};
         // get all initial balances
-        for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        for (let key of state.network.keys) {
+            initialBalances[key.address] = await sh.getBalance(key.address, state.web3);
         }
 
         const { env } = state;
@@ -151,9 +151,9 @@ suite('withdraw', (state) => {
         initialBalances[selected] = initialBalances[selected].minus(selectedWithdrawTransactionCost).plus(selectedReward);
 
         // verify all balances are expected
-        for (let accountAddress of state.accountAddresses) {
-            const finalBalance = await sh.getBalance(accountAddress, state.web3);
-            assert.equal(finalBalance.toString(), initialBalances[accountAddress].toString(), "withdraw balance not expected for " + accountAddress);
+        for (let key of state.network.keys) {
+            const finalBalance = await sh.getBalance(key.address, state.web3);
+            assert.equal(finalBalance.toString(), initialBalances[key.address].toString(), "withdraw balance not expected for " + key.address);
         }
 
     });
@@ -162,8 +162,8 @@ suite('withdraw', (state) => {
         
         const initialBalances = {};
         // get all initial balances
-        for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        for (let key of state.network.keys) {
+            initialBalances[key.address] = await sh.getBalance(key.address, state.web3);
         }
 
         const { env } = state;
@@ -207,9 +207,9 @@ suite('withdraw', (state) => {
         }
 
         // verify all balances are expected
-        for (let accountAddress of state.accountAddresses) {
-            const finalBalance = await sh.getBalance(accountAddress, state.web3);
-            assert.equal(finalBalance.toString(), initialBalances[accountAddress].toString(), "withdraw balance not expected for " + accountAddress);
+        for (let key of state.network.keys) {
+            const finalBalance = await sh.getBalance(key.address, state.web3);
+            assert.equal(finalBalance.toString(), initialBalances[key.address].toString(), "withdraw balance not expected for " + key.address);
         }
 
     };

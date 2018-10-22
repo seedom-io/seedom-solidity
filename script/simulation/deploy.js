@@ -10,18 +10,18 @@ module.exports.run = async (state) => {
 
     const { env } = state;
     
-    env.cause = state.accountAddresses[0];
-    env.causeWallet = state.accountAddresses[1];
+    env.cause = state.network.keys[0].address;
+    env.causeWallet = state.network.keys[1].address;
     env.causeSplit = 600;
     env.participantSplit = 350;
-    env.owner = state.accountAddresses[2];
-    env.ownerWallet = state.accountAddresses[3];
+    env.owner = state.network.keys[2].address;
+    env.ownerWallet = state.network.keys[3].address;
     env.ownerSplit = 50;
     env.ownerMessage = m.random();
     env.ownerSecret = m.hash(env.ownerMessage, env.owner);
     env.valuePerEntry = 1000;
     // owner, ownerWallet, cause, causeWallet == 4 total
-    env.participantsCount = state.accountAddresses.length - 4;
+    env.participantsCount = state.network.keys.length - 4;
     env.goal = 10000;
 
     const now = ch.timestamp();

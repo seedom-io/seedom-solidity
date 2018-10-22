@@ -1,6 +1,9 @@
 const Web3 = require('web3');
+const dir = require('node-dir');
+const path = require("path");
 const WebsocketProvider = require('./ws');
 const https = require('https');
+const keythereum = require('keythereum');
 const cli = require('./cli');
 const net = require('net');
 const h = require('./helper');
@@ -10,7 +13,7 @@ const defaults = {
     jsonrpc: "2.0",
     gas: 1500000,
     gasPrice: 30000000000000
-}
+};
 
 module.exports.main = async (state) => {
 
@@ -22,26 +25,92 @@ module.exports.main = async (state) => {
         state.networkName = h.localNetworkName;
     }
 
-    // either setup parity network or another
-    const result = (state.networkName == h.localNetworkName)
-        ? await parity.main(state)
-        : await network(state);
+    // set up parity first?
+    if (state.networkName == h.localNetworkName) {
+        if (!(await parity.main(state))) {
+            return;
+        }
+    }
+
+    // setup network
+    await network(state);
 
 }
 
 const network = async (state) => {
 
-    state.network = await h.readNetwork(state.networkName);
+    // read network into state if not already loaded
+    if (!('network' in state)) {
+        state.network = await h.readNetwork(state.networkName);
+    }
+
+    // ensure we have a directory for keys
+    if (!('keysDir' in state.network)) {
+        cli.error(`${state.networkName} network does not specify a keys directory`);
+        return;
+    }
+
+    state.network.keys = await getKeys(state.network.keysDir, state.network.password);
+    // load all keys from keys directory and get private keys from password
+    if (h.objLength(state.network.keys) == 0) {
+        cli.warning("no network keys found");
+        return;
+    }
+
+    // convert to object for easy finding of address key
+    state.network.addresses = getAddresses(state.network.keys);
+
     // set web3 instance
     if (!await this.setWeb3(state)) {
         return;
     }
 
-    state.accountAddresses = await state.web3.eth.getAccounts();
-    if (state.accountAddresses.length == 0) {
-        cli.error(`${networkName} network contains no accounts`);
-        return;
+    // set nonces
+    state.network.nonces = await getNonces(state.network.keys, state);
+
+};
+
+const getKeys = async (keysDir, password) => {
+
+    const keys = [];
+    const keyFiles = await dir.promiseFiles(keysDir);
+    for (let keyFile of keyFiles) {
+
+        // only no extension files (UTC...)
+        if  (path.extname(keyFile) != '') {
+            continue;
+        }
+
+        const key = await h.readJsonFile(keyFile);
+        key.address = '0x' + key.address;
+        key.privateKey = '0x' + keythereum.recover(password, key).toString('hex');
+        keys.push(key);
+
     }
+
+    return keys;
+
+};
+
+const getAddresses = (keys) => {
+
+    const addresses = {};
+    for (let key of keys) {
+        addresses[key.address] = key;
+    }
+    return addresses;
+
+};
+
+const getNonces = async (keys, state) => {
+
+    const nonces = {};
+    // get nonces
+    for (let key of keys) {
+        nonces[key.address] = await state.web3.eth.getTransactionCount(key.address);
+    }
+
+    return nonces;
 
 };
 
@@ -76,23 +145,7 @@ const createWeb3 = async (network) => {
 };
 
 const createWsProvider = async (network) => {
-
-    let clientConfig = undefined;
-
-    if ('ca' in network) {
-        clientConfig = {
-            tlsOptions: {
-                ca: await h.readFile(network.ca),
-                cert: await h.readFile(network.cert),
-                key: await h.readFile(network.key),
-                rejectUnauthorized: true,
-                requestCert: true
-            }
-        }
-    };
-
-    return new WebsocketProvider(network.wsUrl, clientConfig);
-
+    return new WebsocketProvider(network.wsUrl);
 };
 
 const createParityProvider = (network) => {
@@ -148,38 +201,64 @@ module.exports.callProvider = async (method, args, state) => {
 
 module.exports.deploy = async (contract, args, options, state) => {
 
-    const web3Instance = new state.web3.eth.Contract(contract.abi);
+    const instance = new state.web3.eth.Contract(contract.abi);
 
-    const web3Transaction = web3Instance.deploy({
+    const method = instance.deploy({
         data: '0x' + contract.evm.bytecode.object,
         arguments: args
     });
 
-    const web3Result = await this.sendMethod(web3Transaction, options, state);
-    web3Result.instance.setProvider(state.web3.currentProvider);
+    const receipt = await this.sendMethod(method, options, state);
+    // set up existing instance
+    instance.options.address = receipt.contractAddress;
+    instance.setProvider(state.web3.currentProvider);
+    cli.info(`${contract.name} contract deployed to ${receipt.contractAddress}`);
 
-    const contractAddress = web3Result.instance.options.address;
-    cli.info(`${contract.name} contract deployed to ${contractAddress}`);
-    return web3Result;
+    return {
+        instance,
+        receipt
+    };
 
-}
+};
 
 module.exports.sendMethod = (method, options, state) => {
-    setStandardOptions(options, state);
-    return verifySend(method.send(options));
+
+    const transaction = { data: method.encodeABI() };
+    const massagedTransaction = massageTransaction(transaction, options, state);
+
+    if (method._parent.options.address) {
+        massagedTransaction.to = method._parent.options.address;
+    }
+
+    return sendTransaction(massagedTransaction, options, state);
+
 };
 
 module.exports.sendFallback = (instance, options, state) => {
-    setStandardOptions(options, state);
-    options.to = instance.options.address;
-    return verifySend(state.web3.eth.sendTransaction(options));
+
+    const massagedTransaction = massageTransaction({
+        to: instance.options.address,
+    }, options, state);
+
+    return sendTransaction(massagedTransaction, options, state);
+
 };
 
-const setStandardOptions = (options, state) => {
-    options.from = options.from ? options.from : state.accountAddresses[0];
-    options.gas = getOption('gas', options, state.network);
-    options.gasPrice = getOption('gasPrice', options, state.network);
-}
+const massageTransaction = (transaction, options, state) => {
+
+    const massagedTransaction = {
+        ...transaction,
+        gas: getOption('gas', options, state.network),
+        gasPrice: getOption('gasPrice', options, state.network)
+    };
+
+    if ('value' in options) {
+        massagedTransaction.value = options.value;
+    }
+
+    return massagedTransaction;
+        
+};
 
 const getOption = (name, options, network) => {
 
@@ -197,42 +276,39 @@ const getOption = (name, options, network) => {
 
 }
 
-const verifySend = (call) => {
+const sendTransaction = (transaction, options, state) => {
+
+    // get from and private key
+    const from = options.from ? options.from.toLowerCase() : state.network.keys[0].address;
+    const privateKey = state.network.addresses[from].privateKey;
+    // manage the nonce
+    const nonce = state.network.nonces[from];
+    state.network.nonces[from] += 1;
+    transaction.nonce = nonce;
 
     return new Promise((accept, reject) => {
-        
-        let receipt;
 
-        call.once('receipt', (data) => {
-            // capture receipt
-            receipt = data;
-            cli.info(`gas used: ${receipt.gasUsed}`);
-        }).then((result) => {
+        // sign transaction and send it off to the ethers
+        state.web3.eth.accounts.signTransaction(transaction, privateKey).then((signedTransaction) => {
+            state.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction).then((receipt) => {
 
-            // triage result type
-            if (!result.options) {
+                cli.info(`gas used: ${receipt.gasUsed}`);
                 // check for standard transaction result
-                if (!result.status || result.status === "0x0") {
-                    cli.json(result);
+                if (!receipt.status || receipt.status === "0x0") {
+                    cli.json(receipt);
                     reject(new Error("Something Thrown"));
                     return;
                 }
+    
+                // accept receipt (receipt only)
+                accept(receipt);
+    
+            }).catch ((error) => {
 
-                // accept result (receipt only)
-                accept(result);
+                reject(error);
 
-            } else {
-                // accept result (instance) and receipt
-                accept({
-                    instance: result,
-                    receipt
-                });
-            }
-
-        }).catch ((error) => {
-            reject(new Error("Something Caught"));
+            });
         });
-
     });
 
 }

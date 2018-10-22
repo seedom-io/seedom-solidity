@@ -18,7 +18,7 @@ module.exports.run = async (state) => {
     for (let i = 0; i < env.participantsCount; i++) {
 
         // participants start at index 4, after cause, owner, and their wallets
-        const address = state.accountAddresses[i + 4];
+        const address = state.network.keys[i + 4].address;
         const message = m.random();
 
         const receipt = await fundraiser.participate({

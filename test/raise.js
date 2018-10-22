@@ -11,8 +11,8 @@ suite('raise', (state) => {
 
         const initialBalances = {};
         // get all initial balances
-        for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        for (let key of state.network.keys) {
+            initialBalances[key.address] = await sh.getBalance(key.address, state.web3);
         }
 
         await raise.run(state);
@@ -76,7 +76,7 @@ suite('raise', (state) => {
         const { env } = state;
         const fundraiser = await state.interfaces.fundraiser;
         
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
         // call fallback function
         await assert.isRejected(
             fundraiser.fallback({

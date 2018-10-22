@@ -1,13 +1,8 @@
 {
-    "rpcUrl": "https://storage2.seedom.io:8545",
-    "wsUrl": "wss://storage2.seedom.io:8546",
-    "proxyRpcUrl": "https://manager1.seedom.io:8549",
-    "proxyWsUrl": "wss://manager1.seedom.io:8550",
-    "ca": "../seedom-infrastructure/secrets/ca.crt",
-    "cert": "../seedom-infrastructure/secrets/client.crt",
-    "key": "../seedom-infrastructure/secrets/client.key",
+    "rpcUrl": "https://mainnet.infura.io/8db21cc2d49c421081900bb238f2f05c",
+    "wsUrl": "wss://mainnet.infura.io/ws",
+    "keysDir": "../seedom-infrastructure/secrets/ethereum",
     "verify": true,
-    "requires": "localhost",
     "gas": "2000000",
     "gasPrice": "40000000000"
 }

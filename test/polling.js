@@ -15,7 +15,7 @@ suite('polling', (state) => {
 
         const { env } = state;
         const causeName = m.hex("TEST CAUSE");
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
 
         await assert.isRejected(
             (await state.interfaces.polling).voteName({
@@ -32,7 +32,7 @@ suite('polling', (state) => {
 
         const { env } = state;
         const causeName = m.hex("");
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
 
         await assert.isRejected(
             (await state.interfaces.polling).voteName({
@@ -50,7 +50,7 @@ suite('polling', (state) => {
         const { env } = state;
         const polling = await state.interfaces.polling;
         const causeName = m.hex("TEST CAUSE1");
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
 
         await assert.isRejected(
             polling.voteName({
@@ -74,7 +74,7 @@ suite('polling', (state) => {
         await cli.progress("waiting for destruct time", env.destructTime - now, 1);
 
         const polling = await state.interfaces.polling;
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
 
         await assert.isRejected(
             polling.destroy({ from: participant, transact: true })
@@ -93,7 +93,7 @@ suite('polling', (state) => {
         const { env } = state;
         const polling = await state.interfaces.polling;
         const causeName = m.hex("TEST CAUSE1");
-        const participant1 = state.accountAddresses[4];
+        const participant1 = state.network.keys[4].address;
 
         await assert.isFulfilled(
             polling.voteName({
@@ -102,7 +102,7 @@ suite('polling', (state) => {
             }, { from: participant1, transact: true })
         );
 
-        const participant2 = state.accountAddresses[5];
+        const participant2 = state.network.keys[5].address;
 
         await assert.isRejected(
             polling.voteName({
@@ -120,8 +120,8 @@ suite('polling', (state) => {
         const polling = await state.interfaces.polling;
         const causeName1 = m.hex("TEST CAUSE1");
         const causeName2 = m.hex("TEST CAUSE2");
-        const participant1 = state.accountAddresses[4];
-        const participant2 = state.accountAddresses[5];
+        const participant1 = state.network.keys[4].address;
+        const participant2 = state.network.keys[5].address;
 
         await assert.isFulfilled(
             polling.voteName({
@@ -137,8 +137,8 @@ suite('polling', (state) => {
             }, { from: participant2, transact: true })
         );
 
-        const participant3 = state.accountAddresses[6];
-        const participant4 = state.accountAddresses[7];
+        const participant3 = state.network.keys[6].address;
+        const participant4 = state.network.keys[7].address;
 
         await assert.isRejected(
             polling.voteIndex({
@@ -164,8 +164,8 @@ suite('polling', (state) => {
         const polling = await state.interfaces.polling;
         const causeName1 = m.hex("TEST CAUSE1");
         const causeName2 = m.hex("TEST CAUSE2");
-        const participant1 = state.accountAddresses[4];
-        const participant2 = state.accountAddresses[5];
+        const participant1 = state.network.keys[4].address;
+        const participant2 = state.network.keys[5].address;
 
         await assert.isFulfilled(
             polling.voteName({
@@ -181,8 +181,8 @@ suite('polling', (state) => {
             }, { from: participant2, transact: true })
         );
 
-        const participant3 = state.accountAddresses[6];
-        const participant4 = state.accountAddresses[7];
+        const participant3 = state.network.keys[6].address;
+        const participant4 = state.network.keys[7].address;
 
         await assert.isFulfilled(
             polling.voteIndex({
@@ -232,8 +232,8 @@ suite('polling', (state) => {
         const polling = await state.interfaces.polling;
         const causeName1 = m.hex("TEST CAUSE1");
         const causeName2 = m.hex("TEST CAUSE2");
-        const participant1 = state.accountAddresses[4];
-        const participant2 = state.accountAddresses[5];
+        const participant1 = state.network.keys[4].address;
+        const participant2 = state.network.keys[5].address;
 
         await assert.isFulfilled(
             polling.voteName({
@@ -292,8 +292,8 @@ suite('polling', (state) => {
         const polling = await state.interfaces.polling;
         const causeName1 = m.hex("TEST CAUSE1");
         const causeName2 = m.hex("TEST CAUSE2");
-        const participant1 = state.accountAddresses[4];
-        const participant2 = state.accountAddresses[5];
+        const participant1 = state.network.keys[4].address;
+        const participant2 = state.network.keys[5].address;
 
         await assert.isFulfilled(
             polling.voteName({

@@ -12,8 +12,8 @@ suite('participate', (state) => {
 
         const initialBalances = {};
         // get all initial balances
-        for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        for (let key of state.network.keys) {
+            initialBalances[key.address] = await sh.getBalance(key.address, state.web3);
         }
 
         await participate.run(state);
@@ -62,8 +62,8 @@ suite('participate', (state) => {
 
         const initialBalances = {};
         // get all initial balances
-        for (let accountAddress of state.accountAddresses) {
-            initialBalances[accountAddress] = await sh.getBalance(accountAddress, state.web3);
+        for (let key of state.network.keys) {
+            initialBalances[key.address] = await sh.getBalance(key.address, state.web3);
         }
 
         const { env } = state;
@@ -113,7 +113,7 @@ suite('participate', (state) => {
         await deploy.run(state);
 
         const { env } = state;
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
         const message = m.random();
 
         await assert.isRejected(
@@ -132,7 +132,7 @@ suite('participate', (state) => {
         const now = ch.timestamp();
         await cli.progress("waiting for end phase", env.endTime - now, 1);
 
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
         const message = m.random();
 
         await assert.isRejected(
@@ -164,7 +164,7 @@ suite('participate', (state) => {
         
         const { env } = state;
         const fundraiser = await state.interfaces.fundraiser;
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
         let message = m.random();
 
         await assert.isFulfilled(
@@ -195,7 +195,7 @@ suite('participate', (state) => {
         await begin.run(state);
         
         const { env } = state;
-        const participant = state.accountAddresses[4];
+        const participant = state.network.keys[4].address;
         const message = '0x0000000000000000000000000000000000000000000000000000000000000000';
         
         await assert.isRejected(

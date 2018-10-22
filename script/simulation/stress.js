@@ -11,8 +11,8 @@ module.exports.run = async (state) => {
 
     const distribution = {};
     // participants start at index 4, after cause, owner, and their wallets
-    for (let i = 4; i < state.accountAddresses.length; i++) {
-        const address = state.accountAddresses[i];
+    for (let i = 4; i < state.network.keys.length; i++) {
+        const address = state.network.keys[i].address;
         distribution[address.toLowerCase()] = 0;
     }
 
