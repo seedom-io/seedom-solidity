@@ -110,12 +110,12 @@ module.exports.json = (obj, text) => {
     this.log('');
 }
 
-module.exports.question = async (question, answer) => {
+module.exports.question = async (question) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    question = tab + tab + ls.warning + tab + question + ' [' + answer + ']: ';
+    question = tab + tab + ls.warning + tab + question;
     const response = await rl.question(question);
     rl.close();
-    return (response === answer);
+    return response;
 }
 
 module.exports.bars = (data) => {

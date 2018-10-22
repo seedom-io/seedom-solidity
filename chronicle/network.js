@@ -44,6 +44,11 @@ const network = async (state) => {
         state.network = await h.readNetwork(state.networkName);
     }
 
+    // ask for password
+    if (!('password' in state.network)) {
+        state.network.password = await cli.question("What is your account password?");
+    }
+
     // ensure we have a directory for keys
     if (!('keysDir' in state.network)) {
         cli.error(`${state.networkName} network does not specify a keys directory`);
