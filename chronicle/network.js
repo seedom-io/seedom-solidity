@@ -82,7 +82,7 @@ const getKeys = async (keysDir, password) => {
     for (let keyFile of keyFiles) {
 
         // only no extension files (UTC...)
-        if  (path.extname(keyFile) != '') {
+        if  (!path.basename(keyFile).startsWith('UTC')) {
             continue;
         }
 
